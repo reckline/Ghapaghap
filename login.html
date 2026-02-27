@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ghapagap - Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <style>
+      .brand-pink { color: rgb(240, 119, 139); }
+      .bg-pink-theme { background-color: rgb(240, 119, 139); }
+      .shadow-pink { box-shadow: 0 10px 25px -5px rgba(240, 119, 139, 0.4); }
+    </style>
+  </head>
+  <body style="background-color: black" class="flex items-center justify-center min-h-screen">
+    
+    <div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+      <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-pink-900/30 rounded-full blur-[100px] opacity-50"></div>
+      <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-900/20 rounded-full blur-[100px] opacity-50"></div>
+    </div>
+
+    <div class="relative w-full max-w-md p-8 bg-zinc-900/80 backdrop-blur-lg rounded-3xl shadow-2xl border border-white/10 m-4">
+      
+      <a href="index.html" class="absolute top-5 right-6 text-gray-500 hover:text-pink-400 transition-all duration-300 hover:rotate-90">
+        <i class="fas fa-times text-xl"></i>
+      </a>
+
+      <div class="text-center mb-8">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-pink-theme rounded-2xl shadow-lg shadow-pink-900/50 mb-4">
+          <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-extrabold text-white">Welcome Back</h1>
+        <p class="text-gray-400 mt-2 font-medium">Please enter your details to login</p>
+      </div>
+
+      <form action="/login" method="POST" class="space-y-6">
+        <div>
+          <label class="block text-sm font-semibold text-gray-300 mb-2">Username or Email</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+              <i class="fas fa-user"></i>
+            </span>
+            <input type="text" name="id" required 
+                   class="w-full pl-10 pr-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all placeholder:text-gray-600"
+                   placeholder="Enter your username" />
+          </div>
+        </div>
+
+        <div>
+          <label class="text-sm font-semibold text-gray-300 block mb-2">Password</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">
+              <i class="fas fa-lock"></i>
+            </span>
+            <input id="password-input" type="password" name="password" required
+                   class="w-full pl-10 pr-12 py-3 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-pink-400 focus:border-transparent transition-all placeholder:text-gray-600"
+                   placeholder="••••••••" />
+            <button type="button" onclick="togglePassword()"
+                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-pink-400 transition-colors">
+              <i id="eye-icon" class="fas fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center">
+          <input type="checkbox" id="remember" class="w-4 h-4 text-pink-500 border-white/10 bg-black rounded focus:ring-pink-400 accent-pink-500" />
+          <label for="remember" class="ml-2 text-sm text-gray-400">Remember me for 30 days</label>
+        </div>
+
+        <button type="submit" 
+                class="w-full py-3 bg-pink-theme text-white font-bold rounded-xl shadow-pink hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 uppercase tracking-wide">
+          Sign In
+        </button>
+      </form>
+
+      <p class="text-center text-sm text-gray-400 mt-8 font-medium">
+        Don't have an account?
+        <a href="signup.html" class="font-bold brand-pink hover:underline">Create Account</a>
+      </p>
+    </div>
+
+    <script src="js/eye.js"></script>
+  </body>
+</html>
