@@ -1,24 +1,22 @@
 const express = require('express');
 const router = express.Router();
 
-// 1. Controller Import (Path aur Spelling verified)
+// ⚠️ FIX: Linux par path exact match hona chahiye
+// Screenshot ke hisaab se folder 'controller' (small) hai aur file 'LoginAndSignupController' (Proper Case)
 const authController = require('../controller/LoginAndSignupController');
 
-// 💡 ROUTE GROUPING: Ek hi path ke different methods ko ek saath likhna
+// 💡 ROUTE GROUPING
 // Login Routes
 router.route('/login')
-    .get(authController.renderLogin)   // Login page dikhane ke liye
-    .post(authController.handleLogin); // Login data process karne ke liye
+    .get(authController.renderLogin)   
+    .post(authController.handleLogin); 
 
 // Signup Routes
 router.route('/signup')
-    .get(authController.renderSignup)   // Signup page dikhane ke liye
-    .post(authController.handleSignup); // Signup data process karne ke liye
+    .get(authController.renderSignup)   
+    .post(authController.handleSignup); 
 
 // 🚪 Logout Route
-// Isse GET rakha hai taaki anchor tag (<a>) se direct call ho sake
 router.get('/logout', authController.handleLogout);
-
-
 
 module.exports = router;
