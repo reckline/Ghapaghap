@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghapagap - Add Bank</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .bg-pink-theme { background-color: rgb(240, 119, 139); }
+        body { background-color: black; color: white; }
+        .glass-card { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        
+        /* Loading animation for button */
+        .loading { opacity: 0.7; pointer-events: none; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md glass-card rounded-[2.5rem] p-8 mt-10">
+        <div class="flex items-center justify-between mb-8">
+            <h1 class="text-2xl font-black">Bank Details</h1>
+            <a href="/profile" class="w-8 h-8 flex items-center justify-center rounded-full bg-zinc-800"><i class="fas fa-times"></i></a>
+        </div>
+
+        <form id="bankForm" class="space-y-5">
+            <div>
+                <label class="text-sm font-bold text-gray-400">Account Holder Name</label>
+                <input type="text" name="accountName" value="<%= user.bankDetails?.accountName || '' %>" required class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-pink-400">
+            </div>
+            <div>
+                <label class="text-sm font-bold text-gray-400">Account Number</label>
+                <input type="text" name="accountNumber" value="<%= user.bankDetails?.accountNumber || '' %>" required class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-pink-400">
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="text-sm font-bold text-gray-400">IFSC Code</label>
+                    <input type="text" name="ifscCode" value="<%= user.bankDetails?.ifscCode || '' %>" required class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+                <div>
+                    <label class="text-sm font-bold text-gray-400">Bank Name</label>
+                    <input type="text" name="bankName" value="<%= user.bankDetails?.bankName || '' %>" required class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-pink-400">
+                </div>
+            </div>
+            <button type="submit" id="submitBtn" class="w-full bg-pink-theme text-white py-4 rounded-2xl font-black text-lg shadow-lg transition-all active:scale-95">
+                SAVE BANK ACCOUNT
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const bankForm = document.getElementById('bankForm');
+        const submitBtn = document.getElementById('submitBtn');
+
+        bankForm.addEventListener('submit', async (e) => {
+            e.preventDefault(); // Default reload ko rokne ke liye
+
+            // UI Feedback
+            submitBtn.disabled = true;
+            submitBtn.classList.add('loading');
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> SAVING...';
+
+            // Form data collect karna
+            const formData = new FormData(bankForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/addBankAccount', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    // Success Toast
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: result.message,
+                        showConfirmButton: false,
+                        timer: 3000,
+                        timerProgressBar: true,
+                        background: '#18181b',
+                        color: '#fff'
+                    });
+                    
+                    submitBtn.innerHTML = 'UPDATED ✅';
+                    submitBtn.style.backgroundColor = '#10b981'; // Green color on success
+                } else {
+                    throw new Error(result.message || 'Something went wrong');
+                }
+            } catch (err) {
+                // Error Alert
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: err.message,
+                    background: '#18181b',
+                    color: '#fff',
+                    confirmButtonColor: '#f0778b'
+                });
+                submitBtn.innerHTML = 'SAVE BANK ACCOUNT';
+            } finally {
+                // 3 sec baad button wapas normal
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('loading');
+                    if(submitBtn.innerHTML === 'UPDATED ✅') {
+                        submitBtn.innerHTML = 'SAVE BANK ACCOUNT';
+                        submitBtn.style.backgroundColor = ''; // Reset to theme pink
+                    }
+                }, 3000);
+            }
+        });
+    </script>
+</body>
+</html>

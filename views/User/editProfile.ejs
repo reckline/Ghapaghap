@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghapagap - Edit Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        .brand-pink { color: rgb(240, 119, 139); }
+        .bg-pink-theme { background-color: rgb(240, 119, 139); }
+        .shadow-pink { box-shadow: 0 10px 25px -5px rgba(240, 119, 139, 0.4); }
+        body { background-color: black; color: white; }
+        .glass-card {
+            background: rgba(24, 24, 27, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-black flex flex-col items-center p-4 md:p-8">
+
+    <div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div class="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-pink-900/20 rounded-full blur-[120px]"></div>
+    </div>
+
+    <div class="w-full max-w-2xl glass-card rounded-[2.5rem] p-6 md:p-10 shadow-2xl">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-3xl font-black tracking-tight">Edit Profile</h1>
+                <p class="text-gray-400 text-sm">Update your personal information</p>
+            </div>
+            <a href="/profile" class="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 transition-all">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+        </div>
+
+        <form action="/user/update-profile" method="POST" enctype="multipart/form-data" class="space-y-6">
+            
+            <div class="flex flex-col items-center mb-8">
+                <div class="relative group">
+                    <img id="previewImg" src="<%= user.avatar %>" 
+                         class="w-32 h-32 rounded-full border-4 border-pink-500/30 object-cover shadow-xl">
+                    
+                    <label for="profilePic" class="absolute bottom-1 right-1 bg-pink-theme w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:scale-110 transition-transform shadow-lg">
+                        <i class="fas fa-camera text-sm"></i>
+                        <input type="file" id="profilePic" name="avatar" class="hidden" accept="image/*" onchange="previewImage(event)">
+                    </label>
+                </div>
+                <p class="text-xs text-gray-500 mt-3 italic">Click camera to change photo</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-400 ml-1">Full Name</label>
+                    <input type="text" name="fullname" value="<%= user.fullname %>" required
+                        class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl focus:ring-2 focus:ring-pink-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-400 ml-1">Username</label>
+                    <input type="text" name="username" value="<%= user.username %>" required
+                        class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl focus:ring-2 focus:ring-pink-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-400 ml-1">Email Address</label>
+                    <input type="email" name="email" value="<%= user.email %>" required
+                        class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl focus:ring-2 focus:ring-pink-400 outline-none transition-all">
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-sm font-bold text-gray-400 ml-1">Phone Number</label>
+                    <input type="text" name="phone" value="<%= user.phone %>" 
+                        class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl focus:ring-2 focus:ring-pink-400 outline-none transition-all">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-400 ml-1">Bio</label>
+                <textarea name="bio" rows="3" placeholder="Tell us about yourself..."
+                    class="w-full px-5 py-4 bg-black/40 border border-white/10 rounded-2xl focus:ring-2 focus:ring-pink-400 outline-none transition-all"><%= user.bio %></textarea>
+            </div>
+
+            <div class="flex gap-4 pt-4">
+                <button type="submit" class="flex-1 bg-pink-theme text-white py-4 rounded-2xl font-black text-lg shadow-pink hover:scale-[1.02] transition-all uppercase tracking-widest">
+                    Save Changes
+                </button>
+                <button type="button" onclick="window.location.href='/profile'" class="px-8 py-4 bg-zinc-800 text-white rounded-2xl font-bold hover:bg-zinc-700 transition-all">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        function previewImage(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function() {
+                    const output = document.getElementById('previewImg');
+                    output.src = reader.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+    </script>
+
+</body>
+</html>

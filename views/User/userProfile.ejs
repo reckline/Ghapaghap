@@ -40,23 +40,33 @@
             </div>
 
             <div style="margin-top: -2rem;" class="min-h-screen text-white font-sans select-none">
-                <div class="flex items-start gap-6 max-w-2xl mx-auto pt-8">
-                    <div class="relative">
-                        <img src="<%= user.profilePic || 'image/Screenshot 2026-02-23 161456.png' %>" alt="Profile" class="w-24 h-24 rounded-full border border-gray-800 object-cover" />
-                    </div>
-                    <div class="flex-1">
-                        <div class="flex items-center gap-2 mb-1">
-                            <h2 class="text-xl font-bold tracking-tight"><%= user.username %></h2>
-                            <% if(user.isVerified) { %> <i class="fas fa-check-circle text-blue-500 text-sm"></i> <% } %>
-                        </div>
-                        <div class="text-sm font-light mb-1 text-gray-200"><%= user.fullname %></div>
-                        <div class="text-sm font-light text-gray-400">Total Subscribers: <%= user.subscribersCount || 0 %></div>
-                    </div>
-                </div>
+         <div class="flex items-start gap-6 max-w-2xl mx-auto pt-8">
+    <div class="relative">
+        <img src="<%= user.avatar %>" 
+             alt="Profile" 
+             class="w-24 h-24 rounded-full border border-gray-800 object-cover" />
+    </div>
+    <div class="flex-1">
+        <div class="flex items-center gap-2 mb-1">
+            <h2 class="text-xl font-bold tracking-tight"><%= user.username %></h2>
+            <% if(user.isVerified) { %> 
+                <i class="fas fa-check-circle text-blue-500 text-sm"></i> 
+            <% } %>
+        </div>
+        <div class="text-sm font-light mb-1 text-gray-200"><%= user.fullname %></div>
+        <div class="text-sm font-light text-gray-400">Total Subscribers: <%= user.subscribersCount || 0 %></div>
+    </div>
+</div>
 
                 <div class="grid grid-cols-2 gap-2 mt-8 max-w-2xl mx-auto">
-                    <button class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold">Edit profile</button>
-                    <button class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold">Change Password</button>
+                    <div class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold flex justify-center">
+                        <a href="/editProfile"><button class="" >Edit profile</button></a>
+                    </div>
+
+                     <div class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold flex justify-center">
+                        <a href="/changePassword"><button class="" >Change Password</button></a>
+                    </div>
+                    
                 </div>
 
                 <div class="grid grid-cols-1 gap-2 mt-2 max-w-2xl mx-auto">
@@ -76,9 +86,9 @@
                     </div>
 
                     <% if (user && user.isVerified) { %>
-                        <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4">
-                         Add Bank Account
-                        </button>
+                        <div class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 flex justify-center">
+                        <a href="/addBankAccount"><button class="" >Add Bank Account</button></a>
+                    </div>
                     <% } else { %>
                          <div class="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20">
                          Verification pending... Bank account add karne ke liye verify karein.
@@ -88,7 +98,9 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-2 mt-2 max-w-2xl mx-auto">
-                    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold">Deposit Funds</button>
+                    <div class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 flex justify-center">
+                        <a href="/depositFunds"><button class="" >Deposit Funds</button></a>
+                    </div>
                     <% if (typeof user !== 'undefined' && user.isVerified) { %>
     <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 gap-2">
         Withdraw Funds

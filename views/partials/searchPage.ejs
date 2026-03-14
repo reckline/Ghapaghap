@@ -94,9 +94,9 @@
                 <div class="flex items-center justify-between p-3.5 hover:bg-white/5 rounded-2xl transition-all group duration-300 border border-transparent hover:border-gray-800">
                     <div onclick="window.location.href='/user/${u.username}'" class="flex items-center gap-4 cursor-pointer min-w-0">
                         <div class="relative">
-                            <img src="${u.avatar || '/image/default-avatar.png'}" 
-                                 class="w-12 h-12 rounded-full border border-gray-800 object-cover flex-shrink-0 bg-neutral-800"
-                                 onerror="this.src='/public/image/default-avatar.png'">
+                            <img src="${u.avatar}" 
+         class="w-12 h-12 rounded-full border border-gray-800 object-cover flex-shrink-0 bg-neutral-800"
+         onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(u.fullname || u.username)}&background=f0778b&color=fff';">
                         </div>
                         <div class="flex flex-col min-w-0">
                             <div class="flex items-center">

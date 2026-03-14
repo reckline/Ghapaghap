@@ -1,7 +1,7 @@
-const User = require('../model/user'); // Ensure case sensitivity (u small)
+const User = require('../model/user'); 
+const bcrypt = require('bcrypt'); // ✨ Bcrypt import karna zaroori hai
 
 // --- 1. GET Pages (Views) ---
-// ⚠️ FIX: Aapka folder name 'LoginandSignup' hai (L capital, a small, S capital)
 const renderLogin = (req, res) => res.render('LoginandSignup/login');
 const renderSignup = (req, res) => res.render('LoginandSignup/signup');
 
@@ -18,7 +18,6 @@ const handleSignup = async (req, res) => {
             return res.redirect('/signup?error=Passwords match nahi ho rahe!');
         }
 
-        // Check existing user
         const existingUser = await User.findOne({ 
             $or: [
                 { username: username.trim().toLowerCase() }, 
@@ -31,6 +30,7 @@ const handleSignup = async (req, res) => {
             return res.redirect('/signup?error=Username, Email ya Phone pehle se registered hai!');
         }
 
+        // ✨ Note: Hashing Model ke pre-save hook mein ho rahi hai, yahan sirf save karna hai
         const newUser = new User({
             fullname: fullname.trim(),
             username: username.trim().toLowerCase(),
@@ -73,18 +73,21 @@ const handleLogin = async (req, res) => {
             return res.redirect('/login?error=User nahi mila!');
         }
 
-        // Password matching
-        if (user.password.trim() !== password.trim()) {
+        // ✅ FIX: Bcrypt se password compare karna hoga
+        const isMatch = await bcrypt.compare(password.trim(), user.password);
+
+        if (!isMatch) {
+            console.log(`❌ Login Failed: Incorrect password for ${user.username}`);
             return res.redirect('/login?error=Galat Password!');
         }
 
+        // Session data set karna
         req.session.user = {
             _id: user._id, 
             username: user.username,
             role: user.role || 'user'
         };
 
-        // Session save logic (Critical for Linux servers)
         await new Promise((resolve, reject) => {
             req.session.save(err => {
                 if (err) reject(err);
@@ -97,7 +100,6 @@ const handleLogin = async (req, res) => {
         if (user.role === 'admin') {
             return res.redirect('/admin/dashboard'); 
         } else {
-            // ⚠️ Note: Check kijiye ki userRouter mein '/profile' route exists karta hai
             return res.redirect('/profile'); 
         }
 

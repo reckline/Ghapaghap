@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghapagap - Deposit Funds</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        .bg-pink-theme { background-color: rgb(240, 119, 139); }
+        body { background-color: black; color: white; }
+        .glass-card { 
+            background: rgba(24, 24, 27, 0.8); 
+            backdrop-filter: blur(20px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+        .amount-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .amount-chip:hover {
+            background: rgba(240, 119, 139, 0.2);
+            border-color: rgb(240, 119, 139);
+        }
+        input::-webkit-outer-spin-button,
+        input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col items-center p-4">
+
+    <div id="mainCard" class="w-full max-w-md glass-card rounded-[2.5rem] p-8 mt-10">
+        <h1 class="text-2xl font-black mb-6">Deposit Funds</h1>
+        <form id="depositForm" class="space-y-6">
+            <input type="number" id="amountInput" placeholder="Enter Amount" required 
+                class="w-full px-6 py-5 bg-black/40 border border-white/10 rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 text-2xl font-bold text-center">
+            
+            <button type="submit" class="w-full bg-pink-theme text-white py-5 rounded-2xl font-black">DEPOSIT NOW</button>
+        </form>
+    </div>
+
+    <div id="upiModal" class="fixed inset-0 bg-black/90 backdrop-blur-md hidden flex-col items-center justify-center p-6 z-50">
+        <div class="w-full max-w-sm glass-card rounded-[2.5rem] p-8 text-center">
+            <h2 class="text-xl font-bold mb-6">Pay Using UPI</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <div onclick="openProcessing()" class="p-4 bg-zinc-900 rounded-2xl cursor-pointer hover:bg-zinc-800">
+                    <img src="https://cdn-icons-png.flaticon.com/512/2991/2991148.png" class="w-10 mx-auto mb-2">
+                    <p class="text-xs">Google Pay</p>
+                </div>
+                <div onclick="openProcessing()" class="p-4 bg-zinc-900 rounded-2xl cursor-pointer hover:bg-zinc-800">
+                    <img src="https://img.icons8.com/color/48/phone-pe.png" class="w-10 mx-auto mb-2">
+                    <p class="text-xs">PhonePe</p>
+                </div>
+                <div onclick="openProcessing()" class="p-4 bg-zinc-900 rounded-2xl cursor-pointer hover:bg-zinc-800">
+                    <img src="https://img.icons8.com/color/48/paytm.png" class="w-10 mx-auto mb-2">
+                    <p class="text-xs">Paytm</p>
+                </div>
+                <div onclick="openProcessing()" class="p-4 bg-zinc-900 rounded-2xl cursor-pointer hover:bg-zinc-800">
+                    <img src="https://img.icons8.com/color/48/bhim.png" class="w-10 mx-auto mb-2">
+                    <p class="text-xs">BHIM UPI</p>
+                </div>
+            </div>
+            <button onclick="closeModal('upiModal')" class="mt-6 text-gray-500 text-sm">Cancel</button>
+        </div>
+    </div>
+
+    <div id="processingPage" class="fixed inset-0 bg-black hidden flex-col items-center justify-center p-6 z-[60]">
+        <div class="text-center">
+            <div class="w-20 h-20 border-4 border-pink-400 border-t-transparent rounded-full animate-spin mx-auto mb-6"></div>
+            <h2 class="text-2xl font-black mb-2">Waiting for Payment...</h2>
+            <p class="text-gray-400 mb-8">Please complete the payment in your UPI app</p>
+            
+            <div class="glass-card p-6 rounded-3xl mb-8">
+                <p class="text-sm text-gray-400">Paying Amount</p>
+                <h3 class="text-3xl font-black text-pink-400">₹<span id="displayAmount">0</span></h3>
+            </div>
+
+            <button onclick="finalizePayment()" class="w-full max-w-xs bg-white text-black py-4 rounded-2xl font-black text-lg shadow-xl">
+                I HAVE COMPLETED PAYMENT
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let globalAmount = 0;
+
+        // Form Submit -> Open UPI Modal
+        document.getElementById('depositForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            globalAmount = document.getElementById('amountInput').value;
+            document.getElementById('displayAmount').innerText = globalAmount;
+            document.getElementById('upiModal').classList.remove('hidden');
+        });
+
+        // UPI Click -> Open Processing
+        function openProcessing() {
+            document.getElementById('upiModal').classList.add('hidden');
+            document.getElementById('processingPage').classList.remove('hidden');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+
+        // Final Button -> Hit Backend
+        async function finalizePayment() {
+            const btn = event.target;
+            btn.disabled = true;
+            btn.innerText = "VERIFYING...";
+
+            try {
+                const response = await fetch('/deposit-finalize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ amount: globalAmount })
+                });
+                const res = await response.json();
+
+                if (res.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: res.message,
+                        background: '#18181b', color: '#fff'
+                    }).then(() => {
+                        window.location.href = '/deposit-funds'; // Redirect back
+                    });
+                }
+            } catch (err) {
+                alert("Payment Verification Failed");
+                btn.disabled = false;
+                btn.innerText = "I HAVE COMPLETED PAYMENT";
+            }
+        }
+    </script>
+</body>
+</html>

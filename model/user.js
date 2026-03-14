@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 
 const userSchema = new mongoose.Schema({
     fullname: { 
@@ -32,7 +33,7 @@ const userSchema = new mongoose.Schema({
     },
     avatar: { 
         type: String, 
-        default: '/image/default-avatar.png' 
+        default: 'https://ui-avatars.com/api/?name=User&background=f0778b&color=fff' 
     },
     walletBalance: { 
         type: Number, 
@@ -45,7 +46,20 @@ const userSchema = new mongoose.Schema({
         default: 'user' 
     },
 
-    // VERIFICATION SYSTEM
+    // ==========================================
+    // 🏦 BANK ACCOUNT SYSTEM
+    // ==========================================
+    bankDetails: {
+        accountName: { type: String, default: "" },
+        accountNumber: { type: String, default: "" },
+        ifscCode: { type: String, default: "" },
+        bankName: { type: String, default: "" },
+        isBankAdded: { type: Boolean, default: false }
+    },
+
+    // ==========================================
+    // 🛠️ VERIFICATION SYSTEM
+    // ==========================================
     isVerified: { 
         type: Boolean, 
         default: false 
@@ -64,29 +78,22 @@ const userSchema = new mongoose.Schema({
         default: ""
     },
 
-    // ==========================================================
-    // ⭐ CONCEPT: Double Tracking (Synced)
-    // ==========================================================
-    
-    // Log jo MUJHE follow kar rahe hain (Followers)
+    // ==========================================
+    // 📈 SUBSCRIPTION SYSTEM
+    // ==========================================
     subscribers: [{ 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
     }],
-
-    // Log jinko MAINE follow kiya hai (Following)
     subscriptions: [{ 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
     }],
-
-    // Note: 'subscriberCount' without 's' for frontend consistency
-    subscriberCount: { 
+    subscribersCount: { // Fixed typo from subscriberCount to match controller
         type: Number, 
         default: 0,
         min: 0 
     },
-    // ==========================================================
 
     shortsCount: { 
         type: Number, 
@@ -98,11 +105,26 @@ const userSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+// ==========================================
+// 🔒 PASSWORD HASHING (Modern Fixed Approach)
+// ==========================================
+userSchema.pre('save', async function() {
+    // Agar password modify nahi hua toh aage mat badho
+    if (!this.isModified('password')) return;
+    
+    try {
+        // Modern async way mein next() ki zaroorat nahi hoti
+        const salt = await bcrypt.genSalt(10);
+        this.password = await bcrypt.hash(this.password, salt);
+    } catch (err) {
+        throw err; // Mongoose async error ko catch kar lega
+    }
+});
+
 // Performance Indices
 userSchema.index({ subscriptions: 1 });
 userSchema.index({ subscribers: 1 });
 userSchema.index({ username: 'text', fullname: 'text' });
 
-// Model Export Logic
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports = User;
