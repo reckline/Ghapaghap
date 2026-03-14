@@ -1,0 +1,63 @@
+<div class="flex items-center gap-2 md:gap-4">
+  <button
+    onclick="toggleSidebar()"
+    class="p-2 hover:bg-gray-800 rounded-full lg:hidden"
+  >
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        stroke-width="2"
+        d="M4 6h16M4 12h16M4 18h16"
+      ></path>
+    </svg>
+  </button>
+  <div
+    class="flex items-center gap-1 font-black text-base md:text-xl tracking-tighter uppercase whitespace-nowrap"
+  >
+    <span class="text-pink-600 text-xl md:text-2xl">●</span> GhapaGhap
+  </div>
+</div>
+
+<div class="hidden sm:flex flex-1 max-w-[600px] mx-4">
+  <div
+    class="flex w-full bg-[#121212] border border-gray-700 rounded-full overflow-hidden focus-within:border-pink-500/50 transition-all"
+  >
+    <input
+      type="text"
+      placeholder="Search"
+      class="w-full bg-transparent px-5 py-2 outline-none text-sm"
+    />
+    <button
+      class="bg-gray-800 px-4 md:px-6 border-l border-gray-700 hover:bg-gray-700"
+    >
+      <svg
+        class="w-5 h-5 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+    <div class="flex items-center gap-2">
+        <a href="./login">
+          <button
+            class="bg-pink-600 text-white text-[10px] md:text-sm font-bold px-3 md:px-5 py-1.5 md:py-2 rounded-full hover:bg-pink-700 active:scale-95 transition-all"
+          >
+            Login
+          </button>
+        </a>
+
+        <a href="./signup">
+          <button
+            class="xs:block border border-gray-700 text-white text-[10px] md:text-sm font-bold px-3 md:px-5 py-1.5 md:py-2 rounded-full hover:bg-gray-800 transition-all"
+          >
+            Sign Up
+          </button>
+        </a>
+      </div>
+    </nav>

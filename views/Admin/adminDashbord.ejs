@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard | Ghapaghp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+       
+
+        <main class="flex-1 h-full overflow-y-auto">
+          <%- include('../partials/adminHeader') %>
+
+            <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-b-4 border-blue-500">
+                        <h3 class="text-gray-400">Total Views</h3>
+                        <p class="text-3xl font-bold mt-2">124.5K</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-b-4 border-red-500">
+                        <h3 class="text-gray-400">New Subscribers</h3>
+                        <p class="text-3xl font-bold mt-2">1,250</p>
+                    </div>
+                    <div class="bg-gray-800 p-6 rounded-xl shadow-lg border-b-4 border-green-500">
+                        <h3 class="text-gray-400">Revenue</h3>
+                        <p class="text-3xl font-bold mt-2">$4,300</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                    <div class="p-6 border-b border-gray-700">
+                        <h2 class="text-xl font-bold">Recent Uploads</h2>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-700">
+                                <tr>
+                                    <th class="p-4">Video Title</th>
+                                    <th class="p-4">Upload Date</th>
+                                    <th class="p-4">Views</th>
+                                    <th class="p-4">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-700">
+                                <tr>
+                                    <td class="p-4 text-blue-400">Dopamine.mp4</td>
+                                    <td class="p-4">2026-03-10</td>
+                                    <td class="p-4">12K</td>
+                                    <td class="p-4 text-green-500">Live</td>
+                                </tr>
+                                <tr>
+                                    <td class="p-4 text-blue-400">Guru Randhawa - Dopamine</td>
+                                    <td class="p-4">2026-03-09</td>
+                                    <td class="p-4">45K</td>
+                                    <td class="p-4 text-green-500">Live</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

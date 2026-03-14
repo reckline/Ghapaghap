@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <title>GhapaGhap | Professional Video Sharing</title>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        #sidebar-overlay { transition: opacity 0.3s ease; }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 pointer-events-none"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <% if (user) { %> <%- include('../partials/mobWithLogin') %> <% } else { %> <%- include('../partials/mobWithoutLogin') %> <% } %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %> <%- include('../partials/headerWithLogin') %> <% } else { %> <%- include('../partials/headerWithoutLogin') %> <% } %>
+    </nav>
+
+    <div class="flex">
+        <% if (user) { %> <%- include('../partials/desktopWithLogin') %> <% } else { %> <%- include('../partials/desktopWithoutLogin') %> <% } %>
+
+        <main class="flex-1 w-full lg:ml-64 mt-16 p-4 md:p-8 mb-20">
+            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">All Creators</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Top Creators</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Messages</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Notifications</button>
+            </div>
+
+            <div style="margin-top: -2rem;" class="min-h-screen text-white font-sans select-none">
+                <div class="flex items-start gap-6 max-w-2xl mx-auto pt-8">
+                    <div class="relative">
+                        <img src="<%= user.profilePic || 'image/Screenshot 2026-02-23 161456.png' %>" alt="Profile" class="w-24 h-24 rounded-full border border-gray-800 object-cover" />
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2 mb-1">
+                            <h2 class="text-xl font-bold tracking-tight"><%= user.username %></h2>
+                            <% if(user.isVerified) { %> <i class="fas fa-check-circle text-blue-500 text-sm"></i> <% } %>
+                        </div>
+                        <div class="text-sm font-light mb-1 text-gray-200"><%= user.fullname %></div>
+                        <div class="text-sm font-light text-gray-400">Total Subscribers: <%= user.subscribersCount || 0 %></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-8 max-w-2xl mx-auto">
+                    <button class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold">Edit profile</button>
+                    <button class="bg-[#262626] hover:bg-[#363636] transition-colors py-1.5 rounded-lg text-sm font-semibold">Change Password</button>
+                </div>
+
+                <div class="grid grid-cols-1 gap-2 mt-2 max-w-2xl mx-auto">
+                    <% if(!user.isVerified) { %>
+                        <button id="verifyBtn" class="bg-red-400 hover:bg-blue-400 transition-colors py-1.5 rounded-lg text-sm font-semibold">Verify your Account</button>
+                    <% } else { %>
+                        <button class="hidden bg-green-600 py-1.5 rounded-lg text-sm font-semibold cursor-default">Account Verified</button>
+                    <% } %>
+
+                    <div id="cameraModal" class="hidden fixed inset-0 bg-black/95 z-[100] flex flex-col items-center justify-center p-4">
+                        <video id="video" autoplay playsinline class="w-full max-w-md rounded-xl border-2 border-white shadow-2xl"></video>
+                        <canvas id="canvas" class="hidden"></canvas>
+                        <div class="flex gap-4 mt-8">
+                            <button id="captureBtn" class="bg-green-500 hover:bg-green-600 text-white px-8 py-3 rounded-full font-bold transition-transform active:scale-95">Capture & Verify</button>
+                            <button id="closeBtn" class="bg-gray-600 hover:bg-gray-700 text-white px-8 py-3 rounded-full font-bold">Cancel</button>
+                        </div>
+                    </div>
+
+                    <% if (user && user.isVerified) { %>
+                        <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4">
+                         Add Bank Account
+                        </button>
+                    <% } else { %>
+                         <div class="text-xs text-yellow-500 bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20">
+                         Verification pending... Bank account add karne ke liye verify karein.
+                        </div>
+                    <% } %>
+
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 mt-2 max-w-2xl mx-auto">
+                    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold">Deposit Funds</button>
+                    <% if (typeof user !== 'undefined' && user.isVerified) { %>
+    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 gap-2">
+        Withdraw Funds
+    </button>
+<% } else { %>
+    <button disabled class=" hidden bg-gray-800 text-gray-500 cursor-not-allowed py-1.5 rounded-lg text-sm font-semibold px-4 flex items-center gap-2 opacity-60">
+        Withdraw Funds
+    </button>
+<% } %>
+                    <% if (typeof user !== 'undefined' && user.isVerified) { %>
+    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold font-history px-4">
+        Fund History
+    </button>
+<% } else { %>
+    <button disabled class="hidden bg-gray-800 text-gray-600 cursor-not-allowed py-1.5 rounded-lg text-sm font-semibold font-history px-4 opacity-50 flex items-center gap-1">
+        <span class="material-icons-sharp text-xs">lock</span>
+        Fund History
+    </button>
+<% } %>
+                    <button class="bg-[#262626] hover:bg-red-800 transition-colors py-1.5 rounded-lg text-sm font-semibold">Delete Account</button>
+                </div>
+
+<div class="flex items-center justify-around mt-8 max-w-2xl mx-auto gap-4">
+    
+    <% if (typeof user !== 'undefined' && user.isVerified) { %>
+        <div onclick="showContent('shorts')" class="flex-1 text-center border border-[#444] rounded-lg p-6 text-white cursor-pointer transition-all hover:border-green-500 active:scale-95 group">
+            <span class="block text-gray-400 text-sm mb-1 group-hover:text-green-400">Total Shorts</span>
+            <span class="text-2xl font-bold">123</span>
+        </div>
+
+        <div onclick="showContent('videos')" class="flex-1 text-center border border-[#444] rounded-lg p-6 text-white cursor-pointer transition-all hover:border-blue-500 active:scale-95 group">
+            <span class="block text-gray-400 text-sm mb-1 group-hover:text-blue-400">Total Videos</span>
+            <span class="text-2xl font-bold">456</span>
+        </div>
+
+    <% } else { %>
+        <div class="hidden flex-1 text-center border border-gray-800 rounded-lg p-6 text-gray-500 cursor-not-allowed opacity-60 relative overflow-hidden group">
+            <span class="material-icons-sharp absolute top-2 right-2 text-xs opacity-30">lock</span>
+            <span class="block text-gray-600 text-[10px] uppercase tracking-tighter mb-1">Total Shorts</span>
+            <span class="text-xl font-bold grayscale">???</span>
+        </div>
+
+        <div class="hidden flex-1 text-center border border-gray-800 rounded-lg p-6 text-gray-500 cursor-not-allowed opacity-60 relative overflow-hidden group">
+            <span class="material-icons-sharp absolute top-2 right-2 text-xs opacity-30">lock</span>
+            <span class="block text-gray-600 text-[10px] uppercase tracking-tighter mb-1">Total Videos</span>
+            <span class="text-xl font-bold grayscale">???</span>
+        </div>
+    <% } %>
+
+</div>
+
+                <div id="content-shorts" class="hidden w-full max-w-2xl mx-auto mt-4 bg-blue-600 rounded-xl p-10 text-center text-xl font-bold">Shorts View Active</div>
+                <div id="content-videos" class="hidden w-full max-w-2xl mx-auto mt-4 bg-red-600 rounded-xl p-10 text-center text-xl font-bold">Videos View Active</div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/profileFooter') %>
+
+    <script src="js/sidebar.js"></script>
+    <script src="js/dom.js"></script>
+
+    <script>
+        
+        const verifyBtn = document.getElementById('verifyBtn');
+        const cameraModal = document.getElementById('cameraModal');
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const captureBtn = document.getElementById('captureBtn');
+        const closeBtn = document.getElementById('closeBtn');
+        let stream = null;
+
+        // Camera functions
+        function stopCamera() {
+            if (stream) stream.getTracks().forEach(track => track.stop());
+            cameraModal.classList.add('hidden');
+            captureBtn.disabled = false;
+            captureBtn.innerText = "Capture & Verify";
+        }
+
+        if(verifyBtn) {
+            verifyBtn.addEventListener('click', async () => {
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                    video.srcObject = stream;
+                    cameraModal.classList.remove('hidden');
+                } catch (err) {
+                    alert("Camera access denied! Please check permissions.");
+                }
+            });
+        }
+
+        closeBtn.addEventListener('click', stopCamera);
+
+        captureBtn.addEventListener('click', async () => {
+            const context = canvas.getContext('2d');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = canvas.toDataURL('image/jpeg');
+            captureBtn.innerText = "Verifying...";
+            captureBtn.disabled = true;
+
+            try {
+                const response = await fetch('/verify/live-capture', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageData })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    alert(result.message);
+                    window.location.reload();
+                } else {
+                    alert("Error: " + result.message);
+                    stopCamera();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Server connection failed!");
+                stopCamera();
+            }
+        });
+
+        // Tab switching logic
+        function showContent(type) {
+            document.getElementById('content-shorts').classList.add('hidden');
+            document.getElementById('content-videos').classList.add('hidden');
+            document.getElementById(`content-${type}`).classList.remove('hidden');
+        }
+
+
+
+        
+    </script>
+</body>
+</html>

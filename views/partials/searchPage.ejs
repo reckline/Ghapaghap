@@ -1,0 +1,166 @@
+<input type="hidden" id="currentUserId" value="<%= user ? (user._id || user.id) : '' %>">
+<input type="hidden" id="isSubsPage" value="<%= (typeof isSubsPage !== 'undefined' && isSubsPage) ? 'true' : 'false' %>">
+
+<div class="relative mb-6 px-1">
+    <div class="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+        <i class="fa-solid fa-magnifying-glass text-gray-500 text-sm"></i>
+    </div>
+    <input type="text" id="mainSearch" 
+           class="block w-full bg-[#1a1a1a] border border-gray-800 text-white text-[13px] rounded-xl focus:ring-1 focus:ring-pink-500 focus:border-pink-500 pl-11 p-3.5 outline-none transition-all" 
+           placeholder="<%= (typeof isSubsPage !== 'undefined' && isSubsPage) ? 'Search in your subscriptions...' : 'Search creators...' %>"
+           autocomplete="off">
+</div>
+
+<div id="searchResults" class="grid grid-cols-1 gap-3">
+    <div id="loader" class="flex justify-center py-10">
+        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-pink-500"></div>
+    </div>
+</div>
+
+<script>
+    var debounceTimer;
+
+    // 1. Initial Load Logic
+    window.onload = function () {
+        fetchUsers(""); // Load initial data
+
+        const searchInput = document.getElementById("mainSearch");
+        if (searchInput) {
+            searchInput.oninput = function (e) {
+                var val = e.target.value.trim();
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(function () {
+                    fetchUsers(val);
+                }, 400);
+            };
+        }
+    };
+
+    // 2. Optimized Fetch Function
+    function fetchUsers(q) {
+        var resultsDiv = document.getElementById("searchResults");
+        var isSubsPage = document.getElementById("isSubsPage").value === "true";
+
+        // Show Loader while fetching
+        resultsDiv.innerHTML = '<div class="flex justify-center py-10"><div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-pink-500"></div></div>';
+
+        // URL building with proper parameters
+        var url = "/search/users?q=" + encodeURIComponent(q || "") + 
+                  "&onlySubs=" + isSubsPage + 
+                  "&v=" + Date.now();
+
+        fetch(url)
+            .then(r => r.json())
+            .then(data => {
+                renderUserList(data);
+            })
+            .catch(e => {
+                console.error("Fetch Error:", e);
+                resultsDiv.innerHTML = '<div class="text-center py-10"><p class="text-red-500 text-xs">Failed to load creators.</p></div>';
+            });
+    }
+
+    // 3. UI Rendering
+    function renderUserList(userArray) {
+        var resultsDiv = document.getElementById("searchResults");
+        var isSubsPage = document.getElementById("isSubsPage").value === "true";
+
+        if (!userArray || userArray.length === 0) {
+            let emptyMsg = isSubsPage 
+                ? "You haven't subscribed to anyone yet." 
+                : "No creators found matching your search.";
+            
+            resultsDiv.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-16 opacity-50">
+                    <i class="fa-solid fa-users-viewfinder text-5xl mb-4 text-gray-600"></i>
+                    <p class="text-[13px] text-white font-medium text-center px-6">${emptyMsg}</p>
+                    ${isSubsPage ? '<a href="/all-creators" class="mt-4 text-pink-500 text-xs font-bold hover:underline">Explore Creators</a>' : ''}
+                </div>`;
+            return;
+        }
+
+        var html = "";
+        userArray.forEach(function (u) {
+            var verifiedTick = u.isVerified ? '<i class="fa-solid fa-circle-check text-blue-500 ml-1.5 text-[12px]"></i>' : "";
+            var isSubbed = u.isSubbed === true;
+            
+            var btnClass = isSubbed ? "bg-gray-800 text-gray-400 border border-gray-700" : "bg-white text-black hover:bg-gray-200";
+            var btnText = isSubbed ? "SUBSCRIBED" : "SUBSCRIBE";
+            
+            var count = u.subscribersCount || 0;
+            var displayCount = count >= 1000 ? (count / 1000).toFixed(1) + "K" : count;
+
+            html += `
+                <div class="flex items-center justify-between p-3.5 hover:bg-white/5 rounded-2xl transition-all group duration-300 border border-transparent hover:border-gray-800">
+                    <div onclick="window.location.href='/user/${u.username}'" class="flex items-center gap-4 cursor-pointer min-w-0">
+                        <div class="relative">
+                            <img src="${u.avatar || '/image/default-avatar.png'}" 
+                                 class="w-12 h-12 rounded-full border border-gray-800 object-cover flex-shrink-0 bg-neutral-800"
+                                 onerror="this.src='/public/image/default-avatar.png'">
+                        </div>
+                        <div class="flex flex-col min-w-0">
+                            <div class="flex items-center">
+                                <span class="font-bold text-[14px] text-white truncate">${u.fullname || u.username}</span>
+                                ${verifiedTick}
+                            </div>
+                            <span class="text-[11px] text-gray-500 font-medium">${displayCount} Subscribers</span>
+                        </div>
+                    </div>
+                    <button onclick="event.stopPropagation(); handleSubscribe(this, '${u._id}')" 
+                            class="flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black tracking-tighter transition-all active:scale-95 ${btnClass}">
+                        ${btnText}
+                    </button>
+                </div>`;
+        });
+        resultsDiv.innerHTML = html;
+    }
+
+    // 4. Handle Subscription Toggle
+    function handleSubscribe(btn, id) {
+        var currentUserId = document.getElementById("currentUserId").value;
+        if (!currentUserId) {
+            window.location.href = "/login";
+            return;
+        }
+
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        var container = btn.closest(".group");
+        var isSubsPage = document.getElementById("isSubsPage").value === "true";
+
+        fetch("/subscribe/" + id, { method: "POST" })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    // Smooth Removal if on Subscriptions page
+                    if (isSubsPage && data.status === "unsubscribed") {
+                        container.style.opacity = "0";
+                        container.style.transform = "scale(0.9) translateY(-10px)";
+                        setTimeout(() => {
+                            container.remove();
+                            // If list is empty after removal, re-fetch to show empty state
+                            if (document.getElementById("searchResults").querySelectorAll('.group').length === 0) {
+                                fetchUsers(document.getElementById("mainSearch").value); 
+                            }
+                        }, 300);
+                    } else {
+                        // Regular Toggle for Discovery
+                        if (data.status === "subscribed") {
+                            btn.innerText = "SUBSCRIBED";
+                            btn.className = "flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black tracking-tighter bg-gray-800 text-gray-400 border border-gray-700";
+                        } else {
+                            btn.innerText = "SUBSCRIBE";
+                            btn.className = "flex-shrink-0 px-5 py-2.5 rounded-full text-[10px] font-black tracking-tighter bg-white text-black";
+                        }
+                    }
+                }
+            })
+            .catch(e => console.error("Subscribe Error:", e))
+            .finally(() => {
+                if(btn) {
+                    btn.disabled = false;
+                    btn.style.opacity = "1";
+                }
+            });
+    }
+</script>

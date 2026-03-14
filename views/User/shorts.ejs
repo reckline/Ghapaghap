@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhapaGhap | Shorts</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <style>
+        .shorts-container {
+            scroll-snap-type: y mandatory;
+            overflow-y: scroll;
+            height: 100vh;
+            scrollbar-width: none;
+        }
+        .shorts-container::-webkit-scrollbar { display: none; }
+        
+        .short-card {
+            scroll-snap-align: start;
+            scroll-snap-stop: always;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: black;
+            position: relative;
+        }
+
+        .video-wrapper {
+            height: 100%;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            background: #000;
+        }
+
+        @media (min-width: 1024px) {
+            .video-wrapper {
+                height: 92vh;
+                border-radius: 1rem;
+                margin-top: 2vh;
+            }
+        }
+    </style>
+</head>
+<body class="bg-black text-white selection:bg-pink-500/30 overflow-hidden">
+
+<div id="sidebar-overlay" class="fixed inset-0 bg-black/60 z-[75] hidden opacity-0 transition-opacity duration-300"></div>
+
+<aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto transition-transform duration-300">
+    <% if (user) { %>
+        <%- include('../partials/mobWithLogin') %>
+    <% } else { %>
+        <%- include('../partials/mobWithoutLogin') %>
+    <% } %>
+</aside>
+
+<nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+<% if (user) { %>
+    <%- include('../partials/headerWithLogin') %>
+<% } else { %>
+    <%- include('../partials/headerWithoutLogin') %>
+<% } %>
+</nav>
+
+<div class="flex">
+    <% if (user) { %>
+        <%- include('../partials/desktopWithLogin') %>
+    <% } else { %>
+        <%- include('../partials/desktopWithoutLogin') %>
+    <% } %>
+
+    <main class="shorts-container lg:ml-64 w-full">
+        <section class="short-card">
+            <div class="video-wrapper overflow-hidden shadow-2xl shadow-pink-500/10 h-[85%] lg:h-[90%]">
+                <video class="short-video w-full h-full object-cover" loop muted playsinline src="video/video 2.mp4"></video>
+                <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 pointer-events-none"></div>
+                
+                <div class="absolute right-3 bottom-20 flex flex-col items-center gap-5 z-20">
+                    <div class="flex flex-col items-center gap-1">
+                        <button class="w-12 h-12 rounded-full bg-gray-800/40 backdrop-blur-md flex items-center justify-center hover:text-pink-500 transition-colors">
+                            <i class="fas fa-heart text-2xl"></i>
+                        </button>
+                        <span class="text-xs font-bold">124K</span>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-6 left-4 right-16 z-20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <img src="image/Screenshot 2026-02-23 161456.png" class="w-10 h-10 rounded-full border-2 border-pink-500">
+                        <span class="font-bold text-sm">@saurav_vlogs</span>
+                        <button class="bg-pink-500 text-white px-4 py-1 rounded-full text-xs font-bold ml-2">Subscribe</button>
+                    </div>
+                    <p class="text-sm font-medium mb-3">Amazing city vibes in 2026 #vibe</p>
+                </div>
+                <div class="progress-bar absolute bottom-0 left-0 h-1 bg-pink-500 z-30 transition-all duration-100" style="width: 0%"></div>
+            </div>
+        </section>
+
+        <section class="short-card">
+            <div class="video-wrapper overflow-hidden shadow-2xl shadow-pink-500/10 h-[85%] lg:h-[90%]">
+                <video class="short-video w-full h-full object-cover" loop muted playsinline src="video/Dopamine.mp4"></video>
+                <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/90 pointer-events-none"></div>
+                <div class="absolute right-3 bottom-20 flex flex-col items-center gap-5 z-20">
+                    <div class="flex flex-col items-center gap-1">
+                        <button class="w-12 h-12 rounded-full bg-gray-800/40 backdrop-blur-md flex items-center justify-center hover:text-pink-500 transition-colors">
+                            <i class="fas fa-heart text-2xl"></i>
+                        </button>
+                        <span class="text-xs font-bold">89K</span>
+                    </div>
+                </div>
+                <div class="absolute bottom-6 left-4 right-16 z-20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <img src="image/Screenshot 2026-02-23 161456.png" class="w-10 h-10 rounded-full border-2 border-pink-500">
+                        <span class="font-bold text-sm">@saurav_vlogs</span>
+                    </div>
+                    <p class="text-sm font-medium mb-3">Dopamine Rush! 🚀</p>
+                </div>
+                <div class="progress-bar absolute bottom-0 left-0 h-1 bg-pink-500 z-30 transition-all duration-100" style="width: 0%"></div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<%- include('../partials/shortsFooter') %>
+
+<script>
+    // 1. VIDEO INTERSECTION OBSERVER
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            const video = entry.target.querySelector('video');
+            if (entry.isIntersecting) {
+                video.play().catch(e => console.log("Autoplay blocked"));
+            } else {
+                video.pause();
+            }
+        });
+    }, { threshold: 0.7 });
+
+    document.querySelectorAll('.short-card').forEach(card => observer.observe(card));
+
+    // 2. VIDEO PROGRESS BAR
+    document.querySelectorAll('.short-video').forEach(video => {
+        video.addEventListener('timeupdate', () => {
+            const progressBar = video.parentElement.querySelector('.progress-bar');
+            if (progressBar && video.duration) {
+                const percentage = (video.currentTime / video.duration) * 100;
+                progressBar.style.width = `${percentage}%`;
+            }
+        });
+        
+        // Mute/Unmute on click
+        video.parentElement.addEventListener('click', () => {
+            video.muted = !video.muted;
+        });
+    });
+
+    // 3. TOAST NOTIFICATION LOGIC
+    const successMsg = "<%= success %>";
+    const errorMsg = "<%= error %>";
+
+    const showToast = (msg, color) => {
+        if (msg && msg !== "null") {
+            Toastify({
+                text: msg,
+                duration: 3000,
+                gravity: "top",
+                position: "right",
+                style: { background: color, borderRadius: "10px" }
+            }).showToast();
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    };
+
+    showToast(successMsg, "linear-gradient(to right, #10b981, #34d399)");
+    showToast(errorMsg, "linear-gradient(to right, #ef4444, #f87171)");
+
+    // 4. SIDEBAR TOGGLE
+    const sidebar = document.getElementById('mobile-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    function toggleSidebar() {
+        sidebar.classList.toggle('-translate-x-full');
+        overlay.classList.toggle('hidden');
+        setTimeout(() => overlay.classList.toggle('opacity-100'), 10);
+    }
+    overlay.addEventListener('click', toggleSidebar);
+</script>
+</body>
+</html>

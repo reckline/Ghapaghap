@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <title>GhapaGhap | Professional Video Sharing</title>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <% if (user) { %>
+            <%- include('../partials/mobWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/mobWithoutLogin') %>
+        <% } %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %>
+            <%- include('../partials/headerWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/headerWithoutLogin') %>
+        <% } %>
+    </nav>
+
+    <div class="flex">
+        <% if (user) { %>
+            <%- include('../partials/desktopWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/desktopWithoutLogin') %>
+        <% } %>
+
+        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-x-auto">
+            
+            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">All Creators</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Top Creators</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Messages</button>
+                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Notifications</button>
+            </div>
+
+            <%- include('../partials/searchPage') %>
+        </main>
+    </div>
+
+    <%- include('../partials/homeFooter') %>
+
+    <script>
+    const sidebar = document.getElementById('mobile-sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    const body = document.body;
+
+    function toggleSidebar() {
+        const isOpen = !sidebar.classList.contains('-translate-x-full');
+
+        if (!isOpen) {
+            // OPEN SIDEBAR
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+            // Thoda delay taaki transition smooth dikhe
+            setTimeout(() => {
+                overlay.classList.add('opacity-100');
+            }, 10);
+            // Background scroll disable karo
+            body.style.overflow = 'hidden';
+        } else {
+            // CLOSE SIDEBAR
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.remove('opacity-100');
+            // Transition khatam hone ka wait karo phir hide karo
+            setTimeout(() => {
+                overlay.classList.add('hidden');
+                body.style.overflow = ''; // Scroll wapas on karo
+            }, 300);
+        }
+    }
+
+    // 1. Overlay click par close
+    overlay.addEventListener('click', toggleSidebar);
+
+    // 2. Escape Key support (Laptop users ke liye)
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) {
+            toggleSidebar();
+        }
+    });
+
+    // 3. Optional: Swipe to close (Mobile users ke liye)
+    let touchStartX = 0;
+    sidebar.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+
+    sidebar.addEventListener('touchend', (e) => {
+        let touchEndX = e.changedTouches[0].screenX;
+        // Agar left swipe kiya (min 50px) toh close kardo
+        if (touchStartX - touchEndX > 50) {
+            toggleSidebar();
+        }
+    }, { passive: true });
+</script>
+</body>
+</html>

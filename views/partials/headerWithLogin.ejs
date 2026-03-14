@@ -1,0 +1,26 @@
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/95 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <div class="flex items-center gap-2 md:gap-4">
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-800 rounded-full lg:hidden">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="font-black text-lg md:text-xl tracking-tighter uppercase flex items-center gap-1">
+                <span class="text-pink-600 text-2xl">●</span> GhapaGhap
+            </div>
+        </div>
+
+        <div class="hidden md:flex flex-1 max-w-[500px] mx-4">
+            <div class="flex w-full bg-[#121212] border border-gray-700 rounded-full overflow-hidden focus-within:border-pink-500/50">
+                <input type="text" placeholder="Search" class="w-full bg-transparent px-5 py-2 outline-none text-sm">
+                <button class="bg-gray-800 px-5 border-l border-gray-700 hover:bg-gray-700">
+                    <i class="fas fa-search text-gray-400"></i>
+                </button>
+            </div>
+        </div>
+
+        <div class="flex items-center"  style="margin-right: 1rem;">
+            <button class="bg-zinc-800 hover:bg-zinc-700 px-3 md:px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/5 transition-all">
+                <i class="fas fa-wallet text-pink-500 text-xs md:text-sm"></i>
+                <span class="text-xs md:text-sm font-bold">500.00</span>
+            </button>
+        </div>
+    </nav>

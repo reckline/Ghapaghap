@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ghapagap - Login</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+
+    <style>
+        .brand-pink { color: rgb(240, 119, 139); }
+        .bg-pink-theme { background-color: rgb(240, 119, 139); }
+        .shadow-pink { box-shadow: 0 10px 25px -5px rgba(240, 119, 139, 0.4); }
+        body { background-color: black; }
+        
+        /* Smooth Fade In Animation */
+        .fade-in { animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen p-4">
+    
+    <div class="fixed top-0 left-0 w-full h-full -z-10 overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-pink-900/20 rounded-full blur-[120px] opacity-60"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-pink-900/10 rounded-full blur-[120px] opacity-60"></div>
+    </div>
+
+    <div class="relative w-full max-w-md bg-zinc-900/80 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 md:p-10 fade-in">
+      
+        <a href="/" class="absolute top-6 right-8 text-gray-500 hover:text-pink-400 transition-all duration-300 hover:rotate-90">
+            <i class="fas fa-times text-2xl"></i>
+        </a>
+
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-20 h-20 bg-pink-theme rounded-3xl shadow-lg shadow-pink-900/40 mb-6">
+                <i class="fas fa-user-lock text-3xl text-white"></i>
+            </div>
+            <h1 class="text-4xl font-black text-white tracking-tight">Welcome Back</h1>
+            <p class="text-gray-400 mt-2 font-medium">Join the <span class="brand-pink font-bold">Ghapagap</span> circle!</p>
+        </div>
+
+        <form action="/login" method="POST" class="space-y-6">
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-300 ml-1">Username, Email or Phone</label>
+                <div class="relative">
+                    <i class="fas fa-at absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input type="text" name="id" required 
+                        class="w-full pl-12 pr-4 py-4 bg-black/40 border border-white/10 rounded-2xl text-white focus:ring-2 focus:ring-pink-400 outline-none transition-all placeholder:text-gray-600"
+                        placeholder="Type anything to login...">
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-sm font-bold text-gray-300 ml-1">Password</label>
+                <div class="relative">
+                    <i class="fas fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                    <input id="password-input" type="password" name="password" required 
+                        class="w-full pl-12 pr-12 py-4 bg-black/40 border border-white/10 rounded-2xl text-white focus:ring-2 focus:ring-pink-400 outline-none transition-all placeholder:text-gray-600"
+                        placeholder="••••••••">
+                    <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-pink-400">
+                        <i id="eye-icon" class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="pt-2">
+                <button type="submit" 
+                    class="w-full bg-pink-theme text-white py-4 rounded-2xl font-black text-lg shadow-pink hover:scale-[1.01] active:scale-[0.99] transition-all duration-200 uppercase tracking-widest">
+                    Sign In
+                </button>
+            </div>
+        </form>
+
+        <div class="mt-10 text-center">
+            <p class="text-gray-400 font-medium">New here? 
+                <a href="/signup" class="brand-pink font-black hover:underline underline-offset-4 uppercase">Create Account</a>
+            </p>
+        </div>
+    </div>
+
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
+    <script>
+        // 1. Toastify Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            const params = new URLSearchParams(window.location.search);
+            const errorMsg = params.get('error');
+            const successMsg = params.get('success');
+
+            if (errorMsg) {
+                Toastify({
+                    text: "❌ " + errorMsg,
+                    duration: 4000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "linear-gradient(to right, #ff5f6d, #ffc371)" }
+                }).showToast();
+            }
+
+            if (successMsg) {
+                Toastify({
+                    text: "✅ " + successMsg,
+                    duration: 4000,
+                    gravity: "top",
+                    position: "right",
+                    style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+                }).showToast();
+            }
+
+            // Cleanup URL
+            if (errorMsg || successMsg) {
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+        });
+
+        // 2. Toggle Password Visibility
+        function togglePassword() {
+            const input = document.getElementById('password-input');
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+    </script>
+</body>
+</html>

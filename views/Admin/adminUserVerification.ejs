@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Verifications | Ghapaghp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(12px); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-gray-200 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+
+        <main class="flex-1 h-full overflow-y-auto custom-scrollbar relative">
+            <%- include('../partials/adminHeader') %>
+
+            <div class="p-4 md:p-8 max-w-7xl mx-auto">
+                
+                <div id="alert-container" class="fixed top-5 right-5 z-50 space-y-3">
+                    <% if(success) { %> 
+                        <div class="bg-green-500/10 border border-green-500/50 text-green-400 p-4 rounded-xl flex items-center shadow-2xl animate-bounce-in">
+                            <span class="material-icons-sharp mr-3">check_circle</span>
+                            <span class="text-sm font-semibold"><%= success %></span>
+                        </div> 
+                    <% } %>
+                    <% if(error) { %> 
+                        <div class="bg-red-500/10 border border-red-500/50 text-red-400 p-4 rounded-xl flex items-center shadow-2xl animate-bounce-in">
+                            <span class="material-icons-sharp mr-3">error</span>
+                            <span class="text-sm font-semibold"><%= error %></span>
+                        </div> 
+                    <% } %>
+                </div>
+
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+                    <div>
+                        <h1 class="text-3xl font-extrabold text-white tracking-tight flex items-center">
+                            <span class="w-2 h-8 bg-blue-600 rounded-full mr-3"></span>
+                            Verification Portal
+                        </h1>
+                        <p class="text-gray-500 text-sm mt-1 ml-5">Review and manage user identity requests</p>
+                    </div>
+                    <div class="bg-blue-600/10 border border-blue-500/20 px-5 py-2 rounded-2xl flex items-center gap-3">
+                        <span class="relative flex h-3 w-3">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                        </span>
+                        <span class="text-blue-400 text-sm font-bold"><%= users.length %> Pending Requests</span>
+                    </div>
+                </div>
+
+                <div class="glass rounded-2xl border border-gray-800 shadow-2xl overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse min-w-[700px]">
+                            <thead class="bg-gray-800/40 text-gray-400 uppercase text-[11px] font-bold tracking-widest border-b border-gray-800">
+                                <tr>
+                                    <th class="p-5">User Identity</th>
+                                    <th class="p-5 text-center">Document Preview</th>
+                                    <th class="p-5">Submission Time</th>
+                                    <th class="p-5 text-right">Decision</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-800/50">
+                                <% if(users.length > 0) { %>
+                                    <% users.forEach(u => { %>
+                                        <tr class="hover:bg-blue-600/[0.02] transition-all group">
+                                            <td class="p-5">
+                                                <div class="flex items-center gap-3">
+                                                    <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center text-blue-500 font-bold border border-gray-700 uppercase">
+                                                        <%= u.fullname.charAt(0) %>
+                                                    </div>
+                                                    <div>
+                                                        <div class="font-bold text-gray-100 group-hover:text-blue-400 transition-colors"><%= u.fullname %></div>
+                                                        <div class="text-[11px] text-gray-500 font-medium">@<%= u.username %></div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="flex justify-center">
+                                                    <div class="relative group/img overflow-hidden rounded-xl border-2 border-gray-800 hover:border-blue-500/50 transition-all shadow-lg">
+                                                        <img src="<%= u.verificationImage %>" alt="Doc" 
+                                                             class="w-20 h-14 object-cover transform group-hover/img:scale-110 transition-transform duration-500">
+                                                        <a href="<%= u.verificationImage %>" target="_blank" 
+                                                           class="absolute inset-0 flex items-center justify-center bg-blue-600/80 opacity-0 group-hover/img:opacity-100 transition-all duration-300">
+                                                           <span class="material-icons-sharp text-white text-lg">zoom_in</span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="text-xs text-gray-400 flex items-center gap-1.5">
+                                                    <span class="material-icons-sharp text-sm opacity-50">schedule</span>
+                                                    <%= new Date(u.updatedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' }) %>
+                                                </div>
+                                            </td>
+                                            <td class="p-5">
+                                                <div class="flex justify-end items-center gap-3">
+                                                    <form action="/admin/verify/accept/<%= u._id %>" method="POST" onsubmit="return confirm('Verify karein?')">
+                                                        <button type="submit" class="p-2.5 rounded-xl bg-green-500/10 text-green-500 hover:bg-green-500 hover:text-white transition-all active:scale-90 flex items-center justify-center shadow-lg shadow-green-500/5">
+                                                            <span class="material-icons-sharp">check</span>
+                                                        </button>
+                                                    </form>
+                                                    <form action="/admin/verify/reject/<%= u._id %>" method="POST" onsubmit="return confirm('Reject karein?')">
+                                                        <button type="submit" class="p-2.5 rounded-xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all active:scale-90 flex items-center justify-center shadow-lg shadow-red-500/5">
+                                                            <span class="material-icons-sharp">close</span>
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="p-24 text-center">
+                                            <div class="flex flex-col items-center animate-pulse">
+                                                <div class="w-20 h-20 bg-gray-800 rounded-full flex items-center justify-center mb-4">
+                                                    <span class="material-icons-sharp text-gray-600 text-4xl">done_all</span>
+                                                </div>
+                                                <h3 class="text-xl font-bold text-gray-400">All caught up!</h3>
+                                                <p class="text-gray-600 text-sm">No new verification requests at the moment.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="mt-8 grid grid-cols-1 gap-4 md:hidden">
+                    <% users.forEach(u => { %>
+                        <div class="glass p-5 rounded-2xl border border-gray-800">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex gap-3">
+                                    <div class="w-10 h-10 rounded-full bg-blue-600/20 text-blue-500 flex items-center justify-center font-bold">
+                                        <%= u.fullname.charAt(0) %>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white"><%= u.fullname %></h4>
+                                        <p class="text-xs text-gray-500">@<%= u.username %></p>
+                                    </div>
+                                </div>
+                                <div class="text-[10px] text-gray-500">
+                                    <%= new Date(u.updatedAt).toLocaleDateString() %>
+                                </div>
+                            </div>
+                            <img src="<%= u.verificationImage %>" class="w-full h-40 object-cover rounded-xl mb-4 border border-gray-700">
+                            <div class="flex gap-2">
+                                <form action="/admin/verify/accept/<%= u._id %>" method="POST" class="flex-1">
+                                    <button class="w-full bg-green-600 text-white py-2 rounded-xl font-bold text-sm">Approve</button>
+                                </form>
+                                <form action="/admin/verify/reject/<%= u._id %>" method="POST" class="flex-1">
+                                    <button class="w-full bg-red-600/10 text-red-500 border border-red-600/30 py-2 rounded-xl font-bold text-sm">Reject</button>
+                                </form>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+
+        const menuBtn = document.getElementById('menu-btn');
+
+        const sidebar = document.getElementById('sidebar');
+
+
+
+        menuBtn.addEventListener('click', () => {
+
+            sidebar.classList.toggle('-translate-x-full');
+
+        });
+
+
+
+        // Close sidebar when clicking outside on mobile
+
+        document.addEventListener('click', (e) => {
+
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+
+                sidebar.classList.add('-translate-x-full');
+
+            }
+
+        });
+
+    </script>
+</body>
+</html>
