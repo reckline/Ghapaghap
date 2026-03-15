@@ -2,31 +2,20 @@ const User = require('../model/user');
 const mongoose = require('mongoose');
 const axios = require('axios');
 const FormData = require('form-data');
+const bcrypt = require('bcrypt');
 
 // ==========================================
 // 0. HELPER FUNCTIONS
 // ==========================================
 
 /**
- * Ye function check karta hai ki avatar sahi hai ya nahi.
- * Agar 404 wala koi path (/image/...) hai, toh ye UI-Avatars return karega.
+ * Avatar fix: Agar broken path hai toh UI-Avatars dikhaega
  */
 const getSafeAvatar = (user) => {
     const avatar = user?.avatar;
-
-    // 1. Agar Bucket ka direct link hai (https://24carret.in/...)
-    if (avatar && avatar.startsWith('http')) {
-        return avatar;
-    }
-
-    // 2. Agar local path hai (Lekin humne local upload band kar diya hai)
-    // Aur agar wo path broken hai (like /image/default...), toh hum use skip karenge.
-    if (avatar && avatar.includes('/uploads/')) {
-        return avatar.replace('/public', '');
-    }
+    if (avatar && avatar.startsWith('http')) return avatar;
+    if (avatar && avatar.includes('/uploads/')) return avatar.replace('/public', '');
     
-    // 3. ✨ Final Fallback: Agar upar kuch bhi sahi nahi mila, toh UI-Avatars dikhao
-    // Isse 404 error hamesha ke liye khatam ho jayega.
     const name = encodeURIComponent(user?.fullname || user?.username || "User");
     return `https://ui-avatars.com/api/?name=${name}&background=f0778b&color=fff&size=128`;
 };
@@ -35,19 +24,44 @@ const getSafeAvatar = (user) => {
 // 1. PUBLIC & NAVIGATION PAGES
 // ==========================================
 
-exports.getHomePage = (req, res) => res.render('User/home', { user: req.session.user || null });
-exports.getWatchPage = (req, res) => res.render('User/watch', { user: req.session.user || null });
-exports.getShortsPage = (req, res) => res.render('User/shorts', { user: req.session.user || null });
-exports.getTrendingPage = (req, res) => res.render('User/trending', { user: req.session.user || null });
+exports.getHomePage = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    const freshUser = userId ? await User.findById(userId).lean() : null;
+    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+    res.render('User/home', { user: freshUser });
+};
+
+exports.getWatchPage = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    const freshUser = userId ? await User.findById(userId).lean() : null;
+    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+    res.render('User/watch', { user: freshUser });
+};
+
+exports.getShortsPage = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    const freshUser = userId ? await User.findById(userId).lean() : null;
+    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+    res.render('User/shorts', { user: freshUser });
+};
+
+exports.getTrendingPage = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    const freshUser = userId ? await User.findById(userId).lean() : null;
+    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+    res.render('User/trending', { user: freshUser });
+};
 
 exports.getAllCreators = async (req, res) => {
     try {
-        const sessionUser = req.session.user;
+        const sessionUserId = req.session.user?._id || req.session.user?.id;
+        let freshUser = null;
         let mySubs = [];
 
-        if (sessionUser) {
-            const me = await User.findById(sessionUser._id || sessionUser.id).select('subscriptions').lean();
-            mySubs = me?.subscriptions ? me.subscriptions.map(id => id.toString()) : [];
+        if (sessionUserId) {
+            freshUser = await User.findById(sessionUserId).lean();
+            mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map(id => id.toString()) : [];
+            if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
         }
 
         const creators = await User.find({ role: { $ne: 'admin' } })
@@ -63,7 +77,7 @@ exports.getAllCreators = async (req, res) => {
         }));
 
         res.render('User/allCreaters', { 
-            user: sessionUser || null, 
+            user: freshUser, 
             creators: creatorsWithStatus,
             isSubsPage: false 
         });
@@ -75,12 +89,15 @@ exports.getAllCreators = async (req, res) => {
 
 exports.getUserSubs = async (req, res) => {
     try {
-        const sessionUser = req.session.user;
-        if (!sessionUser) return res.redirect('/login');
+        const sessionUserId = req.session.user?._id || req.session.user?.id;
+        if (!sessionUserId) return res.redirect('/login');
 
-        const me = await User.findById(sessionUser._id || sessionUser.id).select('subscriptions').lean();
+        // Fresh data with walletBalance
+        const me = await User.findById(sessionUserId).lean();
+        if(!me) return res.redirect('/login');
+        me.avatar = getSafeAvatar(me);
+
         const mySubsIds = me?.subscriptions || [];
-
         const subscribedUsers = await User.find({ _id: { $in: mySubsIds } })
             .select('username fullname avatar subscribersCount isVerified')
             .lean();
@@ -110,21 +127,19 @@ exports.getUserSubs = async (req, res) => {
 exports.searchUsers = async (req, res) => {
     try {
         const query = (req.query.q || "").trim();
-        const sessionUser = req.session.user;
-        const onlySubs = req.query.onlySubs === 'true'; 
+        const userId = req.session.user?._id || req.session.user?.id;
         
         let mySubs = [];
-        if (sessionUser) {
-            const me = await User.findById(sessionUser._id || sessionUser.id).select('subscriptions').lean();
+        if (userId) {
+            const me = await User.findById(userId).select('subscriptions').lean();
             mySubs = me?.subscriptions ? me.subscriptions.map(id => id.toString()) : [];
         }
 
         let filter = { role: { $ne: 'admin' } };
-
-        if (onlySubs && sessionUser) {
+        if (req.query.onlySubs === 'true' && userId) {
             filter._id = { $in: mySubs };
-        } else if (sessionUser) {
-            filter._id = { $ne: new mongoose.Types.ObjectId(sessionUser._id || sessionUser.id) };
+        } else if (userId) {
+            filter._id = { $ne: new mongoose.Types.ObjectId(userId) };
         }
 
         if (query !== "") {
@@ -148,7 +163,6 @@ exports.searchUsers = async (req, res) => {
 
         res.json(usersWithStatus);
     } catch (err) {
-        console.error("Search Error:", err);
         res.status(500).json({ error: "Search Error" });
     }
 };
@@ -156,10 +170,10 @@ exports.searchUsers = async (req, res) => {
 exports.subscribeUser = async (req, res) => {
     try {
         const targetUserId = req.params.userId;
-        const currentUserId = req.session.user ? (req.session.user._id || req.session.user.id).toString() : null;
+        const currentUserId = req.session.user?._id || req.session.user?.id;
 
         if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
-        if (targetUserId === currentUserId) return res.status(400).json({ success: false, message: "Self-sub blocked" });
+        if (targetUserId === currentUserId.toString()) return res.status(400).json({ success: false, message: "Self-sub blocked" });
 
         const me = await User.findById(currentUserId).select('subscriptions');
         const isAlreadySubscribed = me.subscriptions.some(id => id.toString() === targetUserId);
@@ -173,8 +187,8 @@ exports.subscribeUser = async (req, res) => {
             : { $push: { subscriptions: targetUserId } };
 
         const [updatedTarget, updatedMe] = await Promise.all([
-            User.findByIdAndUpdate(targetUserId, targetUpdate, { new: true }),
-            User.findByIdAndUpdate(currentUserId, myUpdate, { new: true }).select('-password').lean()
+            User.findByIdAndUpdate(targetUserId, targetUpdate, { returnDocument: 'after' }),
+            User.findByIdAndUpdate(currentUserId, myUpdate, { returnDocument: 'after' }).select('-password').lean()
         ]);
 
         req.session.user = { ...updatedMe, avatar: getSafeAvatar(updatedMe) };
@@ -186,7 +200,6 @@ exports.subscribeUser = async (req, res) => {
             });
         });
     } catch (err) {
-        console.error("Subscribe Error:", err);
         res.status(500).json({ success: false });
     }
 };
@@ -226,7 +239,6 @@ exports.handleUpdateProfile = async (req, res) => {
             bio: bio ? bio.trim() : ""
         };
 
-        // 🚀 BUCKET UPLOAD
         if (req.file) {
             try {
                 const formData = new FormData();
@@ -235,12 +247,9 @@ exports.handleUpdateProfile = async (req, res) => {
                     contentType: req.file.mimetype,
                 });
                 formData.append('api_key', process.env.PHP_UPLOAD_API_KEY);
-
                 const phpRes = await axios.post(process.env.PHP_UPLOAD_URL, formData, {
                     headers: { ...formData.getHeaders() }
                 });
-
-                // ✅ PHP response mein 'status' check karein
                 if (phpRes.data && phpRes.data.status === true) {
                     updateFields.avatar = phpRes.data.url;
                 }
@@ -255,15 +264,12 @@ exports.handleUpdateProfile = async (req, res) => {
             { returnDocument: 'after' }
         ).select('-password').lean();
 
-        // Sync session with helper
         const finalData = { ...updatedUser };
         finalData.avatar = getSafeAvatar(updatedUser);
-
         req.session.user = finalData;
         req.session.save(() => res.redirect('/profile?success=true'));
 
     } catch (err) {
-        console.error("Update Error:", err);
         res.redirect('/edit-profile?error=server_error');
     }
 };
@@ -276,22 +282,15 @@ exports.getUserDashboard = async (req, res) => {
     } catch (err) { res.status(500).send("Dashboard Error"); }
 };
 
-
-
 // ==========================================
-// 4. USER PASSWORD UPDATE LOGIC
+// 4. PASSWORD & BANK
 // ==========================================
 
-const bcrypt = require('bcrypt');
-
-// --- 1. Page Render Karne Ke Liye ---
-exports.getChangePassword = (req, res) => {
-    // Check karein user login hai ya nahi
-    if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    // Render the view file (Make sure path is correct)
-    return res.render('User/changePassword', { user: req.session.user });
+exports.getChangePassword = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    if (!userId) return res.redirect('/login');
+    const freshUser = await User.findById(userId).lean();
+    res.render('User/changePassword', { user: freshUser });
 };
 
 exports.handleUpdatePassword = async (req, res) => {
@@ -299,44 +298,31 @@ exports.handleUpdatePassword = async (req, res) => {
         const { currentPassword, newPassword, confirmPassword } = req.body;
         const userId = req.session.user?._id || req.session.user?.id;
 
-        if (!userId) return res.redirect('/login?error=Session%20expired');
-
-        // Validation
         if (newPassword !== confirmPassword) {
             return res.redirect('/change-password?error=Confirm%20password%20match%20nahi%20hai');
         }
 
         const user = await User.findById(userId);
-        if (!user) return res.status(404).send("User not found");
-
-        // Bcrypt Match Check
         const isMatch = await bcrypt.compare(currentPassword, user.password);
-        console.log("Current Password Match Result:", isMatch);
 
         if (!isMatch) {
-            // ✅ Router ke path '/change-password' se match hona chahiye
             return res.redirect('/change-password?error=Purana%20password%20galat%20hai');
         }
 
-        // Save New Password
         user.password = newPassword; 
         await user.save();
-
-        console.log("✅ Password successfully updated");
         return res.redirect('/change-password?success=password_updated');
 
     } catch (err) {
-        console.error("CRASH ERROR:", err);
-        if (!res.headersSent) return res.status(500).send("Error: " + err.message);
+        res.status(500).send("Error updating password");
     }
 };
 
-// ==========================================
-// 5. 🏦 BANK ACCOUNT SYSTEM (AJAX - NO REDIRECT)
-// ==========================================
-exports.getAddBankPage = (req, res) => {
-    if (!req.session.user) return res.redirect('/login');
-    res.render('User/addBankAccount', { user: req.session.user });
+exports.getAddBankPage = async (req, res) => {
+    const userId = req.session.user?._id || req.session.user?.id;
+    if (!userId) return res.redirect('/login');
+    const freshUser = await User.findById(userId).lean();
+    res.render('User/addBankAccount', { user: freshUser });
 };
 
 exports.postAddBank = async (req, res) => {
@@ -344,13 +330,10 @@ exports.postAddBank = async (req, res) => {
         const { accountName, accountNumber, ifscCode, bankName } = req.body;
         const userId = req.session.user?._id || req.session.user?.id;
         
-        if (!userId) return res.status(401).json({ success: false, message: "Session expired" });
-
         const updatedUser = await User.findByIdAndUpdate(userId, {
             bankDetails: { accountName, accountNumber, ifscCode, bankName, isBankAdded: true }
-        }, { new: true }).select('-password').lean();
+        }, { returnDocument: 'after' }).select('-password').lean();
 
-        // Session update
         req.session.user = { ...updatedUser, avatar: getSafeAvatar(updatedUser) };
         req.session.save(() => {
             res.json({ success: true, message: "Bank account updated successfully!" });
