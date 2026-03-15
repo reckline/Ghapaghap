@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const userController = require('../controller/userController');
 const searchController = require('../controller/searchController');
-const walletController = require('../controller/walletController'); // ✨ Naya Wallet Controller
+const walletController = require('../controller/walletController'); 
 const { isLoggedIn } = require('../middleware/auth'); 
 const multer = require('multer'); 
 
@@ -67,10 +67,13 @@ router.get('/addBankAccount', (req, res) => res.redirect('/add-bank'));
 router.post('/addBankAccount', isLoggedIn, userController.postAddBank);
 
 // ==========================================
-// 💰 WALLET & DEPOSIT SYSTEM (New)
+// 💰 WALLET & DEPOSIT SYSTEM (Fixed Fix)
 // ==========================================
+// Page dikhane ke liye
 router.get('/deposit-funds', isLoggedIn, walletController.getDepositPage);
-router.post('/deposit-funds', isLoggedIn, walletController.postDeposit);
+
+// Final Payment confirm karne ke liye (Ye function controller mein postFinalizeDeposit naam se hai)
+router.post('/deposit-finalize', isLoggedIn, walletController.postFinalizeDeposit);
 
 // ==========================================
 // 3. ACTION ROUTES
