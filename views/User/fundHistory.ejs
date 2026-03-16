@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fund History - Ghapagap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: black; color: white; }
+        .glass-card { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .tab-active { color: rgb(240, 119, 139); border-bottom: 3px solid rgb(240, 119, 139); }
+        .status-pending { color: #fbbf24; }
+        .status-approved { color: #34d399; }
+        .status-rejected { color: #f87171; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md flex items-center justify-between mt-6 mb-4 px-2">
+        <a href="/profile" class="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 transition-all">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        <h1 class="text-xl font-black uppercase italic tracking-tighter text-pink-400">Fund History</h1>
+        <div class="w-10"></div>
+    </div>
+
+    <div class="w-full max-w-md flex border-b border-zinc-800 mb-6">
+        <button onclick="switchTab('deposits')" id="depTab" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest tab-active">Deposits</button>
+        <button onclick="switchTab('withdrawals')" id="withTab" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-zinc-500">Withdrawals</button>
+    </div>
+
+    <div id="depositsSection" class="w-full max-w-md space-y-3">
+        <% if(deposits.length > 0) { %>
+            <% deposits.forEach(item => { %>
+                <div class="glass-card p-5 rounded-[2rem] flex justify-between items-center">
+                    <div>
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter"><%= new Date(item.createdAt).toLocaleDateString('en-IN') %> • <%= item.paymentApp || 'UPI' %></p>
+                        <h3 class="font-black text-white italic">₹<%= item.amount.toFixed(2) %></h3>
+                        <p class="text-[9px] font-mono text-zinc-600">ID: <%= item.transactionId || 'N/A' %></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black uppercase italic status-<%= item.status.toLowerCase() %>">
+                            <%= item.status %>
+                        </span>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="text-center py-20 opacity-20">
+                <i class="fas fa-history text-5xl mb-3"></i>
+                <p class="font-bold uppercase text-xs">No Deposit History</p>
+            </div>
+        <% } %>
+    </div>
+
+    <div id="withdrawalsSection" class="w-full max-w-md space-y-3 hidden">
+        <% if(withdrawals.length > 0) { %>
+            <% withdrawals.forEach(item => { %>
+                <div class="glass-card p-5 rounded-[2rem] flex justify-between items-center border-l-4 border-pink-500/30">
+                    <div>
+                        <p class="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter"><%= new Date(item.createdAt).toLocaleDateString('en-IN') %> • <%= item.method %></p>
+                        <h3 class="font-black text-pink-400 italic">₹<%= item.amount.toFixed(2) %></h3>
+                        <p class="text-[9px] font-mono text-zinc-600">Ref: <%= item.remark || 'Processing...' %></p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-[10px] font-black uppercase italic status-<%= item.status.toLowerCase() %>">
+                            <%= item.status %>
+                        </span>
+                    </div>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="text-center py-20 opacity-20">
+                <i class="fas fa-wallet text-5xl mb-3"></i>
+                <p class="font-bold uppercase text-xs">No Withdrawal History</p>
+            </div>
+        <% } %>
+    </div>
+
+    <script>
+        function switchTab(type) {
+            const depSection = document.getElementById('depositsSection');
+            const withSection = document.getElementById('withdrawalsSection');
+            const depTab = document.getElementById('depTab');
+            const withTab = document.getElementById('withTab');
+
+            if(type === 'deposits') {
+                depSection.classList.remove('hidden');
+                withSection.classList.add('hidden');
+                depTab.classList.add('tab-active');
+                depTab.classList.remove('text-zinc-500');
+                withTab.classList.remove('tab-active');
+                withTab.classList.add('text-zinc-500');
+            } else {
+                depSection.classList.add('hidden');
+                withSection.classList.remove('hidden');
+                withTab.classList.add('tab-active');
+                withTab.classList.remove('text-zinc-500');
+                depTab.classList.remove('tab-active');
+                depTab.classList.add('text-zinc-500');
+            }
+        }
+    </script>
+</body>
+</html>

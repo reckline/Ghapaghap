@@ -32,12 +32,7 @@
         <% if (user) { %> <%- include('../partials/desktopWithLogin') %> <% } else { %> <%- include('../partials/desktopWithoutLogin') %> <% } %>
 
         <main class="flex-1 w-full lg:ml-64 mt-16 p-4 md:p-8 mb-20">
-            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">All Creators</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Top Creators</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Messages</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Notifications</button>
-            </div>
+        <%- include('../partials/topNav') %>
 
             <div style="margin-top: -2rem;" class="min-h-screen text-white font-sans select-none">
          <div class="flex items-start gap-6 max-w-2xl mx-auto pt-8">
@@ -102,18 +97,19 @@
                         <a href="/depositFunds"><button class="" >Deposit Funds</button></a>
                     </div>
                     <% if (typeof user !== 'undefined' && user.isVerified) { %>
-    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 gap-2">
-        Withdraw Funds
-    </button>
+    <div class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 gap-2 flex justify-center">
+        <a href="/withdrawFunds"><button class="" >Withdraw Funds</button></a>
+    </div>
 <% } else { %>
-    <button disabled class=" hidden bg-gray-800 text-gray-500 cursor-not-allowed py-1.5 rounded-lg text-sm font-semibold px-4 flex items-center gap-2 opacity-60">
+    <button disabled class="hidden bg-gray-800 text-gray-500 cursor-not-allowed py-1.5 rounded-lg text-sm font-semibold px-4 flex items-center gap-2 opacity-60">
         Withdraw Funds
     </button>
 <% } %>
                     <% if (typeof user !== 'undefined' && user.isVerified) { %>
-    <button class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold font-history px-4">
-        Fund History
-    </button>
+    <div class="bg-[#262626] hover:bg-green-700 transition-colors py-1.5 rounded-lg text-sm font-semibold px-4 gap-2 flex justify-center">
+        <a href="/fundHistory"><button class="" >Fund History</button></a>
+    </div>
+
 <% } else { %>
     <button disabled class="hidden bg-gray-800 text-gray-600 cursor-not-allowed py-1.5 rounded-lg text-sm font-semibold font-history px-4 opacity-50 flex items-center gap-1">
         <span class="material-icons-sharp text-xs">lock</span>

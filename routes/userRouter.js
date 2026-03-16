@@ -67,13 +67,19 @@ router.get('/addBankAccount', (req, res) => res.redirect('/add-bank'));
 router.post('/addBankAccount', isLoggedIn, userController.postAddBank);
 
 // ==========================================
-// 💰 WALLET & DEPOSIT SYSTEM (Fixed Fix)
+// 💰 WALLET, DEPOSIT & WITHDRAW SYSTEM
 // ==========================================
-// Page dikhane ke liye
-router.get('/deposit-funds', isLoggedIn, walletController.getDepositPage);
 
-// Final Payment confirm karne ke liye (Ye function controller mein postFinalizeDeposit naam se hai)
+// --- Fund History (NEW) ---
+router.get('/fundHistory', isLoggedIn, walletController.getFundHistory);
+
+// --- Deposit Routes ---
+router.get('/deposit-funds', isLoggedIn, walletController.getDepositPage);
 router.post('/deposit-finalize', isLoggedIn, walletController.postFinalizeDeposit);
+
+// --- Withdrawal Routes ---
+router.get('/withdraw-funds', isLoggedIn, walletController.getWithdrawPage); 
+router.post('/withdraw-submit', isLoggedIn, walletController.postWithdrawRequest); 
 
 // ==========================================
 // 3. ACTION ROUTES
@@ -88,6 +94,10 @@ router.get('/userSubs', (req, res) => res.redirect('/subscriptions'));
 router.get('/userProfile', (req, res) => res.redirect('/profile'));
 router.get('/editProfile', (req, res) => res.redirect('/edit-profile'));
 router.get('/user/edit-profile', (req, res) => res.redirect('/edit-profile'));
+
+// Wallet Compatibility Redirects
 router.get('/depositFunds', (req, res) => res.redirect('/deposit-funds'));
+router.get('/withdrawFunds', (req, res) => res.redirect('/withdraw-funds'));
+router.get('/withdrawalHistory', (req, res) => res.redirect('/fundHistory'));
 
 module.exports = router;

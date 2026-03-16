@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Details | Ghapaghp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0f0f0f; }
+        .glass { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(12px); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #ec4899; border-radius: 10px; }
+        .doc-image:hover { transform: scale(1.02); transition: all 0.3s ease; }
+    </style>
+</head>
+
+<body class="text-white">
+
+
+
+<main class="p-6 min-h-screen">
+    <div class="max-w-5xl mx-auto">
+        <div class="flex items-center justify-between mb-6">
+            <a href="/admin/allVerifiedUsers" class="text-gray-400 hover:text-pink-500 transition-colors flex items-center">
+                <i class="fas fa-arrow-left mr-2"></i> Back to Verified List
+            </a>
+            <div class="flex gap-2">
+                <span class="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider <%= u.verificationStatus === 'Verified' ? 'bg-green-500/10 text-green-500' : 'bg-yellow-500/10 text-yellow-500' %>">
+                    <%= u.verificationStatus %>
+                </span>
+            </div>
+        </div>
+
+        <div class="bg-[#1a1a1a] border border-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+            <div class="h-40 bg-gradient-to-r from-pink-600 via-purple-700 to-indigo-800"></div>
+            
+            <div class="px-8 pb-8">
+                <div class="flex flex-col md:flex-row justify-between items-end -mt-12 mb-8 gap-4">
+                    <div class="relative">
+                        <img src="<%= u.avatar %>" alt="Avatar" class="w-32 h-32 rounded-2xl object-cover border-4 border-[#1a1a1a] shadow-2xl bg-[#1a1a1a]">
+                        <% if(u.isVerified) { %>
+                            <span class="absolute -bottom-2 -right-2 bg-blue-500 text-white w-8 h-8 flex items-center justify-center rounded-full border-4 border-[#1a1a1a]">
+                                <i class="fas fa-check text-sm"></i>
+                            </span>
+                        <% } %>
+                    </div>
+                    
+                    <div class="flex gap-4">
+                        <div class="bg-[#252525] px-6 py-3 rounded-2xl border border-gray-800 text-center">
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Wallet Balance</p>
+                            <p class="text-xl font-bold text-green-500">₹<%= (u.walletBalance || 0).toFixed(2) %></p>
+                        </div>
+                        <div class="bg-[#252525] px-6 py-3 rounded-2xl border border-gray-800 text-center">
+                            <p class="text-[10px] text-gray-500 uppercase font-bold">Subscribers</p>
+                            <p class="text-xl font-bold text-pink-500"><%= u.subscribersCount || 0 %></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-1 space-y-6">
+                        <div>
+                            <h1 class="text-3xl font-bold"><%= u.fullname %></h1>
+                            <p class="text-gray-500">@<%= u.username %></p>
+                        </div>
+
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3 p-3 bg-[#252525]/50 rounded-xl border border-gray-800">
+                                <i class="fas fa-envelope text-pink-500"></i>
+                                <span class="text-sm truncate"><%= u.email %></span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-[#252525]/50 rounded-xl border border-gray-800">
+                                <i class="fas fa-phone text-pink-500"></i>
+                                <span class="text-sm"><%= u.phone || 'Not Provided' %></span>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 bg-[#252525]/50 rounded-xl border border-gray-800">
+                                <i class="far fa-calendar-alt text-pink-500"></i>
+                                <span class="text-sm">Joined: <%= new Date(u.createdAt).toLocaleDateString('en-IN') %></span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border border-gray-800 rounded-2xl">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase mb-3 flex items-center gap-2">
+                                <i class="fas fa-id-card"></i> About Bio
+                            </h4>
+                            <p class="text-sm text-gray-400 leading-relaxed">
+                                <%= u.bio || 'User has not written any bio yet.' %>
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 space-y-6">
+                        
+                        <div class="bg-[#252525]/30 border border-gray-800 rounded-2xl p-6">
+                            <h4 class="text-lg font-bold mb-4 flex items-center justify-between">
+                                <span class="flex items-center gap-2"><i class="fas fa-file-invoice text-pink-500"></i> Verification Document</span>
+                                <% if(u.verificationImage) { %>
+                                    <a href="<%= u.verificationImage %>" target="_blank" class="text-[10px] bg-pink-500 hover:bg-pink-600 text-white px-2 py-1 rounded">VIEW FULL SIZE</a>
+                                <% } %>
+                            </h4>
+                            
+                            <% if(u.verificationImage) { %>
+                                <div class="relative group cursor-zoom-in overflow-hidden rounded-xl border border-gray-700 bg-black">
+                                    <img src="<%= u.verificationImage %>" alt="Verification Document" 
+                                         class="doc-image w-full h-auto max-h-[400px] object-contain mx-auto shadow-lg">
+                                    <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <p class="text-white text-sm font-bold bg-black/60 px-4 py-2 rounded-full">Click image to enlarge</p>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-800 rounded-xl">
+                                    <i class="fas fa-image-slash text-4xl text-gray-700 mb-2"></i>
+                                    <p class="text-gray-500">No verification image uploaded</p>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="bg-[#252525]/30 border border-gray-800 rounded-2xl p-6">
+                            <h4 class="text-lg font-bold mb-4 flex items-center gap-2">
+                                <i class="fas fa-university text-pink-500"></i> Bank Account Information
+                            </h4>
+                            <% if(u.bankDetails?.isBankAdded) { %>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div class="p-3 bg-black/20 rounded-lg">
+                                        <p class="text-[10px] text-gray-500 uppercase">Bank Name</p>
+                                        <p class="font-medium text-gray-200"><%= u.bankDetails.bankName %></p>
+                                    </div>
+                                    <div class="p-3 bg-black/20 rounded-lg">
+                                        <p class="text-[10px] text-gray-500 uppercase">Account Holder</p>
+                                        <p class="font-medium text-gray-200"><%= u.bankDetails.accountName %></p>
+                                    </div>
+                                    <div class="p-3 bg-black/20 rounded-lg">
+                                        <p class="text-[10px] text-gray-500 uppercase">Account Number</p>
+                                        <p class="font-medium text-pink-400 font-mono"><%= u.bankDetails.accountNumber %></p>
+                                    </div>
+                                    <div class="p-3 bg-black/20 rounded-lg">
+                                        <p class="text-[10px] text-gray-500 uppercase">IFSC Code</p>
+                                        <p class="font-medium text-gray-200 font-mono"><%= u.bankDetails.ifscCode %></p>
+                                    </div>
+                                </div>
+                            <% } else { %>
+                                <div class="p-8 text-center bg-black/20 rounded-xl border border-dashed border-gray-800 text-gray-600 italic">
+                                    No bank details found for this user.
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

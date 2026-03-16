@@ -18,68 +18,79 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // =========================================================
-// 🛠️ NOISE REQUESTS HANDLER
+// 🛠️ NOISE REQUESTS HANDLER (Optimized)
 // =========================================================
-app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => res.json({}));
 app.get('/favicon.ico', (req, res) => res.status(204).end());
+app.get('/.well-known/appspecific/com.chrome.devtools.json', (req, res) => res.json({}));
 
 // 4. View Engine Setup
 app.set('view engine', 'ejs');
-// 💡 IMPORTANT: path.resolve use karne se absolute path milta hai, jo views missing error ko fix karega
 app.set('views', path.resolve(__dirname, 'views'));
 
 // 5. GLOBAL MIDDLEWARES
 app.use(express.static(path.join(__dirname, 'public'))); 
 
-// ⭐ Base64 aur badhe payloads ke liye limit
+// Payload limits for images/verification data
 app.use(express.json({ limit: '50mb' })); 
 app.use(express.urlencoded({ limit: '50mb', extended: true })); 
 
-// ⭐ Session
+// Session middleware integration
 app.use(sessionConfig); 
 
-// 💡 Custom Middleware: Global variables for EJS
+// Custom Middleware: Global variables for EJS templates
 app.use((req, res, next) => {
     res.locals.user = req.session.user || null;
     res.locals.success = req.query.success || null;
     res.locals.error = req.query.error || null;
-    // Current path tracking (Debugging ke liye helpful hai)
     res.locals.currentPath = req.path;
     next();
 });
 
-// 6. ROUTES SETUP
+// =========================================================
+// 🛣️ ROUTES SETUP
+// =========================================================
+
+// Importing Routers
+// ⚠️ Note: Make sure the file names in /routes/ match exactly!
 const adminRouter = require('./routes/adminRouter'); 
 const userRouter = require('./routes/userRouter');
 const loginAndSignupRouter = require('./routes/loginAndSignupRouter');
 const searchRouter = require('./routes/searchRouter'); 
 const verifyRouter = require('./routes/verifyRouter'); 
 
+// Registering Routers
 app.use('/admin', adminRouter); 
 app.use('/search', searchRouter); 
 app.use('/verify', verifyRouter); 
+
+// Catch-all routes for Auth and Users
 app.use('/', loginAndSignupRouter); 
 app.use('/', userRouter); 
 
-// 7. ERROR HANDLING (404 Handler)
+// =========================================================
+// ⚠️ ERROR HANDLING (404 Handler)
+// =========================================================
 app.use((req, res) => {
     const errorPath = req.url;
     
-    if (!errorPath.includes('.json') && !errorPath.includes('.ico')) {
+    // Log only relevant 404s
+    if (!errorPath.includes('.json') && !errorPath.includes('.ico') && !errorPath.includes('.map')) {
         console.log("⚠️ 404 - Path Not Found:", errorPath);
     }
 
-    // Pehle 'User/404' (Capital) try karega, fail hua toh manual template dikhayega
-    res.render('User/404', { message: errorPath }, (err, html) => {
+    // Set Status 404 and render
+    res.status(404).render('User/404', { message: errorPath }, (err, html) => {
         if (err) {
-            // Agar file nahi milti toh ye fallback HTML chalega
+            // Fallback UI if EJS fails
             return res.status(404).send(`
                 <body style="background:#0f0f0f; color:white; font-family:sans-serif; text-align:center; padding-top:100px;">
-                    <h1 style="color:#ec4899; font-size:5rem; margin-bottom:0;">404</h1>
-                    <p style="font-size:1.2rem;">Bhai, <b>${errorPath}</b> naam ka rasta nahi mila!</p>
-                    <p style="color:#666; font-size:0.9rem;">(Check: views/User/404.ejs file missing hai)</p>
-                    <br>
-                    <a href="/" style="color:white; text-decoration:none; background:#ec4899; padding:12px 25px; border-radius:50px; font-weight:bold;">Wapas Home Par Chalo</a>
+                    <div style="max-width:600px; margin:0 auto; border: 1px dashed #333; padding:40px; border-radius:20px;">
+                        <h1 style="color:#ec4899; font-size:5rem; margin-bottom:0;">404</h1>
+                        <p style="font-size:1.2rem;">Bhai, <b>${errorPath}</b> naam ka rasta nahi mila!</p>
+                        <p style="color:#666; font-size:0.9rem;">Tip: Routes file mein path check karo.</p>
+                        <br><br>
+                        <a href="/" style="color:white; text-decoration:none; background:#ec4899; padding:12px 25px; border-radius:50px; font-weight:bold;">Wapas Home Par Chalo</a>
+                    </div>
                 </body>
             `);
         }
@@ -89,7 +100,6 @@ app.use((req, res) => {
 
 // 8. SERVER START
 app.listen(PORT, () => {
-    console.log(`🚀 GhapaGhap Server running at: http://localhost:${PORT}`);
-    // Debugging: Ye line aapko terminal mein batayegi server exactly kahan file dhund raha hai
-    console.log(`📂 Views directory set to: ${app.get('views')}`);
+    console.log(`🚀 Server running at: http://localhost:${PORT}`);
+    console.log(`🔧 Admin Panel: http://localhost:${PORT}/admin/dashboard`);
 });

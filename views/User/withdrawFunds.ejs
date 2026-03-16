@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdraw - Ghapagap</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: black; color: white; }
+        .bg-pink-theme { background-color: rgb(240, 119, 139); }
+        .glass-card { background: rgba(24, 24, 27, 0.8); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        input:checked + label { border-color: rgb(240, 119, 139); background: rgba(240, 119, 139, 0.1); color: rgb(240, 119, 139); }
+        .input-field { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center p-4">
+
+    <div class="w-full max-w-md flex items-center justify-between mt-6 mb-4 px-2">
+        <a href="/profile" class="w-10 h-10 flex items-center justify-center rounded-full bg-zinc-800 hover:bg-zinc-700 transition-all">
+            <i class="fas fa-chevron-left"></i>
+        </a>
+        <h1 class="text-xl font-black uppercase italic tracking-tighter">Withdrawal</h1>
+        <div class="w-10"></div>
+    </div>
+
+    <div class="w-full max-w-md glass-card rounded-[2.5rem] p-8 text-center mt-4">
+        <p class="text-gray-500 text-[10px] font-bold uppercase tracking-[0.2em]">Available Balance</p>
+        <h2 class="text-4xl font-black text-pink-400 mt-1">₹<%= user.walletBalance.toFixed(2) %></h2>
+
+        <form id="withdrawForm" class="mt-8 space-y-5 text-left">
+            
+            <div class="grid grid-cols-2 gap-4">
+                <div class="relative">
+                    <input type="radio" name="method" id="methodUpi" value="UPI" class="hidden" checked>
+                    <label for="methodUpi" class="flex flex-col items-center justify-center p-4 border border-white/10 rounded-2xl cursor-pointer transition-all">
+                        <i class="fas fa-qrcode mb-2 text-lg"></i>
+                        <span class="text-[10px] font-bold uppercase">UPI ID</span>
+                    </label>
+                </div>
+                <div class="relative">
+                    <input type="radio" name="method" id="methodBank" value="Bank" class="hidden">
+                    <label for="methodBank" class="flex flex-col items-center justify-center p-4 border border-white/10 rounded-2xl cursor-pointer transition-all">
+                        <i class="fas fa-university mb-2 text-lg"></i>
+                        <span class="text-[10px] font-bold uppercase">Bank A/C</span>
+                    </label>
+                </div>
+            </div>
+
+            <div>
+                <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">Amount to Withdraw</label>
+                <input type="number" id="wAmt" placeholder="Min ₹100" required 
+                    class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 text-xl font-black text-pink-400">
+            </div>
+
+            <div id="upiFields" class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">UPI Address</label>
+                    <input type="text" id="wUpi" 
+                        value="<%= user.bankDetails?.upiId || '' %>" 
+                        placeholder="example@okaxis" 
+                        class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 font-mono text-sm">
+                </div>
+            </div>
+
+            <div id="bankFields" class="hidden space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">Account Holder Name</label>
+                    <input type="text" id="wHolder" 
+                        value="<%= user.bankDetails?.accountName || '' %>"
+                        placeholder="Enter full name" 
+                        class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                </div>
+                <div>
+                    <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">Account Number</label>
+                    <input type="text" id="wAcc" 
+                        value="<%= user.bankDetails?.accountNumber || '' %>"
+                        placeholder="1234XXXXXXXX" 
+                        class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 font-mono text-sm">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">IFSC Code</label>
+                        <input type="text" id="wIfsc" 
+                            value="<%= user.bankDetails?.ifscCode || '' %>"
+                            placeholder="SBIN0001234" 
+                            class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 font-mono text-sm uppercase">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-gray-500 ml-2 uppercase tracking-widest">Bank Name</label>
+                        <input type="text" id="wBankName" 
+                            value="<%= user.bankDetails?.bankName || '' %>"
+                            placeholder="SBI, HDFC, etc" 
+                            class="w-full px-6 py-4 mt-1 input-field rounded-2xl outline-none focus:ring-2 focus:ring-pink-400 text-sm">
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" id="wBtn" class="w-full bg-pink-theme text-white py-5 rounded-3xl font-black shadow-lg shadow-pink-500/20 active:scale-95 transition-all uppercase tracking-tighter text-lg mt-4">
+                SUBMIT WITHDRAWAL
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const upiRadio = document.getElementById('methodUpi');
+        const bankRadio = document.getElementById('methodBank');
+        const upiFields = document.getElementById('upiFields');
+        const bankFields = document.getElementById('bankFields');
+
+        function toggleFields() {
+            if (upiRadio.checked) {
+                upiFields.classList.remove('hidden');
+                bankFields.classList.add('hidden');
+                document.querySelectorAll('#bankFields input').forEach(i => i.required = false);
+                document.getElementById('wUpi').required = true;
+            } else {
+                upiFields.classList.add('hidden');
+                bankFields.classList.remove('hidden');
+                document.querySelectorAll('#bankFields input').forEach(i => i.required = true);
+                document.getElementById('wUpi').required = false;
+            }
+        }
+
+        [upiRadio, bankRadio].forEach(radio => {
+            radio.addEventListener('change', toggleFields);
+        });
+
+        document.getElementById('withdrawForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('wBtn');
+            const amount = parseFloat(document.getElementById('wAmt').value);
+            const balance = parseFloat("<%= user.walletBalance %>");
+
+            if (amount < 100) return Swal.fire({ icon: 'warning', title: 'Minimum ₹100', background: '#18181b', color: '#fff' });
+            if (amount > balance) return Swal.fire({ icon: 'error', title: 'Insufficient Balance', background: '#18181b', color: '#fff' });
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-2"></i> SENDING...';
+
+            const payload = {
+                method: document.querySelector('input[name="method"]:checked').value,
+                amount: amount,
+                upiId: document.getElementById('wUpi').value,
+                accountHolderName: document.getElementById('wHolder').value,
+                accountNumber: document.getElementById('wAcc').value,
+                ifscCode: document.getElementById('wIfsc').value,
+                bankName: document.getElementById('wBankName').value
+            };
+
+            try {
+                const response = await fetch('/withdraw-submit', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const res = await response.json();
+
+                if (res.success) {
+                    Swal.fire({ 
+                        icon: 'success', 
+                        title: 'Success!', 
+                        text: res.message,
+                        background: '#18181b', color: '#fff', confirmButtonColor: '#f0778b'
+                    }).then(() => window.location.href = '/profile');
+                } else {
+                    throw new Error(res.message);
+                }
+            } catch (err) {
+                Swal.fire({ icon: 'error', title: 'Oops!', text: err.message, background: '#18181b', color: '#fff' });
+                btn.disabled = false;
+                btn.innerText = "SUBMIT WITHDRAWAL";
+            }
+        });
+    </script>
+</body>
+</html>

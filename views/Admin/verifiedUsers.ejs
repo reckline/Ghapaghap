@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pending Verifications | Ghapaghp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(12px); }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-gray-200 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+
+        <main class="flex-1 h-full overflow-y-auto custom-scrollbar relative">
+            <%- include('../partials/adminHeader') %>
+
+            <div class="max-w-7xl mx-auto p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl font-bold flex items-center gap-2">
+                    <i class="fas fa-check-circle text-blue-500"></i> Verified Creators
+                </h1>
+                <p class="text-gray-400 text-sm">Total <span class="text-pink-500 font-bold"><%= users.length %></span> verified accounts</p>
+            </div>
+            <div class="relative">
+                <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                    <i class="fas fa-search"></i>
+                </span>
+                <input type="text" id="userSearch" placeholder="Search by name or username..." 
+                    class="bg-[#1a1a1a] border border-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-pink-500 w-full md:w-80 transition-all">
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="usersGrid">
+            <% if (users && users.length > 0) { %>
+                <% users.forEach(u => { %>
+                    <div class="user-card bg-[#1a1a1a] border border-gray-800 rounded-2xl p-5 hover:border-pink-500/50 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <img src="<%= u.avatar %>" alt="Avatar" class="w-16 h-16 rounded-full object-cover border-2 border-pink-500/20 shadow-lg">
+                            <div class="flex-1 overflow-hidden">
+                                <h3 class="name-field font-bold truncate flex items-center gap-1 text-lg">
+                                    <%= u.fullname || 'Unknown User' %>
+                                    <i class="fas fa-check-circle text-blue-500 text-xs" title="Verified"></i>
+                                </h3>
+                                <p class="username-field text-gray-500 text-sm truncate">@<%= u.username || 'user' %></p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4 mt-6 py-4 border-y border-gray-800/50">
+                            <div class="text-center border-r border-gray-800">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Subscribers</p>
+                                <p class="font-bold text-pink-500 text-lg"><%= u.subscribersCount || 0 %></p>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest">Wallet Balance</p>
+                                <p class="font-bold text-green-500 text-lg">₹<%= (u.walletBalance || 0).toLocaleString('en-IN') %></p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex items-center justify-between text-[11px] text-gray-500">
+                            <span><i class="far fa-calendar-alt mr-1"></i> Joined: <%= new Date(u.createdAt).toLocaleDateString('en-IN') %></span>
+                            <a href="/admin/user/<%= u._id %>" class="bg-gray-800 hover:bg-pink-600 text-white px-3 py-1 rounded-full transition-colors">
+                                Details
+                            </a>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-span-full py-20 text-center bg-[#1a1a1a] rounded-2xl border border-dashed border-gray-800">
+                    <i class="fas fa-user-slash text-5xl text-gray-700 mb-4"></i>
+                    <p class="text-gray-400 text-lg font-medium">No verified users found.</p>
+                    <p class="text-gray-600 text-sm">Once users are verified, they will appear here.</p>
+                </div>
+            <% } %>
+        </div>
+
+        <div id="noResults" class="hidden col-span-full py-20 text-center bg-[#1a1a1a] rounded-2xl border border-dashed border-gray-800">
+            <i class="fas fa-search text-4xl text-gray-700 mb-3"></i>
+            <p class="text-gray-500">No matching creators found for your search.</p>
+        </div>
+    </div>
+            
+        </main>
+    </div>
+
+    <script>
+
+        const menuBtn = document.getElementById('menu-btn');
+
+        const sidebar = document.getElementById('sidebar');
+
+
+
+        menuBtn.addEventListener('click', () => {
+
+            sidebar.classList.toggle('-translate-x-full');
+
+        });
+
+
+
+        // Close sidebar when clicking outside on mobile
+
+        document.addEventListener('click', (e) => {
+
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+
+                sidebar.classList.add('-translate-x-full');
+
+            }
+
+        });
+
+    </script>
+
+    <script>
+    // Advanced search filter
+    document.getElementById('userSearch').addEventListener('input', function(e) {
+        const term = e.target.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('.user-card');
+        const noResults = document.getElementById('noResults');
+        let hasVisibleCards = false;
+
+        cards.forEach(card => {
+            const name = card.querySelector('.name-field').innerText.toLowerCase();
+            const username = card.querySelector('.username-field').innerText.toLowerCase();
+            
+            if(name.includes(term) || username.includes(term)) {
+                card.style.display = 'block';
+                hasVisibleCards = true;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Show/hide "No results" message
+        if (term !== "" && !hasVisibleCards) {
+            noResults.classList.remove('hidden');
+        } else {
+            noResults.classList.add('hidden');
+        }
+    });
+</script>
+</body>
+</html>

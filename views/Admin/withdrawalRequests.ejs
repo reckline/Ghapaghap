@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %> | Ghapaghp Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .stat-card { background: #161616; border: 1px solid #27272a; }
+        .glass-table { background: rgba(22, 22, 22, 0.7); backdrop-filter: blur(10px); }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 10px; }
+        .payment-info { background: #0f0f0f; border: 1px dashed #3f3f46; min-width: 220px; }
+        .swal-input-custom { background: #27272a !important; color: white !important; border-radius: 15px !important; }
+    </style>
+</head>
+<body class="bg-[#0b0b0b] text-gray-200 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+
+        <main class="flex-1 h-full overflow-y-auto relative">
+            <%- include('../partials/adminHeader') %>
+
+            <div class="max-w-7xl mx-auto p-6">
+                <div class="mb-8 flex justify-between items-end">
+                    <div>
+                        <h1 class="text-3xl font-black text-white flex items-center gap-3 italic uppercase tracking-tighter">
+                            <i class="material-icons-sharp text-pink-500">account_balance_wallet</i> Payout Requests
+                        </h1>
+                        <p class="text-gray-500 text-sm mt-1">Verify payment details and process pending withdrawals.</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="stat-card p-6 rounded-3xl">
+                        <p class="text-pink-500 text-[10px] font-bold uppercase tracking-widest">Pending Count</p>
+                        <h2 class="text-3xl font-black text-white mt-2"><%= stats.pendingWithdraw %></h2>
+                    </div>
+                    <div class="stat-card p-6 rounded-3xl">
+                        <p class="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Total Outflow</p>
+                        <h2 class="text-3xl font-black text-white mt-2">₹<%= (stats.withdraw || 0).toLocaleString('en-IN') %></h2>
+                    </div>
+                    <div class="stat-card p-6 rounded-3xl border-blue-500/30">
+                        <p class="text-blue-400 text-[10px] font-bold uppercase tracking-widest">Net Revenue</p>
+                        <h2 class="text-3xl font-black text-white mt-2">₹<%= (stats.netBalance || 0).toLocaleString('en-IN') %></h2>
+                    </div>
+                    <div class="stat-card p-6 rounded-3xl border-green-500/20">
+                        <p class="text-green-500 text-[10px] font-bold uppercase tracking-widest">Liquidity</p>
+                        <h2 class="text-3xl font-black text-white mt-2">₹<%= (stats.deposit || 0).toLocaleString('en-IN') %></h2>
+                    </div>
+                </div>
+
+                <div class="stat-card rounded-3xl overflow-hidden">
+                    <div class="p-6 border-b border-zinc-800 flex justify-between items-center">
+                        <h3 class="font-bold text-lg">Action Required</h3>
+                        <span class="bg-zinc-800 text-zinc-400 text-[10px] px-3 py-1 rounded-full uppercase font-bold tracking-tighter">Only Pending shown</span>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="text-[10px] uppercase tracking-widest text-zinc-500 bg-zinc-900/50">
+                                <tr>
+                                    <th class="px-6 py-4">User Details</th>
+                                    <th class="px-6 py-4">Payout Method & Details</th>
+                                    <th class="px-6 py-4">Amount</th>
+                                    <th class="px-6 py-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-zinc-800">
+                                <% if(requests.length > 0) { %>
+                                    <% requests.forEach(req => { %>
+                                        <tr class="hover:bg-zinc-900/30 transition-colors">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center gap-3">
+                                                    <img src="<%= req.user?.avatar || 'https://ui-avatars.com/api/?name=User' %>" class="w-10 h-10 rounded-full border border-zinc-700">
+                                                    <div>
+                                                        <p class="font-bold text-sm text-white"><%= req.user?.fullname || 'Unknown' %></p>
+                                                        <p class="text-[10px] text-zinc-500 italic">User ID: <%= req.user?._id.toString().slice(-6).toUpperCase() %></p>
+                                                    </div>
+                                                </div>
+                                            </td>
+
+                                            <td class="px-6 py-4">
+                                                <div class="payment-info p-3 rounded-2xl">
+                                                    <% if(req.method === 'UPI') { %>
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <span class="text-[9px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded-md font-bold uppercase italic">UPI Transfer</span>
+                                                        </div>
+                                                        <p class="text-xs font-mono text-white select-all"><%= req.bankDetails?.upiId || req.upiId || 'N/A' %></p>
+                                                    <% } else { %>
+                                                        <div class="flex items-center gap-2 mb-1">
+                                                            <span class="text-[9px] bg-purple-500/20 text-purple-400 px-2 py-0.5 rounded-md font-bold uppercase italic">Bank Settlement</span>
+                                                        </div>
+                                                        <div class="space-y-1">
+                                                            <p class="text-[11px] font-bold text-zinc-200 uppercase tracking-tight">
+                                                                <%= req.bankDetails?.accountHolderName || req.accountHolderName || 'Name Missing' %>
+                                                            </p>
+                                                            <p class="text-[11px] text-zinc-400 font-mono select-all">
+                                                                A/C: <%= req.bankDetails?.accountNumber || req.accountNumber %>
+                                                            </p>
+                                                            <div class="flex gap-3">
+                                                                <p class="text-[10px] text-zinc-500 font-mono select-all italic uppercase">IFSC: <%= req.bankDetails?.ifscCode || req.ifscCode %></p>
+                                                                <p class="text-[10px] text-zinc-500 font-bold uppercase"><%= req.bankDetails?.bankName || req.bankName %></p>
+                                                            </div>
+                                                        </div>
+                                                    <% } %>
+                                                </div>
+                                            </td>
+
+                                            <td class="px-6 py-4">
+                                                <div class="flex flex-col">
+                                                    <span class="font-black text-pink-500 text-lg tracking-tighter italic">₹<%= req.amount.toLocaleString('en-IN') %></span>
+                                                    <span class="text-[9px] text-zinc-600 uppercase font-bold"><%= new Date(req.createdAt).toLocaleDateString('en-GB') %> | <%= new Date(req.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) %></span>
+                                                </div>
+                                            </td>
+
+                                            <td class="px-6 py-4 text-right">
+                                                <div class="flex justify-end gap-2">
+                                                    <button onclick="handleWithdrawal('<%= req._id %>', 'Approved')" class="group flex items-center gap-2 bg-green-500/10 text-green-500 px-4 py-2.5 rounded-2xl hover:bg-green-500 hover:text-white transition-all shadow-lg shadow-green-500/5">
+                                                        <i class="material-icons-sharp text-sm">check</i>
+                                                        <span class="text-[10px] font-black uppercase">Approve</span>
+                                                    </button>
+                                                    <button onclick="handleWithdrawal('<%= req._id %>', 'Rejected')" class="group flex items-center gap-2 bg-red-500/10 text-red-500 px-4 py-2.5 rounded-2xl hover:bg-red-500 hover:text-white transition-all shadow-lg shadow-red-500/5">
+                                                        <i class="material-icons-sharp text-sm">close</i>
+                                                        <span class="text-[10px] font-black uppercase">Reject</span>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <% }) %>
+                                <% } else { %>
+                                    <tr>
+                                        <td colspan="4" class="px-6 py-20 text-center">
+                                            <div class="flex flex-col items-center opacity-20">
+                                                <i class="material-icons-sharp text-6xl mb-2">auto_awesome</i>
+                                                <p class="text-sm font-bold uppercase tracking-widest">Great job! All payouts processed.</p>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        async function handleWithdrawal(requestId, status) {
+            const isApprove = status === 'Approved';
+            const { value: remark } = await Swal.fire({
+                title: `<span style="color: ${isApprove ? '#22c55e' : '#ef4444'}">${status} Payout?</span>`,
+                html: `<p style="font-size: 13px; color: #a1a1aa; margin-bottom: 10px;">${isApprove ? 'Enter Transaction ID/Reference after payment.' : 'State the reason for rejection.'}</p>`,
+                input: 'text',
+                inputPlaceholder: isApprove ? 'TXN123456789' : 'Reason...',
+                showCancelButton: true,
+                confirmButtonText: isApprove ? 'Confirm Paid' : 'Reject Request',
+                confirmButtonColor: isApprove ? '#22c55e' : '#ef4444',
+                background: '#161616',
+                color: '#fff',
+                customClass: { input: 'swal-input-custom' }
+            });
+
+            if (remark !== undefined) {
+                // Show loading state
+                Swal.fire({
+                    title: 'Processing...',
+                    background: '#161616',
+                    color: '#fff',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading() }
+                });
+
+                try {
+                    const response = await fetch('/admin/withdrawal/update-status', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ requestId, status, remark })
+                    });
+                    const data = await response.json();
+                    
+                    if(data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Updated!',
+                            text: data.message,
+                            background: '#161616',
+                            color: '#fff',
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => location.reload());
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Failed', text: data.message, background: '#161616', color: '#fff' });
+                    }
+                } catch (err) {
+                    Swal.fire({ icon: 'error', title: 'Error', text: 'Server connection failed', background: '#161616', color: '#fff' });
+                }
+            }
+        }
+    </script>
+
+            <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -45,12 +45,7 @@
 
         <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-x-auto">
             
-            <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">All Creators</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Top Creators</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Messages</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Notifications</button>
-            </div>
+            <%- include('../partials/topNav') %>
 
             <%- include('../partials/searchPage') %>
         </main>
