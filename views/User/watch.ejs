@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <title>GhapaGhap | Watch</title>
+    <title>GhapaGhap | <%= video.title %></title>
     <style>
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: #0f0f0f; }
@@ -26,11 +26,11 @@
             <div class="font-black text-xl tracking-tighter uppercase text-pink-500">GhapaGhap</div>
         </div>
         <nav class="space-y-1">
-            <a href="index.html" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl font-semibold">Home</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Trending</a>
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Shorts</a>
+            <a href="/" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl font-semibold">Home</a>
+            <a href="/trending" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Trending</a>
+            <a href="/shorts" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Shorts</a>
             <hr class="border-gray-800 my-4">
-            <a href="#" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl text-gray-400">History</a>
+            <a href="/profile" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl text-gray-400">My Profile</a>
         </nav>
     </aside>
 
@@ -39,87 +39,96 @@
             <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-800 rounded-full lg:hidden">
                 <i class="fas fa-bars"></i>
             </button>
-            <div class="font-black text-lg md:text-xl tracking-tighter uppercase flex items-center gap-1">
+            <a href="/" class="font-black text-lg md:text-xl tracking-tighter uppercase flex items-center gap-1">
                 <span class="text-pink-600 text-2xl">●</span> GhapaGhap
-            </div>
+            </a>
         </div>
 
         <div class="hidden md:flex flex-1 max-w-[500px] mx-4">
-            <div class="flex w-full bg-[#121212] border border-gray-700 rounded-full overflow-hidden focus-within:border-pink-500/50">
-                <input type="text" placeholder="Search" class="w-full bg-transparent px-5 py-2 outline-none text-sm">
-                <button class="bg-gray-800 px-5 border-l border-gray-700 hover:bg-gray-700">
+            <form action="/search" method="GET" class="flex w-full bg-[#121212] border border-gray-700 rounded-full overflow-hidden focus-within:border-pink-500/50">
+                <input type="text" name="q" placeholder="Search videos..." class="w-full bg-transparent px-5 py-2 outline-none text-sm">
+                <button type="submit" class="bg-gray-800 px-5 border-l border-gray-700 hover:bg-gray-700">
                     <i class="fas fa-search text-gray-400"></i>
                 </button>
-            </div>
+            </form>
         </div>
 
-        <div class="flex items-center">
-            <button class="bg-zinc-800 hover:bg-zinc-700 px-3 md:px-4 py-1.5 rounded-full flex items-center gap-2 border border-white/5 transition-all">
-                <i class="fas fa-wallet text-pink-500 text-xs md:text-sm"></i>
-                <span class="text-xs md:text-sm font-bold">500.00</span>
-            </button>
+        <div class="flex items-center gap-3">
+            <div class="bg-zinc-800 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/5">
+                <i class="fas fa-wallet text-pink-500 text-xs"></i>
+                <span class="text-xs font-bold"><%= user ? user.walletBalance.toFixed(2) : '0.00' %></span>
+            </div>
+            <% if(user) { %>
+                <a href="/profile">
+                    <img src="<%= user.avatar %>" class="w-8 h-8 rounded-full border border-gray-700 object-cover">
+                </a>
+            <% } %>
         </div>
     </nav>
 
     <aside class="hidden lg:flex flex-col w-64 fixed top-16 left-0 h-[calc(100vh-4rem)] bg-[#0f0f0f] p-4 border-r border-gray-800/40">
         <nav class="space-y-1">
-            <a href="index.html" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl font-semibold">Home</a>
-            <a href="#" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">Trending</a>
-            <a href="#" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">Shorts</a>
+            <a href="/" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl font-semibold <%= title === 'GhapaGhap - Home' ? 'bg-zinc-800 text-pink-500' : '' %>">
+                <i class="fas fa-home"></i> Home
+            </a>
+            <a href="/trending" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">
+                <i class="fas fa-fire"></i> Trending
+            </a>
+            <a href="/shorts" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">
+                <i class="fas fa-bolt"></i> Shorts
+            </a>
         </nav>
     </aside>
 
     <main class="lg:ml-64 mt-16 p-0 md:p-4 lg:p-6 pb-24 transition-all">
-        
-        <div class="px-4 py-3 flex gap-3 overflow-x-auto no-scrollbar whitespace-nowrap">
-            <button class="bg-white text-black px-4 py-1.5 rounded-lg text-xs font-bold">All</button>
-            <button class="bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">Creators</button>
-            <button class="bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">Live</button>
-            <button class="bg-zinc-800 hover:bg-zinc-700 px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">Gaming</button>
-        </div>
-
-        <div class="flex flex-col lg:flex-row gap-6 lg:px-4">
+        <div class="flex flex-col lg:flex-row gap-6 lg:px-4 mt-4">
             
             <div class="flex-1 w-full">
-                <div class="relative aspect-video bg-black md:rounded-2xl overflow-hidden group shadow-2xl">
-                    <video id="main-video" controls class="w-full h-full">
-                        <source src="video/GURU RANDHAWA - DOPAMINE.mp4" type="video/mp4">
+                <div class="relative aspect-video bg-black md:rounded-2xl overflow-hidden group shadow-2xl border border-gray-800">
+                    <video id="main-video" controls autoplay class="w-full h-full">
+                        <source src="<%= video.videoUrl %>" type="video/mp4">
                     </video>
                 </div>
 
                 <div class="px-4 md:px-0">
-                    <h1 class="text-lg md:text-xl font-black mt-4 line-clamp-2 leading-tight">Mastering Tailwind CSS for Modern App Design 2026</h1>
+                    <h1 class="text-lg md:text-xl font-black mt-4 line-clamp-2 leading-tight uppercase tracking-tight">
+                        <%= video.title %>
+                    </h1>
                     
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4 pb-6 border-b border-gray-800">
                         <div class="flex items-center gap-3">
-                            <img src="https://i.pravatar.cc/100" class="w-10 h-10 rounded-full ring-2 ring-pink-500/20">
+                            <img src="<%= video.uploader.avatar %>" class="w-10 h-10 rounded-full ring-2 ring-pink-500/20 object-cover">
                             <div>
-                                <p class="font-bold text-sm">GhapaGhap Creator <i class="fas fa-check-circle text-pink-500 text-[10px] ml-1"></i></p>
-                                <p class="text-gray-400 text-xs">2.4M subscribers</p>
+                                <p class="font-bold text-sm"><%= video.uploader.fullname %> <i class="fas fa-check-circle text-pink-500 text-[10px] ml-1"></i></p>
+                                <p class="text-gray-400 text-xs"><%= video.uploader.subscribersCount || 0 %> subscribers</p>
                             </div>
-                            <button class="ml-4 bg-white text-black px-5 py-2 rounded-full font-bold text-sm hover:bg-pink-500 hover:text-white transition-all active:scale-95">Subscribe</button>
+                            
+                            <% let isSubscribed = user && user.subscriptions && user.subscriptions.some(id => id.toString() === video.uploader._id.toString()); %>
+                            <button onclick="handleSubscribe('<%= video.uploader._id %>')" id="sub-btn" 
+                                class="ml-4 px-5 py-2 rounded-full font-bold text-sm transition-all active:scale-95 <%= isSubscribed ? 'bg-zinc-800 text-gray-400' : 'bg-white text-black hover:bg-pink-500 hover:text-white' %>">
+                                <%= isSubscribed ? 'Subscribed' : 'Subscribe' %>
+                            </button>
                         </div>
 
                         <div class="flex items-center gap-2">
-                            <div class="flex items-center bg-zinc-800/80 rounded-full p-1">
+                            <div class="flex items-center bg-zinc-800/80 rounded-full p-1 border border-white/5">
                                 <button class="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-700 rounded-l-full border-r border-zinc-700 transition-colors">
-                                    <i class="far fa-thumbs-up"></i> <span class="text-xs font-bold">45K</span>
+                                    <i class="far fa-thumbs-up"></i> <span class="text-xs font-bold"><%= video.likesCount || 0 %></span>
                                 </button>
                                 <button class="px-4 py-1.5 hover:bg-zinc-700 rounded-r-full transition-colors">
                                     <i class="far fa-thumbs-down"></i>
                                 </button>
                             </div>
-                            <button class="bg-zinc-800/80 p-2.5 rounded-full hover:bg-zinc-700 transition-colors">
+                            <button class="bg-zinc-800/80 p-2.5 rounded-full hover:bg-zinc-700 transition-colors border border-white/5">
                                 <i class="fas fa-share"></i>
                             </button>
                         </div>
                     </div>
 
                     <div class="mt-4 p-4 bg-zinc-900/50 rounded-xl hover:bg-zinc-900 transition-colors cursor-pointer group">
-                        <p class="text-sm font-bold">1.2M views • 2 hours ago</p>
+                        <p class="text-sm font-bold"><%= video.views %> views • <%= new Date(video.createdAt).toLocaleDateString() %></p>
                         <p class="text-sm mt-1 text-gray-300 leading-relaxed">
-                            Dive deep into Tailwind CSS v4 features. We explore responsive grids, fluid typography, and more... 
-                            <span class="text-white font-bold group-hover:text-pink-500">show more</span>
+                            <%= video.description || "Join the conversation..." %>
                         </p>
                     </div>
                 </div>
@@ -128,44 +137,45 @@
             <div class="lg:w-[380px] px-4 md:px-0 flex flex-col gap-4">
                 <h2 class="font-black text-lg uppercase tracking-tight text-gray-400">Up Next</h2>
                 
-                <script>
-                    for(let i=0; i<6; i++) {
-                        document.write(`
-                        <a href="#" class="flex gap-3 group">
-                            <div class="relative w-32 md:w-40 aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden">
-                                <img src="https://picsum.photos/seed/${i+20}/300/200" class="w-full h-full object-cover">
-                                <span class="absolute bottom-1 right-1 bg-black/80 text-[10px] px-1 rounded">12:00</span>
+                <% if(typeof suggestedVideos !== 'undefined' && suggestedVideos.length > 0) { %>
+                    <% suggestedVideos.forEach(v => { %>
+                        <a href="/watch/<%= v._id %>" class="flex gap-3 group">
+                            <div class="relative w-32 md:w-40 aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden border border-white/5">
+                                <img src="<%= v.thumbnailUrl %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                                <span class="absolute bottom-1 right-1 bg-black/80 text-[10px] px-1 rounded font-bold">12:00</span>
                             </div>
                             <div class="flex flex-col overflow-hidden">
-                                <h3 class="text-xs md:text-sm font-bold line-clamp-2 group-hover:text-pink-500 transition-colors">React Server Components vs Next.js 15 Guide</h3>
-                                <p class="text-gray-400 text-[11px] mt-1">Tech Trends</p>
-                                <p class="text-gray-500 text-[11px]">200K views • 4h ago</p>
+                                <h3 class="text-xs md:text-sm font-bold line-clamp-2 group-hover:text-pink-500 transition-colors">
+                                    <%= v.title %>
+                                </h3>
+                                <p class="text-gray-500 text-[11px] mt-1"><%= v.views %> views</p>
                             </div>
                         </a>
-                        `);
-                    }
-                </script>
+                    <% }) %>
+                <% } else { %>
+                    <p class="text-gray-500 text-sm italic">No related videos found.</p>
+                <% } %>
             </div>
         </div>
     </main>
 
     <nav class="lg:hidden fixed bottom-0 left-0 w-full bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-gray-800 h-16 flex items-center justify-around z-50">
-        <a href="index.html" class="flex flex-col items-center text-pink-500 flex-1">
+        <a href="/" class="flex flex-col items-center text-pink-500 flex-1">
             <i class="fas fa-home text-lg"></i>
             <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Home</span>
         </a>
-        <a href="#" class="flex flex-col items-center text-gray-500 flex-1">
+        <a href="/shorts" class="flex flex-col items-center text-gray-500 flex-1">
             <i class="fas fa-bolt text-lg"></i>
             <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Shorts</span>
         </a>
-        <button class="bg-pink-600 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-8 shadow-2xl border-4 border-[#0f0f0f] active:scale-90 transition-transform">
+        <button class="bg-pink-600 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-8 shadow-2xl border-4 border-[#0f0f0f]">
             <i class="fas fa-plus text-xl"></i>
         </button>
-        <a href="#" class="flex flex-col items-center text-gray-500 flex-1">
+        <a href="/user-subs" class="flex flex-col items-center text-gray-500 flex-1">
             <i class="fas fa-users text-lg"></i>
             <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Subs</span>
         </a>
-        <a href="#" class="flex flex-col items-center text-gray-500 flex-1">
+        <a href="/profile" class="flex flex-col items-center text-gray-500 flex-1">
             <i class="fas fa-user-circle text-lg"></i>
             <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Profile</span>
         </a>
@@ -193,6 +203,28 @@
             }
         }
         overlay.addEventListener('click', toggleSidebar);
+
+        // AJAX Subscribe Handler
+        async function handleSubscribe(userId) {
+            try {
+                const response = await fetch(`/subscribe/${userId}`, { method: 'POST' });
+                const data = await response.json();
+                if(data.success) {
+                    const btn = document.getElementById('sub-btn');
+                    if(data.status === 'subscribed') {
+                        btn.innerText = 'Subscribed';
+                        btn.className = 'ml-4 px-5 py-2 rounded-full font-bold text-sm bg-zinc-800 text-gray-400 transition-all active:scale-95';
+                    } else {
+                        btn.innerText = 'Subscribe';
+                        btn.className = 'ml-4 px-5 py-2 rounded-full font-bold text-sm bg-white text-black hover:bg-pink-500 hover:text-white transition-all active:scale-95';
+                    }
+                } else if(data.message === 'Login first') {
+                    window.location.href = '/login';
+                }
+            } catch (err) {
+                console.error("Sub error:", err);
+            }
+        }
     </script>
 </body>
 </html>

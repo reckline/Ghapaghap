@@ -1,23 +1,22 @@
-const User = require('../model/user');
-const mongoose = require('mongoose');
-const axios = require('axios');
-const FormData = require('form-data');
-const bcrypt = require('bcrypt');
+const User = require("../model/user");
+const Video = require("../model/video");
+const mongoose = require("mongoose");
+const axios = require("axios");
+const FormData = require("form-data");
+const bcrypt = require("bcrypt");
 
 // ==========================================
 // 0. HELPER FUNCTIONS
 // ==========================================
 
-/**
- * Avatar fix: Agar broken path hai toh UI-Avatars dikhaega
- */
 const getSafeAvatar = (user) => {
-    const avatar = user?.avatar;
-    if (avatar && avatar.startsWith('http')) return avatar;
-    if (avatar && avatar.includes('/uploads/')) return avatar.replace('/public', '');
-    
-    const name = encodeURIComponent(user?.fullname || user?.username || "User");
-    return `https://ui-avatars.com/api/?name=${name}&background=f0778b&color=fff&size=128`;
+  const avatar = user?.avatar;
+  if (avatar && avatar.startsWith("http")) return avatar;
+  if (avatar && avatar.includes("/uploads/"))
+    return avatar.replace("/public", "");
+
+  const name = encodeURIComponent(user?.fullname || user?.username || "User");
+  return `https://ui-avatars.com/api/?name=${name}&background=f0778b&color=fff&size=128`;
 };
 
 // ==========================================
@@ -25,99 +24,192 @@ const getSafeAvatar = (user) => {
 // ==========================================
 
 exports.getHomePage = async (req, res) => {
+  try {
     const userId = req.session.user?._id || req.session.user?.id;
+    
     const freshUser = userId ? await User.findById(userId).lean() : null;
-    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-    res.render('User/home', { user: freshUser });
+    if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+
+    const videos = await Video.find()
+      .populate('uploader', 'username fullname avatar isVerified')
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const creators = await User.find({ role: { $ne: "admin" } })
+      .select("username fullname avatar subscribersCount isVerified")
+      .sort({ subscribersCount: -1 })
+      .limit(10)
+      .lean();
+
+    const mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map(id => id.toString()) : [];
+    const creatorsWithStatus = creators.map(c => ({
+      ...c,
+      avatar: getSafeAvatar(c),
+      isSubbed: mySubs.includes(c._id.toString())
+    }));
+
+    res.render("User/home", { 
+        user: freshUser, 
+        creators: creatorsWithStatus,
+        videos: videos || [], 
+        title: "GhapaGhap - Home"
+    });
+  } catch (err) {
+    console.error("Home Page Error:", err);
+    res.status(500).send("Home Page Error");
+  }
 };
 
 exports.getWatchPage = async (req, res) => {
+  try {
+    const videoId = req.params.id;
     const userId = req.session.user?._id || req.session.user?.id;
-    const freshUser = userId ? await User.findById(userId).lean() : null;
-    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-    res.render('User/watch', { user: freshUser });
+
+    // Fresh User, Main Video, aur Suggested Videos fetch karo
+    const [freshUser, video] = await Promise.all([
+      userId ? User.findById(userId).lean() : null,
+      Video.findById(videoId).populate('uploader').lean()
+    ]);
+
+    if (!video) return res.redirect("/?error=video_not_found");
+
+    // 🔥 FIX: Suggested Videos fetch karna zaroori hai EJS crash se bachne ke liye
+    const suggestedVideos = await Video.find({ 
+      _id: { $ne: videoId },
+      isPublished: true 
+    })
+    .limit(10)
+    .lean();
+
+    if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+
+    res.render("User/watch", { 
+      user: freshUser, 
+      video: video,
+      suggestedVideos: suggestedVideos || [], // 🔥 Missing data added
+      title: video.title 
+    });
+  } catch (err) {
+    console.error("🔥 Watch Page Controller Error:", err);
+    res.redirect("/");
+  }
 };
 
 exports.getShortsPage = async (req, res) => {
-    const userId = req.session.user?._id || req.session.user?.id;
-    const freshUser = userId ? await User.findById(userId).lean() : null;
-    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-    res.render('User/shorts', { user: freshUser });
+  const userId = req.session.user?._id || req.session.user?.id;
+  const freshUser = userId ? await User.findById(userId).lean() : null;
+  if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+  res.render("User/shorts", { user: freshUser, title: "Shorts" });
 };
 
 exports.getTrendingPage = async (req, res) => {
-    const userId = req.session.user?._id || req.session.user?.id;
-    const freshUser = userId ? await User.findById(userId).lean() : null;
-    if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-    res.render('User/trending', { user: freshUser });
+  const userId = req.session.user?._id || req.session.user?.id;
+  const freshUser = userId ? await User.findById(userId).lean() : null;
+  if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+  res.render("User/trending", { user: freshUser, title: "Trending" });
 };
 
-exports.getAllCreators = async (req, res) => {
+// --- Top Creators Logic ---
+
+exports.getTopCreators = async (req, res) => {
     try {
         const sessionUserId = req.session.user?._id || req.session.user?.id;
+        
         let freshUser = null;
         let mySubs = [];
-
         if (sessionUserId) {
             freshUser = await User.findById(sessionUserId).lean();
             mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map(id => id.toString()) : [];
-            if(freshUser) freshUser.avatar = getSafeAvatar(freshUser);
         }
 
-        const creators = await User.find({ role: { $ne: 'admin' } })
-            .select('username fullname avatar subscribersCount isVerified videosCount')
+        const topCreators = await User.find({ role: { $ne: "admin" } })
+            .select("username fullname avatar subscribersCount isVerified videosCount bio")
             .sort({ subscribersCount: -1 })
             .lean();
 
-        const creatorsWithStatus = creators.map(c => ({
+        const creatorsWithStatus = topCreators.map((c) => ({
             ...c,
             _id: c._id.toString(),
             avatar: getSafeAvatar(c),
-            isSubbed: mySubs.includes(c._id.toString())
+            isSubbed: mySubs.includes(c._id.toString()),
         }));
 
-        res.render('User/allCreaters', { 
-            user: freshUser, 
+        res.render("User/allCreaters", { 
+            user: freshUser,
             creators: creatorsWithStatus,
-            isSubsPage: false 
+            title: "Top Trending Creators",
+            isSubsPage: false,
         });
     } catch (err) {
-        console.error("All Creators Error:", err);
-        res.status(500).send("Error loading creators");
+        console.error(err);
+        res.status(500).send("Error");
     }
 };
 
-exports.getUserSubs = async (req, res) => {
-    try {
-        const sessionUserId = req.session.user?._id || req.session.user?.id;
-        if (!sessionUserId) return res.redirect('/login');
+exports.getAllCreators = async (req, res) => {
+  try {
+    const sessionUserId = req.session.user?._id || req.session.user?.id;
+    let freshUser = null;
+    let mySubs = [];
 
-        // Fresh data with walletBalance
-        const me = await User.findById(sessionUserId).lean();
-        if(!me) return res.redirect('/login');
-        me.avatar = getSafeAvatar(me);
-
-        const mySubsIds = me?.subscriptions || [];
-        const subscribedUsers = await User.find({ _id: { $in: mySubsIds } })
-            .select('username fullname avatar subscribersCount isVerified')
-            .lean();
-
-        const usersWithStatus = subscribedUsers.map(u => ({
-            ...u,
-            _id: u._id.toString(),
-            avatar: getSafeAvatar(u),
-            isSubbed: true 
-        }));
-        
-        res.render('User/userSubs', { 
-            users: usersWithStatus, 
-            user: me, 
-            isSubsPage: true 
-        });
-    } catch (err) {
-        console.error("UserSubs Error:", err);
-        res.status(500).send("Error loading subscriptions");
+    if (sessionUserId) {
+      freshUser = await User.findById(sessionUserId).lean();
+      mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map((id) => id.toString()) : [];
+      if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
     }
+
+    const creators = await User.find({ role: { $ne: "admin" } })
+      .select("username fullname avatar subscribersCount isVerified videosCount")
+      .sort({ subscribersCount: -1 })
+      .lean();
+
+    const creatorsWithStatus = creators.map((c) => ({
+      ...c,
+      _id: c._id.toString(),
+      avatar: getSafeAvatar(c),
+      isSubbed: mySubs.includes(c._id.toString()),
+    }));
+
+    res.render("User/allCreaters", {
+      user: freshUser,
+      creators: creatorsWithStatus,
+      isSubsPage: false,
+      title: "All Creators"
+    });
+  } catch (err) {
+    res.status(500).send("Error loading creators");
+  }
+};
+
+exports.getUserSubs = async (req, res) => {
+  try {
+    const sessionUserId = req.session.user?._id || req.session.user?.id;
+    if (!sessionUserId) return res.redirect("/login");
+
+    const me = await User.findById(sessionUserId).lean();
+    if (me) me.avatar = getSafeAvatar(me);
+
+    const subscribedUsers = await User.find({ _id: { $in: me?.subscriptions || [] } })
+      .select("username fullname avatar subscribersCount isVerified")
+      .sort({ subscribersCount: -1 })
+      .lean();
+
+    const usersWithStatus = subscribedUsers.map((u) => ({
+      ...u,
+      _id: u._id.toString(),
+      avatar: getSafeAvatar(u),
+      isSubbed: true,
+    }));
+
+    res.render("User/userSubs", {
+      users: usersWithStatus,
+      user: me,
+      isSubsPage: true,
+      title: "My Subscriptions"
+    });
+  } catch (err) {
+    res.status(500).send("Error loading subscriptions");
+  }
 };
 
 // ==========================================
@@ -125,161 +217,153 @@ exports.getUserSubs = async (req, res) => {
 // ==========================================
 
 exports.searchUsers = async (req, res) => {
-    try {
-        const query = (req.query.q || "").trim();
-        const userId = req.session.user?._id || req.session.user?.id;
-        
-        let mySubs = [];
-        if (userId) {
-            const me = await User.findById(userId).select('subscriptions').lean();
-            mySubs = me?.subscriptions ? me.subscriptions.map(id => id.toString()) : [];
-        }
+  try {
+    const query = (req.query.q || "").trim();
+    const userId = req.session.user?._id || req.session.user?.id;
 
-        let filter = { role: { $ne: 'admin' } };
-        if (req.query.onlySubs === 'true' && userId) {
-            filter._id = { $in: mySubs };
-        } else if (userId) {
-            filter._id = { $ne: new mongoose.Types.ObjectId(userId) };
-        }
-
-        if (query !== "") {
-            filter.$or = [
-                { username: { $regex: query, $options: 'i' } },
-                { fullname: { $regex: query, $options: 'i' } }
-            ];
-        }
-
-        const users = await User.find(filter)
-            .select('username fullname avatar isVerified subscribersCount videosCount')
-            .limit(20)
-            .lean();
-
-        const usersWithStatus = users.map(u => ({
-            ...u,
-            _id: u._id.toString(),
-            avatar: getSafeAvatar(u),
-            isSubbed: mySubs.includes(u._id.toString())
-        }));
-
-        res.json(usersWithStatus);
-    } catch (err) {
-        res.status(500).json({ error: "Search Error" });
+    let mySubs = [];
+    if (userId) {
+      const me = await User.findById(userId).select("subscriptions").lean();
+      mySubs = me?.subscriptions ? me.subscriptions.map((id) => id.toString()) : [];
     }
+
+    let filter = { role: { $ne: "admin" } };
+    if (query !== "") {
+      filter.$or = [
+        { username: { $regex: query, $options: "i" } },
+        { fullname: { $regex: query, $options: "i" } },
+      ];
+    }
+
+    const users = await User.find(filter)
+      .select("username fullname avatar isVerified subscribersCount videosCount")
+      .sort({ subscribersCount: -1 })
+      .limit(20)
+      .lean();
+
+    const usersWithStatus = users.map((u) => ({
+      ...u,
+      _id: u._id.toString(),
+      avatar: getSafeAvatar(u),
+      isSubbed: mySubs.includes(u._id.toString()),
+    }));
+
+    res.json(usersWithStatus);
+  } catch (err) {
+    res.status(500).json({ error: "Search Error" });
+  }
 };
 
 exports.subscribeUser = async (req, res) => {
-    try {
-        const targetUserId = req.params.userId;
-        const currentUserId = req.session.user?._id || req.session.user?.id;
+  try {
+    const targetUserId = req.params.userId;
+    const currentUserId = req.session.user?._id || req.session.user?.id;
 
-        if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
-        if (targetUserId === currentUserId.toString()) return res.status(400).json({ success: false, message: "Self-sub blocked" });
+    if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
+    if (targetUserId === currentUserId.toString()) return res.status(400).json({ success: false, message: "Self-sub blocked" });
 
-        const me = await User.findById(currentUserId).select('subscriptions');
-        const isAlreadySubscribed = me.subscriptions.some(id => id.toString() === targetUserId);
+    const me = await User.findById(currentUserId).select("subscriptions");
+    const isAlreadySubscribed = me.subscriptions.some((id) => id.toString() === targetUserId);
 
-        const targetUpdate = isAlreadySubscribed 
-            ? { $pull: { subscribers: currentUserId }, $inc: { subscribersCount: -1 } } 
-            : { $push: { subscribers: currentUserId }, $inc: { subscribersCount: 1 } };
+    const targetUpdate = isAlreadySubscribed
+      ? { $pull: { subscribers: currentUserId }, $inc: { subscribersCount: -1 } }
+      : { $push: { subscribers: currentUserId }, $inc: { subscribersCount: 1 } };
 
-        const myUpdate = isAlreadySubscribed 
-            ? { $pull: { subscriptions: targetUserId } } 
-            : { $push: { subscriptions: targetUserId } };
+    const myUpdate = isAlreadySubscribed
+      ? { $pull: { subscriptions: targetUserId } }
+      : { $push: { subscriptions: targetUserId } };
 
-        const [updatedTarget, updatedMe] = await Promise.all([
-            User.findByIdAndUpdate(targetUserId, targetUpdate, { returnDocument: 'after' }),
-            User.findByIdAndUpdate(currentUserId, myUpdate, { returnDocument: 'after' }).select('-password').lean()
-        ]);
+    const [updatedTarget, updatedMe] = await Promise.all([
+      User.findByIdAndUpdate(targetUserId, targetUpdate, { returnDocument: "after" }),
+      User.findByIdAndUpdate(currentUserId, myUpdate, { returnDocument: "after" }).select("-password").lean(),
+    ]);
 
-        req.session.user = { ...updatedMe, avatar: getSafeAvatar(updatedMe) };
-        req.session.save(() => {
-            res.json({ 
-                success: true, 
-                newCount: updatedTarget.subscribersCount,
-                status: isAlreadySubscribed ? "unsubscribed" : "subscribed"
-            });
-        });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    req.session.user = { ...updatedMe, avatar: getSafeAvatar(updatedMe) };
+    req.session.save(() => {
+      res.json({
+        success: true,
+        newCount: updatedTarget.subscribersCount,
+        status: isAlreadySubscribed ? "unsubscribed" : "subscribed",
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ success: false });
+  }
 };
 
 // ==========================================
 // 3. USER PROFILE & EDIT LOGIC
 // ==========================================
 
-exports.getProfile = async (req, res) => { 
-    try {
-        const userId = req.session?.user?._id || req.session?.user?.id;
-        const freshUser = await User.findById(userId).lean();
-        if (!freshUser) return res.redirect('/login');
-        freshUser.avatar = getSafeAvatar(freshUser);
-        res.render('User/userProfile', { user: freshUser });
-    } catch (err) { res.status(500).send("Error"); }
+exports.getProfile = async (req, res) => {
+  try {
+    const userId = req.session?.user?._id || req.session?.user?.id;
+    const freshUser = await User.findById(userId).lean();
+    if (!freshUser) return res.redirect("/login");
+    freshUser.avatar = getSafeAvatar(freshUser);
+    res.render("User/userProfile", { user: freshUser, title: "My Profile" });
+  } catch (err) {
+    res.status(500).send("Error");
+  }
 };
 
 exports.getEditProfile = async (req, res) => {
-    try {
-        const user = await User.findById(req.session.user._id).lean();
-        user.avatar = getSafeAvatar(user);
-        res.render('User/editProfile', { user }); 
-    } catch (err) { res.redirect('/profile'); }
+  try {
+    const user = await User.findById(req.session.user._id).lean();
+    if (user) user.avatar = getSafeAvatar(user);
+    res.render("User/editProfile", { user, title: "Edit Profile" });
+  } catch (err) {
+    res.redirect("/profile");
+  }
 };
 
 exports.handleUpdateProfile = async (req, res) => {
-    try {
-        const { fullname, username, phone, email, bio } = req.body;
-        const userId = req.session.user._id;
+  try {
+    const { fullname, username, phone, email, bio } = req.body;
+    const userId = req.session.user._id;
 
-        let updateFields = {
-            fullname: fullname.trim(),
-            username: username.trim().toLowerCase(),
-            phone: phone.trim(),
-            email: email.trim().toLowerCase(),
-            bio: bio ? bio.trim() : ""
-        };
+    let updateFields = {
+      fullname: fullname.trim(),
+      username: username.trim().toLowerCase(),
+      phone: phone.trim(),
+      email: email.trim().toLowerCase(),
+      bio: bio ? bio.trim() : "",
+    };
 
-        if (req.file) {
-            try {
-                const formData = new FormData();
-                formData.append('image', req.file.buffer, {
-                    filename: req.file.originalname,
-                    contentType: req.file.mimetype,
-                });
-                formData.append('api_key', process.env.PHP_UPLOAD_API_KEY);
-                const phpRes = await axios.post(process.env.PHP_UPLOAD_URL, formData, {
-                    headers: { ...formData.getHeaders() }
-                });
-                if (phpRes.data && phpRes.data.status === true) {
-                    updateFields.avatar = phpRes.data.url;
-                }
-            } catch (uploadErr) {
-                console.error("PHP Upload Failed:", uploadErr.message);
-            }
-        }
-
-        const updatedUser = await User.findByIdAndUpdate(
-            userId, 
-            updateFields, 
-            { returnDocument: 'after' }
-        ).select('-password').lean();
-
-        const finalData = { ...updatedUser };
-        finalData.avatar = getSafeAvatar(updatedUser);
-        req.session.user = finalData;
-        req.session.save(() => res.redirect('/profile?success=true'));
-
-    } catch (err) {
-        res.redirect('/edit-profile?error=server_error');
+    if (req.file) {
+      const formData = new FormData();
+      formData.append("image", req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
+      formData.append("api_key", process.env.PHP_UPLOAD_API_KEY);
+      const phpRes = await axios.post(process.env.PHP_UPLOAD_URL, formData, {
+        headers: { ...formData.getHeaders() },
+      });
+      if (phpRes.data && phpRes.data.status === true) {
+        updateFields.avatar = phpRes.data.url;
+      }
     }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateFields, { returnDocument: "after" })
+      .select("-password")
+      .lean();
+
+    req.session.user = { ...updatedUser, avatar: getSafeAvatar(updatedUser) };
+    req.session.save(() => res.redirect("/profile?success=true"));
+  } catch (err) {
+    res.redirect("/edit-profile?error=server_error");
+  }
 };
 
 exports.getUserDashboard = async (req, res) => {
-    try {
-        const user = await User.findById(req.session.user._id).lean();
-        if(user) user.avatar = getSafeAvatar(user);
-        res.render('User/dashboard', { user }); 
-    } catch (err) { res.status(500).send("Dashboard Error"); }
+  try {
+    const user = await User.findById(req.session.user._id).lean();
+    if (user) user.avatar = getSafeAvatar(user);
+    res.render("User/dashboard", { user, title: "Creator Dashboard" });
+  } catch (err) {
+    res.status(500).send("Dashboard Error");
+  }
 };
 
 // ==========================================
@@ -287,58 +371,61 @@ exports.getUserDashboard = async (req, res) => {
 // ==========================================
 
 exports.getChangePassword = async (req, res) => {
-    const userId = req.session.user?._id || req.session.user?.id;
-    if (!userId) return res.redirect('/login');
-    const freshUser = await User.findById(userId).lean();
-    res.render('User/changePassword', { user: freshUser });
+  const userId = req.session.user?._id || req.session.user?.id;
+  if (!userId) return res.redirect("/login");
+  const freshUser = await User.findById(userId).lean();
+  res.render("User/changePassword", { user: freshUser, title: "Change Password" });
 };
 
 exports.handleUpdatePassword = async (req, res) => {
-    try {
-        const { currentPassword, newPassword, confirmPassword } = req.body;
-        const userId = req.session.user?._id || req.session.user?.id;
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+    const userId = req.session.user?._id || req.session.user?.id;
 
-        if (newPassword !== confirmPassword) {
-            return res.redirect('/change-password?error=Confirm%20password%20match%20nahi%20hai');
-        }
-
-        const user = await User.findById(userId);
-        const isMatch = await bcrypt.compare(currentPassword, user.password);
-
-        if (!isMatch) {
-            return res.redirect('/change-password?error=Purana%20password%20galat%20hai');
-        }
-
-        user.password = newPassword; 
-        await user.save();
-        return res.redirect('/change-password?success=password_updated');
-
-    } catch (err) {
-        res.status(500).send("Error updating password");
+    if (newPassword !== confirmPassword) {
+      return res.redirect("/change-password?error=Confirm%20password%20match%20nahi%20hai");
     }
+
+    const user = await User.findById(userId);
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+
+    if (!isMatch) {
+      return res.redirect("/change-password?error=Purana%20password%20galat%20hai");
+    }
+
+    user.password = newPassword; // Mongoose middleware automatically hash kar dega
+    await user.save();
+    return res.redirect("/change-password?success=password_updated");
+  } catch (err) {
+    res.status(500).send("Error updating password");
+  }
 };
 
 exports.getAddBankPage = async (req, res) => {
-    const userId = req.session.user?._id || req.session.user?.id;
-    if (!userId) return res.redirect('/login');
-    const freshUser = await User.findById(userId).lean();
-    res.render('User/addBankAccount', { user: freshUser });
+  const userId = req.session.user?._id || req.session.user?.id;
+  if (!userId) return res.redirect("/login");
+  const freshUser = await User.findById(userId).lean();
+  res.render("User/addBankAccount", { user: freshUser, title: "Add Bank Account" });
 };
 
 exports.postAddBank = async (req, res) => {
-    try {
-        const { accountName, accountNumber, ifscCode, bankName } = req.body;
-        const userId = req.session.user?._id || req.session.user?.id;
-        
-        const updatedUser = await User.findByIdAndUpdate(userId, {
-            bankDetails: { accountName, accountNumber, ifscCode, bankName, isBankAdded: true }
-        }, { returnDocument: 'after' }).select('-password').lean();
+  try {
+    const { accountName, accountNumber, ifscCode, bankName } = req.body;
+    const userId = req.session.user?._id || req.session.user?.id;
 
-        req.session.user = { ...updatedUser, avatar: getSafeAvatar(updatedUser) };
-        req.session.save(() => {
-            res.json({ success: true, message: "Bank account updated successfully!" });
-        });
-    } catch (err) {
-        res.status(500).json({ success: false, message: "Failed to update bank details" });
-    }
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      {
+        bankDetails: { accountName, accountNumber, ifscCode, bankName, isBankAdded: true },
+      },
+      { returnDocument: "after" }
+    ).select("-password").lean();
+
+    req.session.user = { ...updatedUser, avatar: getSafeAvatar(updatedUser) };
+    req.session.save(() => {
+      res.json({ success: true, message: "Bank account updated successfully!" });
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Failed to update bank details" });
+  }
 };

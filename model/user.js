@@ -89,7 +89,7 @@ const userSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
     }],
-    subscribersCount: { // Fixed typo from subscriberCount to match controller
+    subscribersCount: { 
         type: Number, 
         default: 0,
         min: 0 
@@ -106,25 +106,38 @@ const userSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 // ==========================================
-// 🔒 PASSWORD HASHING (Modern Fixed Approach)
+// 🔒 PASSWORD HASHING & COUNTER SYNC
 // ==========================================
 userSchema.pre('save', async function() {
-    // Agar password modify nahi hua toh aage mat badho
-    if (!this.isModified('password')) return;
-    
-    try {
-        // Modern async way mein next() ki zaroorat nahi hoti
-        const salt = await bcrypt.genSalt(10);
-        this.password = await bcrypt.hash(this.password, salt);
-    } catch (err) {
-        throw err; // Mongoose async error ko catch kar lega
+    // 1. Password Hashing
+    if (this.isModified('password')) {
+        try {
+            const salt = await bcrypt.genSalt(10);
+            this.password = await bcrypt.hash(this.password, salt);
+        } catch (err) {
+            throw new Error("Password hashing failed");
+        }
+    }
+
+    // 2. Auto-sync subscribersCount (Video model wale fix ki tarah)
+    if (this.isModified('subscribers')) {
+        this.subscribersCount = this.subscribers.length;
     }
 });
 
-// Performance Indices
+// ==========================================
+// ⚡ PERFORMANCE INDICES
+// ==========================================
 userSchema.index({ subscriptions: 1 });
 userSchema.index({ subscribers: 1 });
 userSchema.index({ username: 'text', fullname: 'text' });
+
+// ==========================================
+// 🔑 METHODS: Password Verification
+// ==========================================
+userSchema.methods.comparePassword = async function(enteredPassword) {
+    return await bcrypt.compare(enteredPassword, this.password);
+};
 
 const User = mongoose.models.User || mongoose.model('User', userSchema);
 module.exports = User;

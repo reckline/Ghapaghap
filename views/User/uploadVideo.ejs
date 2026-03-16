@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <title>GhapaGhap</title>
+    <style>
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f0f0f;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #444;
+      }
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      #mobile-sidebar {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30"
+  >
+    <div
+      id="sidebar-overlay"
+      class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"
+    ></div>
+
+    <!-- ==================================== Mobile Sidebar ==================================== -->
+
+    <aside
+      id="mobile-sidebar"
+      class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto"
+    >
+       <% if (user) { %>
+         <%- include('../partials/mobWithLogin') %>
+       <% } else { %>
+         <%- include('../partials/mobWithoutLogin') %>
+       <% } %>
+    </aside>
+    <!-- ========================================= Header ======================================== -->
+
+    <nav
+      class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+     <% if (user) { %>
+       <%- include('../partials/headerWithLogin') %>
+     <% } else { %>
+       <%- include('../partials/headerWithoutLogin') %>
+     <% } %>
+    </nav>
+    <!-- ========================================= Desktop Sidebar ======================================== -->
+    <div class="flex">
+        <% if (user) { %>
+            <%- include('../partials/desktopWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/desktopWithoutLogin') %>
+        <% } %>
+      <!-- ========================================= Main Body ======================================== -->
+      <main class="flex-1 w-full lg:ml-64 mt-16 p-4 md:p-8 mb-20">
+
+           <%- include('../partials/topNav') %>
+
+
+
+<div class="min-h-screen bg-[#0f0f0f] py-10 px-4 text-gray-200">
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-gray-800">
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-white mb-2">Upload Content</h1>
+                <p class="text-gray-400">Share your creative videos with the community of Ghapaghap.</p>
+            </div>
+
+            <form action="/upload-video" method="POST" enctype="multipart/form-data" class="space-y-6">
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Video Title</label>
+                    <input type="text" name="title" required placeholder="What's your video about?"
+                        class="w-full px-4 py-3 bg-[#2a2a2a] rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition duration-200">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-300 mb-2">Description</label>
+                    <textarea name="description" rows="4" placeholder="Tell viewers about your video..."
+                        class="w-full px-4 py-3 bg-[#2a2a2a] rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition duration-200"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <div class="group p-6 border-2 border-dashed border-gray-700 rounded-2xl hover:border-pink-500 transition-all duration-300 bg-[#242424]">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3 text-center">Thumbnail (JPG/PNG)</label>
+                        <div class="flex flex-col items-center">
+                            <input type="file" name="thumbnail" accept="image/*" required 
+                                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-pink-900/30 file:text-pink-400 file:font-semibold hover:file:bg-pink-900/50 cursor-pointer">
+                            <p class="text-xs text-gray-500 mt-2">Recommended: 1280x720px</p>
+                        </div>
+                    </div>
+
+                    <div class="group p-6 border-2 border-dashed border-gray-700 rounded-2xl hover:border-blue-500 transition-all duration-300 bg-[#242424]">
+                        <label class="block text-sm font-semibold text-gray-300 mb-3 text-center">Video File (MP4)</label>
+                        <div class="flex flex-col items-center">
+                            <input type="file" name="video" accept="video/*" required 
+                                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-900/30 file:text-blue-400 file:font-semibold hover:file:bg-blue-900/50 cursor-pointer">
+                            <p class="text-xs text-gray-500 mt-2">Max Size: 150MB</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <button type="submit" class="w-full py-4 bg-gradient-to-r from-pink-600 to-red-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-pink-500/20 transition transform hover:-translate-y-1 active:scale-95">
+                    🚀 Publish Video
+                </button>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+
+      </main>
+    </div>
+    <%- include('../partials/homeFooter') %>
+    <script>
+      const sidebar = document.getElementById("mobile-sidebar");
+      const overlay = document.getElementById("sidebar-overlay");
+
+      function toggleSidebar() {
+        const isClosed = sidebar.classList.contains("-translate-x-full");
+        if (isClosed) {
+          sidebar.classList.remove("-translate-x-full");
+          overlay.classList.remove("hidden");
+          setTimeout(() => overlay.classList.add("opacity-100"), 10);
+        } else {
+          sidebar.classList.add("-translate-x-full");
+          overlay.classList.remove("opacity-100");
+          setTimeout(() => overlay.classList.add("hidden"), 300);
+        }
+      }
+      overlay.addEventListener("click", toggleSidebar);
+    </script>
+  </body>
+</html>
