@@ -25,27 +25,24 @@
         </svg>
         <span class="text-[10px] mt-1">Shorts</span>
       </a>
-      <div class="flex flex-1 justify-center">
-        <a href="/uploadVideos">
-          <button
-          class="bg-pink-600 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform border-4 border-[#0f0f0f] -mt-6"
-        >
-          <svg
-            class="w-7 h-7"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            ></path>
-          </svg>
-        </button>
-        </a>
-      </div>
+           <div class="flex flex-1 justify-center">
+  <% if (user && user.isVerified) { %>
+    <a href="/upload-video">
+      <button class="bg-pink-600 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform border-4 border-[#0f0f0f] -mt-6">
+        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+      </button>
+    </a>
+  <% } else { %>
+    <button onclick="checkVerification()" 
+            class="bg-gray-600 text-white w-11 h-11 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform border-4 border-[#0f0f0f] -mt-6">
+      <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+      </svg>
+    </button>
+  <% } %>
+</div>
       <a
         href="/userSubs"
         class="flex flex-col items-center text-gray-500 flex-1"

@@ -1,157 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
-    />
-    <title>GhapaGhap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <title>GhapaGhap | Publish Content</title>
     <style>
-      ::-webkit-scrollbar {
-        width: 6px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0f0f0f;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #333;
-        border-radius: 10px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #444;
-      }
-      .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-      }
-      #mobile-sidebar {
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      }
-    </style>
-  </head>
-  <body
-    class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30"
-  >
-    <div
-      id="sidebar-overlay"
-      class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"
-    ></div>
-
-    <!-- ==================================== Mobile Sidebar ==================================== -->
-
-    <aside
-      id="mobile-sidebar"
-      class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto"
-    >
-       <% if (user) { %>
-         <%- include('../partials/mobWithLogin') %>
-       <% } else { %>
-         <%- include('../partials/mobWithoutLogin') %>
-       <% } %>
-    </aside>
-    <!-- ========================================= Header ======================================== -->
-
-    <nav
-      class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
-     <% if (user) { %>
-       <%- include('../partials/headerWithLogin') %>
-     <% } else { %>
-       <%- include('../partials/headerWithoutLogin') %>
-     <% } %>
-    </nav>
-    <!-- ========================================= Desktop Sidebar ======================================== -->
-    <div class="flex">
-        <% if (user) { %>
-            <%- include('../partials/desktopWithLogin') %>
-        <% } else { %>
-            <%- include('../partials/desktopWithoutLogin') %>
-        <% } %>
-      <!-- ========================================= Main Body ======================================== -->
-      <main class="flex-1 w-full lg:ml-64 mt-16 p-4 md:p-8 mb-20">
-
-           <%- include('../partials/topNav') %>
-
-
-
-<div class="min-h-screen bg-[#0f0f0f] py-10 px-4 text-gray-200">
-    <div class="max-w-4xl mx-auto">
-        <div class="bg-[#1a1a1a] rounded-2xl shadow-2xl p-8 border border-gray-800">
-            <div class="mb-8">
-                <h1 class="text-3xl font-bold text-white mb-2">Upload Content</h1>
-                <p class="text-gray-400">Share your creative videos with the community of Ghapaghap.</p>
-            </div>
-
-            <form action="/upload-video" method="POST" enctype="multipart/form-data" class="space-y-6">
-                
-                <div>
-                    <label class="block text-sm font-semibold text-gray-300 mb-2">Video Title</label>
-                    <input type="text" name="title" required placeholder="What's your video about?"
-                        class="w-full px-4 py-3 bg-[#2a2a2a] rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition duration-200">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-300 mb-2">Description</label>
-                    <textarea name="description" rows="4" placeholder="Tell viewers about your video..."
-                        class="w-full px-4 py-3 bg-[#2a2a2a] rounded-xl border border-gray-700 text-white placeholder-gray-500 focus:ring-2 focus:ring-pink-500 focus:border-transparent outline-none transition duration-200"></textarea>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    
-                    <div class="group p-6 border-2 border-dashed border-gray-700 rounded-2xl hover:border-pink-500 transition-all duration-300 bg-[#242424]">
-                        <label class="block text-sm font-semibold text-gray-300 mb-3 text-center">Thumbnail (JPG/PNG)</label>
-                        <div class="flex flex-col items-center">
-                            <input type="file" name="thumbnail" accept="image/*" required 
-                                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-pink-900/30 file:text-pink-400 file:font-semibold hover:file:bg-pink-900/50 cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-2">Recommended: 1280x720px</p>
-                        </div>
-                    </div>
-
-                    <div class="group p-6 border-2 border-dashed border-gray-700 rounded-2xl hover:border-blue-500 transition-all duration-300 bg-[#242424]">
-                        <label class="block text-sm font-semibold text-gray-300 mb-3 text-center">Video File (MP4)</label>
-                        <div class="flex flex-col items-center">
-                            <input type="file" name="video" accept="video/*" required 
-                                class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-blue-900/30 file:text-blue-400 file:font-semibold hover:file:bg-blue-900/50 cursor-pointer">
-                            <p class="text-xs text-gray-500 mt-2">Max Size: 150MB</p>
-                        </div>
-                    </div>
-
-                </div>
-
-                <button type="submit" class="w-full py-4 bg-gradient-to-r from-pink-600 to-red-500 text-white rounded-xl font-bold text-lg shadow-lg hover:shadow-pink-500/20 transition transform hover:-translate-y-1 active:scale-95">
-                    🚀 Publish Video
-                </button>
-
-            </form>
-        </div>
-    </div>
-</div>
-
-
-      </main>
-    </div>
-    <%- include('../partials/homeFooter') %>
-    <script>
-      const sidebar = document.getElementById("mobile-sidebar");
-      const overlay = document.getElementById("sidebar-overlay");
-
-      function toggleSidebar() {
-        const isClosed = sidebar.classList.contains("-translate-x-full");
-        if (isClosed) {
-          sidebar.classList.remove("-translate-x-full");
-          overlay.classList.remove("hidden");
-          setTimeout(() => overlay.classList.add("opacity-100"), 10);
-        } else {
-          sidebar.classList.add("-translate-x-full");
-          overlay.classList.remove("opacity-100");
-          setTimeout(() => overlay.classList.add("hidden"), 300);
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .progress-glow { box-shadow: 0 0 15px rgba(236, 72, 153, 0.5); }
+        
+        .input-focus:focus { 
+            background: rgba(255, 255, 255, 0.05);
+            border-color: #ec4899;
+            box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);
         }
-      }
-      overlay.addEventListener("click", toggleSidebar);
+        
+        /* Smooth scale animation for upload icon */
+        .upload-icon-anim { animation: bounce 2s infinite; }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <% if (user) { %> <%- include('../partials/mobWithLogin') %> <% } else { %> <%- include('../partials/mobWithoutLogin') %> <% } %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %> <%- include('../partials/headerWithLogin') %> <% } else { %> <%- include('../partials/headerWithoutLogin') %> <% } %>
+    </nav>
+
+    <div class="flex">
+        <% if (user) { %> <%- include('../partials/desktopWithLogin') %> <% } else { %> <%- include('../partials/desktopWithoutLogin') %> <% } %>
+
+        <main class="flex-1 w-full lg:ml-64 mt-16 p-4 md:p-8 mb-20">
+            <%- include('../partials/topNav') %>
+
+            <div class="min-h-screen py-6 px-2 text-gray-200">
+                <div class="max-w-4xl mx-auto">
+                    <div class="bg-[#1a1a1a] rounded-3xl shadow-2xl p-6 md:p-10 border border-gray-800 relative overflow-hidden">
+                        <div class="absolute -top-20 -right-20 w-64 h-64 bg-pink-600/10 blur-[100px] rounded-full"></div>
+                        
+                        <div class="mb-10 relative z-10">
+                            <h1 class="text-4xl font-black text-white mb-2 tracking-tight italic">PUBLISH <span class="text-pink-500">CONTENT</span></h1>
+                            <p class="text-gray-400 text-sm">Upload high-quality 800MB videos or trending shorts.</p>
+                        </div>
+
+                        <form id="uploadForm" class="space-y-8 relative z-10">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2">
+                                    <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Video Title</label>
+                                    <input type="text" name="title" required placeholder="Catchy title for your content..."
+                                        class="w-full px-5 py-4 bg-[#242424] rounded-2xl border border-gray-700 text-white placeholder-gray-600 outline-none transition duration-300 input-focus font-medium">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Type</label>
+                                    <select id="typeSelector" name="videoType" class="w-full px-5 py-4 bg-[#242424] rounded-2xl border border-gray-700 text-pink-400 font-black outline-none transition duration-300 input-focus cursor-pointer appearance-none">
+                                        <option value="video" selected>📺 FULL VIDEO</option>
+                                        <option value="short">📱 SHORT</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Description</label>
+                                <textarea name="description" rows="3" placeholder="Tell your audience about this video..."
+                                    class="w-full px-5 py-4 bg-[#242424] rounded-2xl border border-gray-700 text-white placeholder-gray-600 outline-none transition duration-300 input-focus resize-none"></textarea>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="group p-8 border-2 border-dashed border-gray-800 rounded-3xl hover:border-pink-500/40 transition-all duration-500 bg-[#242424]/50 text-center">
+                                    <i class="fa-regular fa-image text-3xl text-gray-600 group-hover:text-pink-500 transition-colors mb-4"></i>
+                                    <label class="block text-xs font-black text-gray-500 mb-4 uppercase tracking-widest">Cover Image</label>
+                                    <input type="file" name="thumbnail" accept="image/*" required 
+                                        class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:bg-pink-500/10 file:text-pink-500 file:font-bold hover:file:bg-pink-500/20 cursor-pointer">
+                                </div>
+
+                                <div id="videoUploadBox" class="group p-8 border-2 border-dashed border-gray-800 rounded-3xl hover:border-blue-500/40 transition-all duration-500 bg-[#242424]/50 text-center">
+                                    <i class="fa-solid fa-video text-3xl text-gray-600 group-hover:text-blue-500 transition-colors mb-4"></i>
+                                    <label class="block text-xs font-black text-gray-500 mb-4 uppercase tracking-widest">Source File</label>
+                                    <input type="file" id="videoInput" name="video" accept="video/*" required 
+                                        class="w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-6 file:rounded-full file:border-0 file:bg-blue-500/10 file:text-blue-500 file:font-bold hover:file:bg-blue-500/20 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <div id="progressContainer" class="hidden animate-in fade-in duration-500">
+                                <div class="bg-[#111] p-6 rounded-3xl border border-gray-800 space-y-4">
+                                    <div class="flex justify-between items-end">
+                                        <div class="flex flex-col">
+                                            <span class="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">Current Task</span>
+                                            <div class="flex items-center gap-2">
+                                                <span id="statusLabel" class="text-sm font-bold text-white tracking-tight italic">Starting Engine...</span>
+                                            </div>
+                                        </div>
+                                        <span id="percentLabel" class="text-4xl font-black text-pink-500 italic tabular-nums">0%</span>
+                                    </div>
+                                    <div class="w-full bg-gray-900 rounded-full h-4 overflow-hidden p-1">
+                                        <div id="progressBar" class="h-full bg-gradient-to-r from-pink-600 via-magenta-500 to-blue-500 rounded-full w-0 transition-all duration-300 progress-glow relative">
+                                            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between items-center">
+                                        <p class="text-[9px] text-gray-600 uppercase font-bold tracking-widest"><i class="fa-solid fa-shield-halved mr-1"></i> AES-256 Encrypted Upload</p>
+                                        <p id="sizeLabel" class="text-[9px] text-gray-400 font-black"></p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" id="submitBtn" class="w-full py-5 bg-white text-black rounded-2xl font-black text-xl shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:bg-pink-500 hover:text-white transition-all duration-300 active:scale-[0.98] flex items-center justify-center gap-3 group">
+                                <i class="fa-solid fa-bolt-lightning group-hover:animate-pulse"></i> 
+                                <span id="btnText">PUBLISH NOW</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/homeFooter') %>
+
+    <script>
+        const socket = io();
+        let socketId = "";
+
+        socket.on('connect', () => {
+            socketId = socket.id;
+        });
+
+        // Listen for Heavy Processing Updates (Duration, Cloud Upload, DB Save)
+        socket.on('processing_status', (data) => {
+            statusLabel.innerText = data.step;
+            progressBar.style.width = data.percent + '%';
+            percentLabel.innerText = data.percent + '%';
+            
+            if (data.percent === 100) {
+                statusLabel.innerText = "SUCCESSFULLY PUBLISHED!";
+                statusLabel.classList.add('text-green-400');
+            }
+        });
+
+        const form = document.getElementById('uploadForm');
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const percentLabel = document.getElementById('percentLabel');
+        const statusLabel = document.getElementById('statusLabel');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const typeSelector = document.getElementById('typeSelector');
+        const videoUploadBox = document.getElementById('videoUploadBox');
+
+        // Dynamic UI Change based on content type
+        typeSelector.addEventListener('change', (e) => {
+            if(e.target.value === 'short') {
+                videoUploadBox.classList.replace('hover:border-blue-500/40', 'hover:border-pink-500/40');
+                submitBtn.classList.replace('hover:bg-pink-500', 'hover:bg-magenta-600');
+            } else {
+                videoUploadBox.classList.replace('hover:border-pink-500/40', 'hover:border-blue-500/40');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(form);
+            const videoFile = document.getElementById('videoInput').files[0];
+            
+            // Show File Size
+            if(videoFile) {
+                const sizeMB = (videoFile.size / (1024 * 1024)).toFixed(2);
+                document.getElementById('sizeLabel').innerText = `${sizeMB} MB TOTAL`;
+            }
+
+            submitBtn.disabled = true;
+            btnText.innerText = "UPLOADING...";
+            progressContainer.classList.remove('hidden');
+
+            try {
+                // Axios for Upload Progress (Client to Server)
+                const response = await axios.post('/upload-video', formData, {
+                    headers: { 
+                        'Content-Type': 'multipart/form-data',
+                        'x-socket-id': socketId 
+                    },
+                    timeout: 0, // No timeout for large files
+                    onUploadProgress: (progressEvent) => {
+                        const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+                        
+                        // We scale Axios progress to 0-80%, remaining 20% is for server-side processing
+                        const displayPercent = Math.round(percent * 0.8);
+                        
+                        if (percent < 100) {
+                            progressBar.style.width = displayPercent + '%';
+                            percentLabel.innerText = displayPercent + '%';
+                            statusLabel.innerText = "Streaming to Secure Server...";
+                        } else {
+                            statusLabel.innerText = "Server Received File. Processing...";
+                            progressBar.style.width = '85%';
+                            percentLabel.innerText = '85%';
+                        }
+                    }
+                });
+
+                if (response.data.success) {
+                    statusLabel.innerText = "Mubarak Ho! Redirecting...";
+                    setTimeout(() => {
+                        window.location.href = response.data.redirect || "/profile";
+                    }, 1500);
+                }
+            } catch (error) {
+                console.error("Upload Error:", error);
+                alert("Upload Failed: " + (error.response?.data?.message || "Server Error"));
+                submitBtn.disabled = false;
+                btnText.innerText = "RETRY PUBLISH";
+                progressContainer.classList.add('hidden');
+            }
+        });
+
+        // Sidebar logic remains same...
     </script>
-  </body>
+</body>
 </html>

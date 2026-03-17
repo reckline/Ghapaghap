@@ -1,229 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
     <title>GhapaGhap | <%= video.title %></title>
+    
+    <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+    <link href="https://unpkg.com/@silvermine/videojs-quality-selector/dist/css/quality-selector.css" rel="stylesheet">
+
     <style>
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: #0f0f0f; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        
+        /* Custom Video.js Styling */
+        .video-js { width: 100%; height: 100%; border-radius: 1rem; overflow: hidden; }
+        .vjs-big-play-button { 
+            background-color: rgba(236, 72, 153, 0.7) !important; 
+            border: none !important; 
+            border-radius: 50% !important;
+            width: 2.5em !important; height: 2.5em !important; line-height: 2.5em !important;
+        }
+        .vjs-menu-button-popup .vjs-menu { width: 10em; left: -4em; }
     </style>
 </head>
 <body class="bg-[#0f0f0f] text-white font-sans antialiased">
-
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
 
     <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
-        <div class="flex items-center gap-4 mb-6">
-            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-800 rounded-full">
-                <i class="fas fa-times text-xl"></i>
-            </button>
-            <div class="font-black text-xl tracking-tighter uppercase text-pink-500">GhapaGhap</div>
-        </div>
-        <nav class="space-y-1">
-            <a href="/" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl font-semibold">Home</a>
-            <a href="/trending" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Trending</a>
-            <a href="/shorts" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl">Shorts</a>
-            <hr class="border-gray-800 my-4">
-            <a href="/profile" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl text-gray-400">My Profile</a>
-        </nav>
+        <% if (user) { %> <%- include('../partials/mobWithLogin') %> <% } else { %> <%- include('../partials/mobWithoutLogin') %> <% } %>
     </aside>
 
-    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/95 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
-        <div class="flex items-center gap-2 md:gap-4">
-            <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-800 rounded-full lg:hidden">
-                <i class="fas fa-bars"></i>
-            </button>
-            <a href="/" class="font-black text-lg md:text-xl tracking-tighter uppercase flex items-center gap-1">
-                <span class="text-pink-600 text-2xl">●</span> GhapaGhap
-            </a>
-        </div>
-
-        <div class="hidden md:flex flex-1 max-w-[500px] mx-4">
-            <form action="/search" method="GET" class="flex w-full bg-[#121212] border border-gray-700 rounded-full overflow-hidden focus-within:border-pink-500/50">
-                <input type="text" name="q" placeholder="Search videos..." class="w-full bg-transparent px-5 py-2 outline-none text-sm">
-                <button type="submit" class="bg-gray-800 px-5 border-l border-gray-700 hover:bg-gray-700">
-                    <i class="fas fa-search text-gray-400"></i>
-                </button>
-            </form>
-        </div>
-
-        <div class="flex items-center gap-3">
-            <div class="bg-zinc-800 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/5">
-                <i class="fas fa-wallet text-pink-500 text-xs"></i>
-                <span class="text-xs font-bold"><%= user ? user.walletBalance.toFixed(2) : '0.00' %></span>
-            </div>
-            <% if(user) { %>
-                <a href="/profile">
-                    <img src="<%= user.avatar %>" class="w-8 h-8 rounded-full border border-gray-700 object-cover">
-                </a>
-            <% } %>
-        </div>
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %> <%- include('../partials/headerWithLogin') %> <% } else { %> <%- include('../partials/headerWithoutLogin') %> <% } %>
     </nav>
 
-    <aside class="hidden lg:flex flex-col w-64 fixed top-16 left-0 h-[calc(100vh-4rem)] bg-[#0f0f0f] p-4 border-r border-gray-800/40">
-        <nav class="space-y-1">
-            <a href="/" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl font-semibold <%= title === 'GhapaGhap - Home' ? 'bg-zinc-800 text-pink-500' : '' %>">
-                <i class="fas fa-home"></i> Home
-            </a>
-            <a href="/trending" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">
-                <i class="fas fa-fire"></i> Trending
-            </a>
-            <a href="/shorts" class="flex items-center gap-4 p-3 hover:bg-gray-800 rounded-xl text-gray-400 hover:text-white">
-                <i class="fas fa-bolt"></i> Shorts
-            </a>
-        </nav>
-    </aside>
+    <div class="flex">
+        <% if (user) { %> <%- include('../partials/desktopWithLogin') %> <% } else { %> <%- include('../partials/desktopWithoutLogin') %> <% } %>
 
-    <main class="lg:ml-64 mt-16 p-0 md:p-4 lg:p-6 pb-24 transition-all">
-        <div class="flex flex-col lg:flex-row gap-6 lg:px-4 mt-4">
-            
-            <div class="flex-1 w-full">
-                <div class="relative aspect-video bg-black md:rounded-2xl overflow-hidden group shadow-2xl border border-gray-800">
-                    <video id="main-video" controls autoplay class="w-full h-full">
-                        <source src="<%= video.videoUrl %>" type="video/mp4">
-                    </video>
-                </div>
-
-                <div class="px-4 md:px-0">
-                    <h1 class="text-lg md:text-xl font-black mt-4 line-clamp-2 leading-tight uppercase tracking-tight">
-                        <%= video.title %>
-                    </h1>
-                    
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4 pb-6 border-b border-gray-800">
-                        <div class="flex items-center gap-3">
-                            <img src="<%= video.uploader.avatar %>" class="w-10 h-10 rounded-full ring-2 ring-pink-500/20 object-cover">
-                            <div>
-                                <p class="font-bold text-sm"><%= video.uploader.fullname %> <i class="fas fa-check-circle text-pink-500 text-[10px] ml-1"></i></p>
-                                <p class="text-gray-400 text-xs"><%= video.uploader.subscribersCount || 0 %> subscribers</p>
-                            </div>
-                            
-                            <% let isSubscribed = user && user.subscriptions && user.subscriptions.some(id => id.toString() === video.uploader._id.toString()); %>
-                            <button onclick="handleSubscribe('<%= video.uploader._id %>')" id="sub-btn" 
-                                class="ml-4 px-5 py-2 rounded-full font-bold text-sm transition-all active:scale-95 <%= isSubscribed ? 'bg-zinc-800 text-gray-400' : 'bg-white text-black hover:bg-pink-500 hover:text-white' %>">
-                                <%= isSubscribed ? 'Subscribed' : 'Subscribe' %>
-                            </button>
-                        </div>
-
-                        <div class="flex items-center gap-2">
-                            <div class="flex items-center bg-zinc-800/80 rounded-full p-1 border border-white/5">
-                                <button class="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-700 rounded-l-full border-r border-zinc-700 transition-colors">
-                                    <i class="far fa-thumbs-up"></i> <span class="text-xs font-bold"><%= video.likesCount || 0 %></span>
-                                </button>
-                                <button class="px-4 py-1.5 hover:bg-zinc-700 rounded-r-full transition-colors">
-                                    <i class="far fa-thumbs-down"></i>
-                                </button>
-                            </div>
-                            <button class="bg-zinc-800/80 p-2.5 rounded-full hover:bg-zinc-700 transition-colors border border-white/5">
-                                <i class="fas fa-share"></i>
-                            </button>
-                        </div>
+        <main class="lg:ml-64 mt-16 p-0 md:p-4 lg:p-6 pb-24 transition-all w-full">
+            <div class="flex flex-col lg:flex-row gap-6 lg:px-4">
+                <div class="flex-1 w-full">
+                    <div class="relative aspect-video bg-black md:rounded-2xl overflow-hidden shadow-2xl border border-gray-800">
+                        <video id="main-video" class="video-js vjs-big-play-centered" controls preload="auto" playsinline oncontextmenu="return false;">
+                            <source src="<%= video.videoUrl_720p || video.videoUrl %>" type="video/mp4" label="720P" res="720" />
+                            <source src="<%= video.videoUrl_480p || video.videoUrl %>" type="video/mp4" label="480P" res="480" />
+                            <source src="<%= video.videoUrl_360p || video.videoUrl %>" type="video/mp4" label="360P" res="360" />
+                        </video>
                     </div>
 
-                    <div class="mt-4 p-4 bg-zinc-900/50 rounded-xl hover:bg-zinc-900 transition-colors cursor-pointer group">
-                        <p class="text-sm font-bold"><%= video.views %> views • <%= new Date(video.createdAt).toLocaleDateString() %></p>
-                        <p class="text-sm mt-1 text-gray-300 leading-relaxed">
-                            <%= video.description || "Join the conversation..." %>
-                        </p>
+                    <div class="px-4 md:px-0">
+                        <h1 class="text-lg md:text-xl font-black mt-4 line-clamp-2 uppercase tracking-tight"><%= video.title %></h1>
+                        
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mt-4 pb-6 border-b border-gray-800">
+                            <div class="flex items-center gap-3 justify-between">
+                                <div class="flex items-center gap-3">
+                                    <img src="<%= video.uploader.avatar %>" class="w-10 h-10 rounded-full ring-2 ring-pink-500/20 object-cover">
+                                    <div>
+                                        <p class="font-bold text-sm"><%= video.uploader.fullname %> <i class="fas fa-check-circle text-blue-500 text-[10px] ml-1"></i></p>
+                                        <p class="text-gray-400 text-xs"><%= video.uploader.subscribersCount || 0 %> subscribers</p>
+                                    </div>
+                                </div>
+                                
+                                <% 
+                                  let isSubscribed = false;
+                                  if (user && user.subscriptions && video.uploader) {
+                                      isSubscribed = user.subscriptions.some(id => id.toString() === video.uploader._id.toString());
+                                  }
+                                %>
+                                <button onclick="handleSubscribe('<%= video.uploader._id %>')" id="sub-btn" 
+                                    class="ml-4 px-5 py-2 rounded-full font-bold text-sm transition-all active:scale-95 <%= isSubscribed ? 'bg-zinc-800 text-gray-400' : 'bg-white text-black hover:bg-pink-500 hover:text-white' %>">
+                                    <%= isSubscribed ? 'Subscribed' : 'Subscribe' %>
+                                </button>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center bg-zinc-800/80 rounded-full p-1 border border-white/5">
+                                    <button onclick="handleLike('<%= video._id %>')" id="like-btn" class="flex items-center gap-2 px-4 py-1.5 hover:bg-zinc-700 rounded-full transition-colors">
+                                        <i id="like-icon" class="<%= (user && video.likes.includes(user._id)) ? 'fas' : 'far' %> fa-thumbs-up <%= (user && video.likes.includes(user._id)) ? 'text-pink-500' : '' %>"></i> 
+                                        <span id="like-count" class="text-xs font-bold"><%= video.likesCount || 0 %></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 p-4 bg-zinc-900/50 rounded-xl hover:bg-zinc-900 transition-colors">
+                            <p class="text-sm font-bold"><%= video.views %> views • <%= new Date(video.createdAt).toLocaleDateString() %></p>
+                            <p class="text-sm mt-1 text-gray-300 leading-relaxed"><%= video.description || "Join the conversation..." %></p>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="lg:w-[380px] px-4 md:px-0 flex flex-col gap-4">
-                <h2 class="font-black text-lg uppercase tracking-tight text-gray-400">Up Next</h2>
-                
-                <% if(typeof suggestedVideos !== 'undefined' && suggestedVideos.length > 0) { %>
-                    <% suggestedVideos.forEach(v => { %>
-                        <a href="/watch/<%= v._id %>" class="flex gap-3 group">
-                            <div class="relative w-32 md:w-40 aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden border border-white/5">
-                                <img src="<%= v.thumbnailUrl %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
-                                <span class="absolute bottom-1 right-1 bg-black/80 text-[10px] px-1 rounded font-bold">12:00</span>
-                            </div>
-                            <div class="flex flex-col overflow-hidden">
-                                <h3 class="text-xs md:text-sm font-bold line-clamp-2 group-hover:text-pink-500 transition-colors">
-                                    <%= v.title %>
-                                </h3>
-                                <p class="text-gray-500 text-[11px] mt-1"><%= v.views %> views</p>
-                            </div>
-                        </a>
-                    <% }) %>
-                <% } else { %>
-                    <p class="text-gray-500 text-sm italic">No related videos found.</p>
-                <% } %>
+                <div class="lg:w-[380px] px-4 md:px-0 flex flex-col gap-4">
+                    <h2 class="font-black text-lg uppercase tracking-tight text-gray-400">Up Next</h2>
+                    <% if(typeof suggestedVideos !== 'undefined' && suggestedVideos.length > 0) { %>
+                        <% suggestedVideos.forEach(v => { %>
+                            <a href="/watch/<%= v._id %>" class="flex gap-3 group">
+                                <div class="relative w-32 md:w-40 aspect-video flex-shrink-0 bg-gray-800 rounded-lg overflow-hidden">
+                                    <img src="<%= v.thumbnailUrl %>" class="w-full h-full object-cover group-hover:scale-105 transition-transform">
+                                </div>
+                                <div class="flex flex-col overflow-hidden">
+                                    <h3 class="text-xs md:text-sm font-bold line-clamp-2"><%= v.title %></h3>
+                                    <p class="text-gray-500 text-[11px] mt-1"><%= v.views %> views</p>
+                                </div>
+                            </a>
+                        <% }) %>
+                    <% } %>
+                </div>
             </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
-    <nav class="lg:hidden fixed bottom-0 left-0 w-full bg-[#0f0f0f]/95 backdrop-blur-xl border-t border-gray-800 h-16 flex items-center justify-around z-50">
-        <a href="/" class="flex flex-col items-center text-pink-500 flex-1">
-            <i class="fas fa-home text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Home</span>
-        </a>
-        <a href="/shorts" class="flex flex-col items-center text-gray-500 flex-1">
-            <i class="fas fa-bolt text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Shorts</span>
-        </a>
-        <button class="bg-pink-600 text-white w-12 h-12 rounded-full flex items-center justify-center -mt-8 shadow-2xl border-4 border-[#0f0f0f]">
-            <i class="fas fa-plus text-xl"></i>
-        </button>
-        <a href="/user-subs" class="flex flex-col items-center text-gray-500 flex-1">
-            <i class="fas fa-users text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Subs</span>
-        </a>
-        <a href="/profile" class="flex flex-col items-center text-gray-500 flex-1">
-            <i class="fas fa-user-circle text-lg"></i>
-            <span class="text-[10px] mt-1 font-bold uppercase tracking-widest">Profile</span>
-        </a>
-    </nav>
+    <%- include('../partials/homeFooter') %>
+
+    <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
+    <script src="https://unpkg.com/@silvermine/videojs-quality-selector/dist/js/quality-selector.min.js"></script>
 
     <script>
-        const sidebar = document.getElementById('mobile-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
+        // 1. Initialize Player with Quality Selector
+        var player = videojs('main-video', {
+            autoplay: true,
+            muted: false,
+            controlBar: {
+                children: [
+                    'playToggle', 'volumePanel', 'currentTimeDisplay', 
+                    'timeDivider', 'durationDisplay', 'progressControl', 
+                    'qualitySelector', 'fullscreenToggle',
+                ],
+            },
+        });
 
-        function toggleSidebar() {
-            const isClosed = sidebar.classList.contains('-translate-x-full');
-            if (isClosed) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                setTimeout(() => {
-                    overlay.classList.remove('opacity-0');
-                    overlay.classList.add('opacity-100', 'pointer-events-auto');
-                }, 10);
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.remove('opacity-100');
-                overlay.classList.add('opacity-0');
-                overlay.classList.remove('pointer-events-auto');
-                setTimeout(() => overlay.classList.add('hidden'), 300);
-            }
-        }
-        overlay.addEventListener('click', toggleSidebar);
+        // 🛡️ ANTI-DOWNLOAD PROTECTION
+        document.getElementById('main-video').addEventListener('contextmenu', e => e.preventDefault());
+        player.ready(function() {
+            var videoElement = this.tech_.el_;
+            videoElement.setAttribute('controlsList', 'nodownload');
+        });
 
-        // AJAX Subscribe Handler
-        async function handleSubscribe(userId) {
+        // 2. View Count (On Load after 3s)
+        window.onload = () => {
+            const videoId = "<%= video._id %>";
+            setTimeout(() => { fetch(`/video/view/${videoId}`, { method: 'POST' }); }, 3000);
+        };
+
+        // 3. Interactions (Like & Subscribe)
+        async function handleLike(videoId) {
             try {
-                const response = await fetch(`/subscribe/${userId}`, { method: 'POST' });
-                const data = await response.json();
-                if(data.success) {
-                    const btn = document.getElementById('sub-btn');
-                    if(data.status === 'subscribed') {
+                const res = await fetch(`/video/like/${videoId}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    const icon = document.getElementById('like-icon');
+                    document.getElementById('like-count').innerText = data.likesCount;
+                    if (data.isLiked) { icon.classList.replace('far', 'fas'); icon.classList.add('text-pink-500'); }
+                    else { icon.classList.replace('fas', 'far'); icon.classList.remove('text-pink-500'); }
+                } else if (data.message === "Login first") window.location.href = "/login";
+            } catch (err) { console.log(err); }
+        }
+
+        async function handleSubscribe(targetUserId) {
+            const btn = document.getElementById('sub-btn');
+            try {
+                const res = await fetch(`/subscribe/${targetUserId}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }});
+                const data = await res.json();
+                if (data.success) {
+                    if (data.status === 'subscribed') {
                         btn.innerText = 'Subscribed';
-                        btn.className = 'ml-4 px-5 py-2 rounded-full font-bold text-sm bg-zinc-800 text-gray-400 transition-all active:scale-95';
+                        btn.classList.replace('bg-white', 'bg-zinc-800');
+                        btn.classList.replace('text-black', 'text-gray-400');
                     } else {
                         btn.innerText = 'Subscribe';
-                        btn.className = 'ml-4 px-5 py-2 rounded-full font-bold text-sm bg-white text-black hover:bg-pink-500 hover:text-white transition-all active:scale-95';
+                        btn.classList.replace('bg-zinc-800', 'bg-white');
+                        btn.classList.replace('text-gray-400', 'text-black');
                     }
-                } else if(data.message === 'Login first') {
-                    window.location.href = '/login';
-                }
-            } catch (err) {
-                console.error("Sub error:", err);
-            }
+                } else if (data.message === "Login first") window.location.href = '/login';
+            } catch (err) { console.log(err); }
+        }
+
+        // Sidebar logic
+        function toggleSidebar() {
+            const sidebar = document.getElementById("mobile-sidebar");
+            const overlay = document.getElementById("sidebar-overlay");
+            sidebar.classList.toggle("-translate-x-full");
+            overlay.classList.toggle("hidden");
+            setTimeout(() => overlay.classList.toggle("opacity-100"), 10);
         }
     </script>
 </body>

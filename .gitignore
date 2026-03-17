@@ -1,0 +1,4 @@
+node_modules/
+public/uploads/temp/
+.env
+*.mp4

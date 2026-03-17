@@ -72,168 +72,55 @@
             <%- include('../partials/desktopWithoutLogin') %>
         <% } %>
       <!-- ========================================= Main Body ======================================== -->
-      <!-- <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
-        <div
-          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8"
-        >
-          <a href="watch.html" class="flex flex-col gap-3 group">
-            <div
-              class="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group-hover:rounded-none transition-all duration-300"
-            >
-              <img
-                src="https://picsum.photos/seed/tech1/800/450"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                alt="thumbnail"
-              />
-              <span
-                class="absolute bottom-2 right-2 bg-black/80 text-[10px] px-1.5 py-0.5 rounded font-bold backdrop-blur-sm"
-                >12:45</span
-              >
-            </div>
-            <div class="flex gap-3 px-1">
-              <div
-                class="w-9 h-9 rounded-full bg-pink-500 flex-shrink-0 overflow-hidden"
-              >
-                <img src="https://i.pravatar.cc/150?u=1" alt="avatar" />
-              </div>
-              <div class="flex flex-col">
-                <h3
-                  class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-pink-400 transition-colors"
-                >
-                  Mastering Tailwind CSS for Modern App Design 2026
-                </h3>
-                <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
-                  GhapaGhap Creator
-                  <svg
-                    class="w-3 h-3 text-blue-400"
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    ></path>
-                  </svg>
-                </p>
-                <p class="text-gray-500 text-[11px]">
-                  1.2M views • 2 hours ago
-                </p>
-              </div>
-            </div>
-          </a>
 
-          <a href="watch.html" class="flex flex-col gap-3 group">
-            <div
-              class="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group-hover:rounded-none transition-all duration-300"
-            >
-              <img
-                src="https://picsum.photos/seed/code2/800/450"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                alt="thumbnail"
-              />
-              <span
-                class="absolute bottom-2 right-2 bg-black/80 text-[10px] px-1.5 py-0.5 rounded font-bold backdrop-blur-sm"
-                >08:20</span
-              >
-            </div>
-            <div class="flex gap-3 px-1">
-              <div
-                class="w-9 h-9 rounded-full bg-purple-500 flex-shrink-0 overflow-hidden"
-              >
-                <img src="https://i.pravatar.cc/150?u=2" alt="avatar" />
-              </div>
-              <div class="flex flex-col">
-                <h3
-                  class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-pink-400 transition-colors"
-                >
-                  Why 2026 is the year of AI-Driven UI
-                </h3>
-                <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
-                  Future Tech
-                </p>
-                <p class="text-gray-500 text-[11px]">
-                  850K views • 5 hours ago
-                </p>
-              </div>
-            </div>
-          </a>
-
-          <a href="watch.html" class="flex flex-col gap-3 group">
-            <div
-              class="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group-hover:rounded-none transition-all duration-300"
-            >
-              <img
-                src="https://picsum.photos/seed/design3/800/450"
-                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                alt="thumbnail"
-              />
-              <span
-                class="absolute bottom-2 right-2 bg-black/80 text-[10px] px-1.5 py-0.5 rounded font-bold backdrop-blur-sm"
-                >22:10</span
-              >
-            </div>
-            <div class="flex gap-3 px-1">
-              <div
-                class="w-9 h-9 rounded-full bg-yellow-500 flex-shrink-0 overflow-hidden"
-              >
-                <img src="https://i.pravatar.cc/150?u=3" alt="avatar" />
-              </div>
-              <div class="flex flex-col">
-                <h3
-                  class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-pink-400 transition-colors"
-                >
-                  Responsive Design Workflow: From Figma to Code
-                </h3>
-                <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
-                  Design Hub
-                </p>
-                <p class="text-gray-500 text-[11px]">2.1M views • 1 day ago</p>
-              </div>
-            </div>
-          </a>
-        </div>
-      </main> -->
-
-      <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
+     <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8">
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-x-4 gap-y-8">
     
     <% if (videos && videos.length > 0) { %>
       <% videos.forEach(video => { %>
-        <a href="/watch/<%= video._id %>" class="flex flex-col gap-3 group">
-          <div class="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group-hover:rounded-none transition-all duration-300">
-            <img
-              src="<%= video.thumbnailUrl %>"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              alt="<%= video.title %>"
-              onerror="this.src='https://picsum.photos/seed/error/800/450'"
-            />
-            <span class="absolute bottom-2 right-2 bg-black/80 text-[10px] px-1.5 py-0.5 rounded font-bold backdrop-blur-sm">
-              <%= video.duration ? video.duration : 'HD' %>
-            </span>
-          </div>
-
-          <div class="flex gap-3 px-1">
-            <div class="w-9 h-9 rounded-full bg-pink-500 flex-shrink-0 overflow-hidden">
-                <img src="<%= video.uploader && video.uploader.avatar ? video.uploader.avatar : 'https://ui-avatars.com/api/?name=User' %>" alt="avatar" />
+        
+        <% /* ✅ Only show if videoType is 'video' */ %>
+        <% if (video.videoType === 'video') { %>
+          
+          <a href="/watch/<%= video._id %>" class="flex flex-col gap-3 group">
+            <div class="relative aspect-video bg-gray-800 rounded-xl overflow-hidden group-hover:rounded-none transition-all duration-300">
+              <img
+                src="<%= video.thumbnailUrl %>"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                alt="<%= video.title %>"
+                onerror="this.src='https://picsum.photos/seed/error/800/450'"
+              />
+              <span class="absolute bottom-2 right-2 bg-black/80 text-[10px] px-1.5 py-0.5 rounded font-bold backdrop-blur-sm">
+                <%= video.duration ? video.duration : 'HD' %>
+              </span>
             </div>
 
-            <div class="flex flex-col">
-              <h3 class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-pink-400 transition-colors">
-                <%= video.title %>
-              </h3>
-              <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
-                <%= video.uploader ? video.uploader.fullname : 'Anonymous' %>
-                <% if(video.uploader && video.uploader.isVerified) { %>
-                  <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path>
-                  </svg>
-                <% } %>
-              </p>
-              <p class="text-gray-500 text-[11px]">
-                <%= video.views %> views • <%= video.createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) %>
-              </p>
+            <div class="flex gap-3 px-1">
+              <div class="w-9 h-9 rounded-full bg-pink-500 flex-shrink-0 overflow-hidden">
+                  <img src="<%= video.uploader && video.uploader.avatar ? video.uploader.avatar : 'https://ui-avatars.com/api/?name=User' %>" alt="avatar" class="w-full h-full object-cover" />
+              </div>
+
+              <div class="flex flex-col">
+                <h3 class="font-bold text-sm leading-tight line-clamp-2 group-hover:text-pink-400 transition-colors">
+                  <%= video.title %>
+                </h3>
+                <p class="text-gray-400 text-xs mt-1.5 flex items-center gap-1">
+                  <%= video.uploader ? video.uploader.fullname : 'Anonymous' %>
+                  <% if(video.uploader && video.uploader.isVerified) { %>
+                    <svg class="w-3 h-3 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"></path>
+                    </svg>
+                  <% } %>
+                </p>
+                <p class="text-gray-500 text-[11px]">
+                  <%= video.views %> views • <%= video.createdAt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) %>
+                </p>
+              </div>
             </div>
-          </div>
-        </a>
+          </a>
+
+        <% } %> <% /* End of videoType check */ %>
+
       <% }) %>
     <% } else { %>
       <div class="col-span-full flex flex-col items-center justify-center py-20 opacity-50">
