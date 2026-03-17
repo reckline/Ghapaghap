@@ -2,10 +2,10 @@
     <div class="space-y-2 overflow-y-auto custom-scrollbar">
         
         <div class="space-y-1">
-            <a href="/profile" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 <%= currentPath === '/profile' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
-    <i class="fas fa-circle-user w-5 text-center"></i> 
-    <span class="text-sm">My Profile</span>
-</a>
+            <a href="userProfile" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 <%= currentPath === 'userProfile' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
+                <i class="fas fa-circle-user w-5 text-center"></i>
+                <span class="text-sm">My Profile</span>
+            </a>
             <a href="/" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 <%= currentPath === '/' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
                 <i class="fas fa-home w-5 text-center"></i>
                 <span class="text-sm">Home</span>
@@ -33,14 +33,17 @@
             </a>
 
             <% if (user && user.isVerified) { %>
-                <a href="/myVideos" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group <%= currentPath === '/myVideos' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
-                    <i class="fas fa-video w-5 text-center group-hover:text-pink-500 transition-colors"></i>
-                    <span class="text-sm font-medium">My Videos</span>
-                    <span class="ml-auto w-2 h-2 rounded-full bg-pink-600 shadow-[0_0_8px_#db2777]"></span>
-                </a>
-            <% } %>
+<a href="/myVideos" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group <%= currentPath === '/myVideos' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
+    <i class="fas fa-video w-5 text-center group-hover:text-pink-500 transition-colors"></i>
+    <span class="text-sm font-medium">My Videos</span>
+    <span class="ml-auto w-2 h-2 rounded-full bg-pink-600 shadow-[0_0_8px_#db2777]"></span>
+</a>
 
-            
+<a href="/myShorts" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 group <%= currentPath === '/myShorts' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
+    <i class="fas fa-bolt-lightning w-5 text-center group-hover:text-pink-500 transition-colors"></i>
+    <span class="text-sm font-medium">My Shorts</span>
+    </a>
+            <% } %>
         </div>
 
         <hr class="border-gray-800/50 my-4 mx-2" />

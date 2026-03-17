@@ -29,6 +29,25 @@ exports.getMyVideos = async (req, res) => {
     }
 };
 
+// controller/myVideoController.js
+exports.getMyShorts = async (req, res) => {
+    try {
+        // ✅ Dono possibilities check karein: 'short' aur 'shorts'
+        const shorts = await Video.find({ 
+            uploader: req.user._id, 
+            videoType: { $in: ['shorts', 'short'] } 
+        }).sort({ createdAt: -1 });
+
+        res.render('User/myShorts', { 
+            user: req.user, 
+            shorts: shorts,
+            currentPath: '/myShorts'
+        });
+    } catch (error) {
+        console.log("Error fetching shorts:", error);
+        res.status(500).send("Error fetching shorts");
+    }
+};
 // ==========================================
 // 2. DELETE VIDEO
 // ==========================================

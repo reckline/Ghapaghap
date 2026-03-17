@@ -50,6 +50,8 @@ app.use(sessionConfig);
 
 // Custom Middleware: req.session.user ko req.user mein map karna
 app.use((req, res, next) => {
+    // 🔥 CRITICAL: Agar aap custom session use kar rahe hain, 
+    // toh req.user ko manually set karna padega controllers ke liye
     if (req.session && req.session.user) {
         req.user = req.session.user; 
     }
