@@ -1,30 +1,75 @@
-<div class="flex items-center gap-4 mb-6">
-  <button onclick="toggleSidebar()" class="p-2 hover:bg-gray-800 rounded-full">
-    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-    </svg>
-  </button>
-  
-  <a href="/" class="font-black text-xl tracking-tighter uppercase text-pink-500">
-    GhapaGhap
-  </a>
+<div class="flex items-center justify-between mb-8 px-2">
+    <a href="/" class="font-black text-2xl tracking-tighter uppercase text-pink-500">
+        GhapaGhap
+    </a>
+    <button onclick="toggleSidebar()" class="p-2 hover:bg-zinc-800 rounded-full transition-colors text-zinc-400">
+        <i class="fas fa-xmark text-xl"></i>
+    </button>
 </div>
 
-<nav class="space-y-1">
-  <a href="/" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl font-semibold">Home</a>
-  <a href="/trending" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all">Trending</a>
-  <a href="/shorts" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all">Shorts</a>
-  <a href="/live" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all">Live Room</a>
-  
-  <hr class="border-gray-800 my-4" />
-  
-  <p class="text-[10px] uppercase font-bold text-gray-500 px-3 mb-2 tracking-widest">You</p>
-  
-  <a href="/allCreaters" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all text-gray-400">All Creaters</a>
-  <a href="/dashboard" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all text-gray-400">Your Videos</a>
-  <a href="/liked" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all text-gray-400">Liked Videos</a>
-  
-  <hr class="border-gray-800 my-4" />
-  
-  <a href="/logout" class="flex items-center gap-5 p-3 hover:bg-gray-800 rounded-xl transition-all text-red-500 hover:text-red-400 font-bold">Logout</a>
+<div class="mb-8 px-2">
+    <% if (locals.user) { %>
+        <div class="flex items-center gap-4 p-4 rounded-2xl bg-zinc-900/50 border border-white/5">
+            <div class="relative">
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-zinc-800 to-zinc-900 border border-white/10 flex items-center justify-center shadow-lg">
+                    <span class="text-pink-500 font-bold text-xl">
+                        <%= (user.username || 'U').charAt(0).toUpperCase() %>
+                    </span>
+                </div>
+                <div class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-[#0f0f0f] rounded-full"></div>
+            </div>
+            <div class="overflow-hidden">
+                <p class="text-base font-bold text-white truncate"><%= user.username %></p>
+                <p class="text-[11px] text-zinc-500 font-medium uppercase tracking-wider">Online</p>
+            </div>
+        </div>
+    <% } else { %>
+        <a href="/login" class="flex items-center justify-center gap-3 p-3 rounded-xl bg-pink-600 text-white font-bold text-sm shadow-lg shadow-pink-600/20">
+            <i class="fas fa-sign-in-alt"></i> SIGN IN
+        </a>
+    <% } %>
+</div>
+
+<nav class="space-y-1.5">
+    <% const path = locals.currentPath || ''; %>
+
+    <a href="/" class="flex items-center gap-5 p-3.5 rounded-xl transition-all duration-300 <%= path === '/' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-zinc-400 hover:bg-white/5' %>">
+        <i class="fas fa-house-chimney w-5 text-center text-lg"></i>
+        <span class="text-sm">Home</span>
+    </a>
+
+    <a href="/shorts" class="flex items-center gap-5 p-3.5 rounded-xl transition-all duration-300 <%= path.includes('/shorts') ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-zinc-400 hover:bg-white/5' %>">
+        <i class="fas fa-bolt-lightning w-5 text-center text-lg"></i>
+        <span class="text-sm">Shorts</span>
+    </a>
+
+    <a href="/live" class="flex items-center gap-5 p-3.5 rounded-xl transition-all duration-300 <%= path.includes('/live') ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-zinc-400 hover:bg-white/5' %>">
+        <i class="fas fa-broadcast-tower w-5 text-center text-lg"></i>
+        <span class="text-sm">Live Room</span>
+    </a>
+
+    <hr class="border-zinc-800/50 my-5 mx-2" />
+
+    <p class="text-[10px] uppercase font-black text-zinc-600 px-4 mb-3 tracking-[0.2em]">Studio</p>
+
+    <a href="/allCreaters" class="flex items-center gap-5 p-3.5 rounded-xl transition-all duration-300 <%= path.includes('/allCreaters') ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-zinc-400 hover:bg-white/5' %>">
+        <i class="fas fa-users-viewfinder w-5 text-center text-lg"></i>
+        <span class="text-sm">All Creators</span>
+    </a>
+
+    <% if (user && user.isVerified) { %>
+        <a href="/my-videos" class="flex items-center gap-5 p-3.5 rounded-xl transition-all duration-300 <%= path.includes('/my-videos') ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-zinc-400 hover:bg-white/5' %>">
+            <i class="fas fa-clapperboard w-5 text-center text-lg"></i>
+            <span class="text-sm font-medium">My Videos</span>
+        </a>
+    <% } %>
+
+    <% if (locals.user) { %>
+        <div class="pt-6">
+            <a href="/logout" class="flex items-center gap-5 p-4 rounded-xl transition-all duration-300 text-red-500/80 hover:bg-red-500/10 font-black uppercase tracking-widest text-[11px]">
+                <i class="fas fa-power-off text-lg"></i>
+                Logout
+            </a>
+        </div>
+    <% } %>
 </nav>

@@ -191,3 +191,30 @@ exports.toggleLike = async (req, res) => {
         res.status(500).json({ success: false });
     }
 };
+
+exports.getMyVideos = async (req, res) => {
+    try {
+        if (!req.user || !req.user._id) {
+            return res.redirect('/login');
+        }
+
+        const allContent = await Video.find({ uploader: req.user._id })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // ✅ FIXED FILTER: 'videoType' field use karein jo aapke upload logic mein hai
+        const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
+        const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
+
+        res.render("User/myVideos", { 
+            videos, 
+            shorts,
+            title: "My Studio | Ghapaghap",
+            user: req.user,
+            currentPath: "/myVideos"
+        });
+    } catch (err) {
+        console.error("🔥 MyVideos Fetch Error:", err.message);
+        res.status(500).send("Error: " + err.message);
+    }
+};

@@ -65,15 +65,25 @@ exports.getWatchPage = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.session.user?._id || req.session.user?.id;
 
-    // Fresh User, Main Video, aur Suggested Videos fetch karo
+    // 🔍 Console log check karne ke liye (Sahi ID aa rahi hai ya nahi)
+    console.log("Requested Video ID:", videoId);
+
+    // Validate MongoDB ID format to prevent crash
+    if (!mongoose.Types.ObjectId.isValid(videoId)) {
+      console.log("Invalid Video ID format");
+      return res.redirect("/?error=invalid_id");
+    }
+
     const [freshUser, video] = await Promise.all([
       userId ? User.findById(userId).lean() : null,
       Video.findById(videoId).populate('uploader').lean()
     ]);
 
-    if (!video) return res.redirect("/?error=video_not_found");
+    if (!video) {
+      console.log("Video not found in Database for ID:", videoId);
+      return res.redirect("/?error=video_not_found");
+    }
 
-    // 🔥 FIX: Suggested Videos fetch karna zaroori hai EJS crash se bachne ke liye
     const suggestedVideos = await Video.find({ 
       _id: { $ne: videoId },
       isPublished: true 
@@ -86,12 +96,12 @@ exports.getWatchPage = async (req, res) => {
     res.render("User/watch", { 
       user: freshUser, 
       video: video,
-      suggestedVideos: suggestedVideos || [], // 🔥 Missing data added
+      suggestedVideos: suggestedVideos || [], 
       title: video.title 
     });
   } catch (err) {
     console.error("🔥 Watch Page Controller Error:", err);
-    res.redirect("/");
+    res.redirect("/?error=server_error");
   }
 };
 
@@ -108,8 +118,6 @@ exports.getTrendingPage = async (req, res) => {
   if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
   res.render("User/trending", { user: freshUser, title: "Trending" });
 };
-
-// --- Top Creators Logic ---
 
 exports.getTopCreators = async (req, res) => {
     try {
@@ -298,12 +306,29 @@ exports.subscribeUser = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     const userId = req.session?.user?._id || req.session?.user?.id;
-    const freshUser = await User.findById(userId).lean();
+    if (!userId) return res.redirect("/login");
+
+    const [freshUser, allContent] = await Promise.all([
+      User.findById(userId).lean(),
+      Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean()
+    ]);
+
     if (!freshUser) return res.redirect("/login");
     freshUser.avatar = getSafeAvatar(freshUser);
-    res.render("User/userProfile", { user: freshUser, title: "My Profile" });
+
+    // 🛠️ FIXED: Filtering based on "short" and "shorts" both
+    const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
+    const videos = allContent.filter(v => v.videoType !== 'shorts' && v.videoType !== 'short');
+
+    res.render("User/userProfile", { 
+        user: freshUser, 
+        shorts: shorts,      
+        videos: videos,      
+        title: "My Profile" 
+    });
   } catch (err) {
-    res.status(500).send("Error");
+    console.error("Profile Fetch Error:", err);
+    res.status(500).send("Error loading profile");
   }
 };
 
@@ -393,7 +418,7 @@ exports.handleUpdatePassword = async (req, res) => {
       return res.redirect("/change-password?error=Purana%20password%20galat%20hai");
     }
 
-    user.password = newPassword; // Mongoose middleware automatically hash kar dega
+    user.password = newPassword; 
     await user.save();
     return res.redirect("/change-password?success=password_updated");
   } catch (err) {
