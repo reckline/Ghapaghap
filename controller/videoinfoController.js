@@ -104,7 +104,7 @@ exports.handleVideoUpload = async (req, res) => {
             await s3Client.send(new PutObjectCommand({
                 Bucket: process.env.ZETTA_BUCKET,
                 Key: fileName,
-                Body: fileData,
+                Body: file.buffer,
                 ContentType: file.mimetype,
                 // ✅ ADDED ONLY THIS: File ko public banane ke liye
                 ACL: 'public-read', 

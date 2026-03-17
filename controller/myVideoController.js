@@ -5,17 +5,30 @@ const path = require("path");
 // ==========================================
 // 1. FETCH USER VIDEOS & SHORTS
 // ==========================================
+// controller/myVideoController.js (Ya aapki main controller file)
+
 exports.getMyVideos = async (req, res) => {
     try {
-        if (!req.user || !req.user._id) return res.redirect('/login');
+        if (!req.user || !req.user._id) {
+            return res.redirect('/login');
+        }
 
         const allContent = await Video.find({ uploader: req.user._id })
             .sort({ createdAt: -1 })
             .lean();
 
-        // ✅ FIXED FILTER
-        const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
-        const videos = allContent.filter(v => v.videoType !== 'shorts' && v.videoType !== 'short');
+        // 🛠️ IS SECTION KO UPDATE KAREIN
+        // ✅ Ye logic Shorts aur Long videos ko sahi se divide karega
+        const shorts = allContent.filter(v => 
+            v.videoType === 'shorts' || 
+            v.videoType === 'short'
+        );
+
+        const videos = allContent.filter(v => 
+            v.videoType === 'video' || 
+            v.videoType === 'long' || 
+            !v.videoType
+        );
 
         res.render("User/myVideos", { 
             videos, 
@@ -24,7 +37,9 @@ exports.getMyVideos = async (req, res) => {
             user: req.user,
             currentPath: "/myVideos"
         });
+
     } catch (err) {
+        console.error("🔥 Error in getMyVideos:", err.message);
         res.status(500).send("Error: " + err.message);
     }
 };

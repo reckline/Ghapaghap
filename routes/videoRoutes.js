@@ -8,10 +8,11 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
+
 /**
  * 🛠️ DISK STORAGE CONFIG
  */
-const storage = multer.diskStorage({
+const storage = multer.memoryStorage({
   destination: (req, file, cb) => {
     const uploadPath = path.join(__dirname, "../public/uploads/temp");
     if (!fs.existsSync(uploadPath)) {
