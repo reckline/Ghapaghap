@@ -15,17 +15,14 @@ try {
 
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
-    region: process.env.ZETTA_REGION || "indore",
-    
-    // ✅ FIX: Agar environment variable load nahi ho raha, toh yahan apna URL manually bhi daal sakte hain
-    // Dashboard mein check karein ki ZETTA_ENDPOINT mein "https://" laga hai ya nahi.
-    endpoint: process.env.ZETTA_ENDPOINT || "https://idr01.zata.ai", 
-    
+    region: "indore",
+    // ✅ FIX: Endpoint direct daal diya hai taaki ENOTFOUND na aaye
+    endpoint: "https://idr01.zata.ai", 
     credentials: {
         accessKeyId: process.env.ZETTA_ACCESS_KEY || "", 
         secretAccessKey: process.env.ZETTA_SECRET_KEY || "",
     },
-    forcePathStyle: true, // Zetta/DigitalOcean/Minio ke liye true hona zaroori hai
+    forcePathStyle: true, 
 });
 
 const getSafeAvatar = (user) => {
@@ -85,13 +82,9 @@ exports.handleVideoUpload = async (req, res) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
             try {
-                // Ensure bucket name exists
-                if (!process.env.ZETTA_BUCKET) {
-                    throw new Error("ZETTA_BUCKET is not defined in environment variables.");
-                }
-
                 const uploadParams = {
-                    Bucket: process.env.ZETTA_BUCKET,
+                    // ✅ FIX: Bucket name ko direct string mein dala hai
+                    Bucket: "saurrockers", 
                     Key: fileName,
                     Body: file.buffer, 
                     ContentType: file.mimetype,
@@ -100,9 +93,8 @@ exports.handleVideoUpload = async (req, res) => {
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
                 
-                // Clean endpoint to avoid double slashes
-                const baseEndpoint = (process.env.ZETTA_ENDPOINT || "").replace(/\/$/, "");
-                return `${baseEndpoint}/${process.env.ZETTA_BUCKET}/${fileName}`;
+                // Return final URL
+                return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
                 console.error(`❌ Zetta Error [${folder}]:`, s3Err.message);
                 throw new Error(`Cloud connection failed: ${s3Err.message}`);
