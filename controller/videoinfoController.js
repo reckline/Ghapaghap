@@ -13,13 +13,14 @@ try {
     console.error("⚠️ FFprobe static not found.");
 }
 
-// 🛠️ CONFIG: Zetta Client Setup
+// 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
+// ✅ FIX: Added fallback to prevent "Resolved credential object is not valid"
 const s3Client = new S3Client({
     region: process.env.ZETTA_REGION || "indore",
     endpoint: process.env.ZETTA_ENDPOINT, 
     credentials: {
-        accessKeyId: process.env.ZETTA_ACCESS_KEY, 
-        secretAccessKey: process.env.ZETTA_SECRET_KEY,
+        accessKeyId: process.env.ZETTA_ACCESS_KEY || "", 
+        secretAccessKey: process.env.ZETTA_SECRET_KEY || "",
     },
     forcePathStyle: true,
 });
@@ -61,22 +62,22 @@ exports.handleVideoUpload = async (req, res) => {
 
     try {
         const { title, description, category, videoType } = req.body;
-        const userId = req.session.user?._id;
+        const userId = req.session.user?._id || req.session.user?.id;
 
         if (!userId) {
             return res.status(401).json({ success: false, message: "Session expired, please login again." });
         }
 
         if (!req.files || !req.files['video'] || !req.files['thumbnail']) {
-            return res.status(400).json({ success: false, message: "Video or Thumbnail missing!" });
+            return res.status(400).json({ success: false, message: "Bhai, files missing hain (Video/Thumbnail)!" });
         }
 
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 30 });
 
-        // 🟢 Optimized Upload Function with Debugging
+        // 🟢 Upload Function (Using Memory Buffer)
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
@@ -84,27 +85,30 @@ exports.handleVideoUpload = async (req, res) => {
                 const uploadParams = {
                     Bucket: process.env.ZETTA_BUCKET,
                     Key: fileName,
-                    Body: file.buffer,
+                    Body: file.buffer, 
                     ContentType: file.mimetype,
                     ACL: 'public-read', 
                 };
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
-                return `${process.env.ZETTA_ENDPOINT}/${process.env.ZETTA_BUCKET}/${fileName}`;
+                // Ensure endpoint doesn't have double slashes
+                const cleanEndpoint = process.env.ZETTA_ENDPOINT.replace(/\/$/, "");
+                return `${cleanEndpoint}/${process.env.ZETTA_BUCKET}/${fileName}`;
             } catch (s3Err) {
-                console.error(`❌ Zetta Error (${folder}):`, s3Err.message);
-                throw new Error(`Cloud Upload Failed (${folder}): ${s3Err.message}`);
+                console.error(`❌ Zetta Cloud Error (${folder}):`, s3Err.message);
+                throw new Error(`Cloud Upload Failed: ${s3Err.message}`);
             }
         };
 
-        // Concurrent Uploads
+        // Concurrent Uploads (Parallel)
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving to Database...', percent: 80 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving Info...', percent: 80 });
 
+        // 🟢 Database Entry
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
@@ -126,8 +130,7 @@ exports.handleVideoUpload = async (req, res) => {
         console.error("🚀 FINAL BACKEND ERROR:", err);
         res.status(500).json({ 
             success: false, 
-            message: err.message || "Unknown Server Error",
-            debug: "Check server logs for details"
+            message: "Upload Error: " + err.message 
         });
     }
 };
@@ -146,12 +149,15 @@ exports.updateViews = async (req, res) => {
 exports.toggleLike = async (req, res) => {
     try {
         const { videoId } = req.params;
-        const userId = req.session.user?._id;
+        const userId = req.session.user?._id || req.session.user?.id;
+        if (!userId) return res.status(401).json({ success: false, message: "Login first" });
+
         const video = await Video.findById(videoId);
-        if (!video || !userId) return res.status(404).json({ success: false });
+        if (!video) return res.status(404).json({ success: false });
 
         const isLiked = video.likes.some(id => id.toString() === userId.toString());
         if (isLiked) video.likes.pull(userId); else video.likes.push(userId);
+        
         video.likesCount = video.likes.length;
         await video.save();
 
@@ -161,15 +167,22 @@ exports.toggleLike = async (req, res) => {
 
 exports.getMyVideos = async (req, res) => {
     try {
-        const userId = req.user?._id || req.session.user?._id;
+        const userId = req.user?._id || req.session.user?._id || req.session.user?.id;
         if (!userId) return res.redirect('/login');
 
         const allContent = await Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean();
+        
         const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
         const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
 
         res.render("User/myVideos", { 
-            videos, shorts, title: "My Studio", user: req.user || req.session.user, currentPath: "/myVideos" 
+            videos, 
+            shorts, 
+            title: "My Studio | Ghapaghap", 
+            user: req.user || req.session.user, 
+            currentPath: "/myVideos" 
         });
-    } catch (err) { res.status(500).send(err.message); }
+    } catch (err) { 
+        res.status(500).send("Error: " + err.message); 
+    }
 };
