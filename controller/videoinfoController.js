@@ -6,34 +6,67 @@ const { Readable } = require('stream');
 const fs = require("fs");
 const path = require("path");
 
-// 🟢 FFprobe setup
-try {
-    const ffprobeStatic = require("ffprobe-static");
-    ffmpeg.setFfprobePath(ffprobeStatic.path);
-} catch (err) {
-    console.error("⚠️ FFprobe static not found, using system path.");
-}
+// ==========================================
+// 1. FETCH USER VIDEOS & SHORTS (With Duration Support)
+// ==========================================
+exports.getMyVideos = async (req, res) => {
+    try {
+        if (!req.user || !req.user._id) {
+            return res.redirect('/login');
+        }
 
-// 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
-const s3Client = new S3Client({
-    region: "indore", 
-    endpoint: "https://idr01.zata.ai", 
-    credentials: {
-        // Fix: Explicitly using the correct key names
-        accessKeyId: process.env.ZETTA_ACCESS_KEY || "3H36HDHCY4EI4ZGJUNSY", 
-        secretAccessKey: process.env.ZETTA_SECRET_KEY || "PGJuoGxbn9IZB94D7x8J7-wdXgqVG8eXBAp9D5BDXzWFHkYhdZjvYw",
-    },
-    forcePathStyle: true,
-    requestHandler: {
-        connectionTimeout: 900000, // 15 Minutes tak badha diya
-        socketTimeout: 900000
+        // Saara content fetch kar rahe hain duration ke saath
+        const allContent = await Video.find({ uploader: req.user._id })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        // ✅ Shorts Filter: 'shorts' ya 'short' dono handle honge
+        const shorts = allContent.filter(v => 
+            v.videoType === 'shorts' || 
+            v.videoType === 'short'
+        );
+
+        // ✅ Long Videos Filter: 'video', 'long' ya agar type empty ho
+        const videos = allContent.filter(v => 
+            v.videoType === 'video' || 
+            v.videoType === 'long' || 
+            !v.videoType
+        );
+
+        res.render("User/myVideos", { 
+            videos, 
+            shorts,
+            title: "My Studio | Ghapaghap",
+            user: req.user,
+            currentPath: "/myVideos"
+        });
+
+    } catch (err) {
+        console.error("🔥 Error in getMyVideos:", err.message);
+        res.status(500).send("Error: " + err.message);
     }
-});
+};
 
-const getSafeAvatar = (user) => {
-    const avatar = user?.avatar;
-    if (avatar && avatar.startsWith("http")) return avatar;
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullname || "User")}&background=f0778b&color=fff`;
+// Separate Shorts Page Logic
+exports.getMyShorts = async (req, res) => {
+    try {
+        if (!req.user || !req.user._id) return res.redirect('/login');
+
+        const shorts = await Video.find({ 
+            uploader: req.user._id, 
+            videoType: { $in: ['shorts', 'short'] } 
+        }).sort({ createdAt: -1 }).lean();
+
+        res.render('User/myShorts', { 
+            user: req.user, 
+            shorts: shorts,
+            title: "My Shorts | Ghapaghap",
+            currentPath: '/myShorts'
+        });
+    } catch (error) {
+        console.log("Error fetching shorts:", error);
+        res.status(500).send("Error fetching shorts");
+    }
 };
 
 // ==========================================
