@@ -5,15 +5,15 @@ const ffmpeg = require("fluent-ffmpeg");
 const fs = require("fs");
 const path = require("path");
 
-// 🟢 FIX: FFprobe path setup
+// 🟢 FFprobe setup
 try {
     const ffprobeStatic = require("ffprobe-static");
     ffmpeg.setFfprobePath(ffprobeStatic.path);
 } catch (err) {
-    console.error("⚠️ FFprobe static not found. Please run: npm install ffprobe-static");
+    console.error("⚠️ FFprobe static not found.");
 }
 
-// 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
+// 🛠️ CONFIG: Zetta Client Setup
 const s3Client = new S3Client({
     region: process.env.ZETTA_REGION || "indore",
     endpoint: process.env.ZETTA_ENDPOINT, 
@@ -23,14 +23,6 @@ const s3Client = new S3Client({
     },
     forcePathStyle: true,
 });
-
-// 🛠️ HELPERS
-const formatDuration = (seconds) => {
-    if (!seconds || isNaN(seconds)) return "0:00";
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
 
 const getSafeAvatar = (user) => {
     const avatar = user?.avatar;
@@ -71,49 +63,54 @@ exports.handleVideoUpload = async (req, res) => {
         const { title, description, category, videoType } = req.body;
         const userId = req.session.user?._id;
 
+        if (!userId) {
+            return res.status(401).json({ success: false, message: "Session expired, please login again." });
+        }
+
         if (!req.files || !req.files['video'] || !req.files['thumbnail']) {
-            return res.status(400).json({ success: false, message: "Bhai, files missing hain!" });
+            return res.status(400).json({ success: false, message: "Video or Thumbnail missing!" });
         }
 
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        // 🟢 STEP 1: Status Update
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Preparing Video...', percent: 15 });
-        
-        let videoDuration = "0:00"; 
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
 
-        // 🟢 STEP 2: Upload Function (Using Buffer - MemoryStorage Compatible)
+        // 🟢 Optimized Upload Function with Debugging
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
-            const uploadParams = {
-                Bucket: process.env.ZETTA_BUCKET,
-                Key: fileName,
-                Body: file.buffer, // ✅ MemoryStorage uses buffer
-                ContentType: file.mimetype,
-                ACL: 'public-read', 
-            };
+            try {
+                const uploadParams = {
+                    Bucket: process.env.ZETTA_BUCKET,
+                    Key: fileName,
+                    Body: file.buffer,
+                    ContentType: file.mimetype,
+                    ACL: 'public-read', 
+                };
 
-            await s3Client.send(new PutObjectCommand(uploadParams));
-            return `${process.env.ZETTA_ENDPOINT}/${process.env.ZETTA_BUCKET}/${fileName}`;
+                await s3Client.send(new PutObjectCommand(uploadParams));
+                return `${process.env.ZETTA_ENDPOINT}/${process.env.ZETTA_BUCKET}/${fileName}`;
+            } catch (s3Err) {
+                console.error(`❌ Zetta Error (${folder}):`, s3Err.message);
+                throw new Error(`Cloud Upload Failed (${folder}): ${s3Err.message}`);
+            }
         };
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 45 });
-
-        // 🟢 STEP 3: Concurrent Uploads
+        // Concurrent Uploads
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        // 🟢 STEP 4: Database Entry
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving to Database...', percent: 80 });
+
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
             videoUrl,
             thumbnailUrl,
-            duration: videoDuration,
+            duration: "0:00",
             uploader: userId,
             category: category || "General",
             videoType: videoType || "video" 
@@ -122,14 +119,16 @@ exports.handleVideoUpload = async (req, res) => {
         await newVideo.save();
         await User.findByIdAndUpdate(userId, { $inc: { videosCount: 1 } });
 
-        // ✅ Note: No fs.unlink needed for memoryStorage.
-
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Done!', percent: 100 });
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🚀 Upload Logic Error:", err);
-        res.status(500).json({ success: false, message: "Upload Fail: " + err.message });
+        console.error("🚀 FINAL BACKEND ERROR:", err);
+        res.status(500).json({ 
+            success: false, 
+            message: err.message || "Unknown Server Error",
+            debug: "Check server logs for details"
+        });
     }
 };
 
@@ -139,62 +138,38 @@ exports.handleVideoUpload = async (req, res) => {
 exports.updateViews = async (req, res) => {
     try {
         const { videoId } = req.params;
-        const updatedVideo = await Video.findByIdAndUpdate(
-            videoId, 
-            { $inc: { views: 1 } }, 
-            { new: true }
-        );
-        res.json({ success: true, views: updatedVideo?.views || 0 });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+        await Video.findByIdAndUpdate(videoId, { $inc: { views: 1 } });
+        res.json({ success: true });
+    } catch (err) { res.status(500).json({ success: false }); }
 };
 
 exports.toggleLike = async (req, res) => {
     try {
         const { videoId } = req.params;
-        const userId = req.session.user?._id || req.session.user?.id;
-        if (!userId) return res.status(401).json({ success: false, message: "Login first" });
-
+        const userId = req.session.user?._id;
         const video = await Video.findById(videoId);
-        if (!video) return res.status(404).json({ success: false });
+        if (!video || !userId) return res.status(404).json({ success: false });
 
         const isLiked = video.likes.some(id => id.toString() === userId.toString());
-        if (isLiked) video.likes.pull(userId);
-        else video.likes.push(userId);
-
+        if (isLiked) video.likes.pull(userId); else video.likes.push(userId);
         video.likesCount = video.likes.length;
         await video.save();
 
         res.json({ success: true, likesCount: video.likesCount, isLiked: !isLiked });
-    } catch (err) {
-        res.status(500).json({ success: false });
-    }
+    } catch (err) { res.status(500).json({ success: false }); }
 };
 
 exports.getMyVideos = async (req, res) => {
     try {
         const userId = req.user?._id || req.session.user?._id;
-        if (!userId) {
-            return res.redirect('/login');
-        }
+        if (!userId) return res.redirect('/login');
 
-        const allContent = await Video.find({ uploader: userId })
-            .sort({ createdAt: -1 })
-            .lean();
-
+        const allContent = await Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean();
         const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
         const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
 
         res.render("User/myVideos", { 
-            videos, 
-            shorts,
-            title: "My Studio | Ghapaghap",
-            user: req.user || req.session.user,
-            currentPath: "/myVideos"
+            videos, shorts, title: "My Studio", user: req.user || req.session.user, currentPath: "/myVideos" 
         });
-    } catch (err) {
-        console.error("🔥 MyVideos Fetch Error:", err.message);
-        res.status(500).send("Error: " + err.message);
-    }
+    } catch (err) { res.status(500).send(err.message); }
 };
