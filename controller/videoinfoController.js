@@ -15,14 +15,14 @@ try {
 
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
-    region: "indore",
-    endpoint: "https://idr01.zata.ai", 
+    region: "indore", 
+    endpoint: "https://idr01.zata.ai", // ✅ Fixed: ENOTFOUND error solve karne ke liye direct URL
     credentials: {
-        // ✅ Yahan apni ACTUAL KEYS dashboard se dekh kar daal dena agar env kaam na kare
-        accessKeyId: process.env.ZETTA_ACCESS_KEY || "", 
-        secretAccessKey: process.env.ZETTA_SECRET_KEY || "",
+        // ✅ IMPORTANT: Agar variables kaam nahi kar rahe, toh yahan direct Keys paste kar dein
+        accessKeyId: process.env.ZETTA_ACCESS_KEY || "YOUR_ACCESS_KEY_HERE", 
+        secretAccessKey: process.env.ZETTA_SECRET_KEY || "YOUR_SECRET_KEY_HERE",
     },
-    forcePathStyle: true, 
+    forcePathStyle: true, // Zetta ke liye true hona compulsory hai
 });
 
 const getSafeAvatar = (user) => {
@@ -65,7 +65,7 @@ exports.handleVideoUpload = async (req, res) => {
         const userId = req.session.user?._id || req.session.user?.id;
 
         if (!userId) {
-            return res.status(401).json({ success: false, message: "Session expired, login again." });
+            return res.status(401).json({ success: false, message: "Session expired." });
         }
 
         if (!req.files || !req.files['video'] || !req.files['thumbnail']) {
@@ -77,13 +77,12 @@ exports.handleVideoUpload = async (req, res) => {
 
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
 
-        // 🟢 Upload Function
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
             try {
                 const uploadParams = {
-                    Bucket: "saurrockers", // ✅ FIXED: Direct Bucket Name
+                    Bucket: "saurrockers", // ✅ Fixed: ZETTA_BUCKET error solve karne ke liye direct naam
                     Key: fileName,
                     Body: file.buffer, 
                     ContentType: file.mimetype,
@@ -92,15 +91,15 @@ exports.handleVideoUpload = async (req, res) => {
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
                 
-                // ✅ FIXED: Direct URL Format
+                // Final URL formation
                 return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
-                console.error(`❌ Zetta Error [${folder}]:`, s3Err.message);
-                throw new Error(s3Err.message);
+                console.error(`❌ Cloud Connection Error [${folder}]:`, s3Err);
+                throw new Error(s3Err.name || "Connection Failed");
             }
         };
 
-        // Parallel Uploads
+        // Dono files parallel upload hongi
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
@@ -108,7 +107,6 @@ exports.handleVideoUpload = async (req, res) => {
 
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving...', percent: 80 });
 
-        // 🟢 Database Entry
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
@@ -127,13 +125,16 @@ exports.handleVideoUpload = async (req, res) => {
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🚀 UPLOAD ERROR:", err);
-        res.status(500).json({ success: false, message: "Upload Error: " + err.message });
+        console.error("🚀 BACKEND ERROR:", err);
+        res.status(500).json({ 
+            success: false, 
+            message: "Upload Failed: " + err.message 
+        });
     }
 };
 
 // ==========================================
-// 3. OTHER LOGICS
+// 3. OTHER LOGICS (Views, Likes, MyVideos)
 // ==========================================
 exports.updateViews = async (req, res) => {
     try {
