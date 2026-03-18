@@ -16,13 +16,13 @@ try {
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
     region: "indore", 
-    endpoint: "https://idr01.zata.ai", // ✅ Fixed: ENOTFOUND error solve karne ke liye direct URL
+    endpoint: "https://idr01.zata.ai", // ✅ FIX: Direct endpoint taaki AWS par connect na kare
     credentials: {
-        // ✅ IMPORTANT: Agar variables kaam nahi kar rahe, toh yahan direct Keys paste kar dein
-        accessKeyId: process.env.ZETTA_ACCESS_KEY || "YOUR_ACCESS_KEY_HERE", 
-        secretAccessKey: process.env.ZETTA_SECRET_KEY || "YOUR_SECRET_KEY_HERE",
+        // ⚠️ DHAYAN DEIN: Agar env variables kaam nahi kar rahe, toh yahan direct Keys paste karein
+        accessKeyId: process.env.ZETTA_ACCESS_KEY || "3H36HDHCY4EI4ZGJUNSY", 
+        secretAccessKey: process.env.ZETTA_SECRET_KEY || "PGJuoGxbn9IZB94D7x8J7-wdXgqVG8eXBAp9D5BDXzWFHkYhdZjvYw",
     },
-    forcePathStyle: true, // Zetta ke liye true hona compulsory hai
+    forcePathStyle: true, // Zetta ke liye ye true hona zaroori hai
 });
 
 const getSafeAvatar = (user) => {
@@ -82,7 +82,7 @@ exports.handleVideoUpload = async (req, res) => {
             
             try {
                 const uploadParams = {
-                    Bucket: "saurrockers", // ✅ Fixed: ZETTA_BUCKET error solve karne ke liye direct naam
+                    Bucket: "saurrockers", // ✅ FIX: Bucket name direct hardcode kar diya hai
                     Key: fileName,
                     Body: file.buffer, 
                     ContentType: file.mimetype,
@@ -94,12 +94,12 @@ exports.handleVideoUpload = async (req, res) => {
                 // Final URL formation
                 return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
-                console.error(`❌ Cloud Connection Error [${folder}]:`, s3Err);
-                throw new Error(s3Err.name || "Connection Failed");
+                console.error(`❌ Cloud Error [${folder}]:`, s3Err);
+                // Detail error bhej rahe hain taaki debugging aasaan ho
+                throw new Error(s3Err.name || s3Err.message || "Unknown Cloud Error");
             }
         };
 
-        // Dono files parallel upload hongi
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
@@ -134,7 +134,7 @@ exports.handleVideoUpload = async (req, res) => {
 };
 
 // ==========================================
-// 3. OTHER LOGICS (Views, Likes, MyVideos)
+// 3. OTHER LOGICS
 // ==========================================
 exports.updateViews = async (req, res) => {
     try {
