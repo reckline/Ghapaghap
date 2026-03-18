@@ -16,9 +16,9 @@ try {
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
     region: "indore",
-    // ✅ FIX: Endpoint direct daal diya hai taaki ENOTFOUND na aaye
     endpoint: "https://idr01.zata.ai", 
     credentials: {
+        // ✅ Yahan apni ACTUAL KEYS dashboard se dekh kar daal dena agar env kaam na kare
         accessKeyId: process.env.ZETTA_ACCESS_KEY || "", 
         secretAccessKey: process.env.ZETTA_SECRET_KEY || "",
     },
@@ -65,17 +65,17 @@ exports.handleVideoUpload = async (req, res) => {
         const userId = req.session.user?._id || req.session.user?.id;
 
         if (!userId) {
-            return res.status(401).json({ success: false, message: "Session expired, please login again." });
+            return res.status(401).json({ success: false, message: "Session expired, login again." });
         }
 
         if (!req.files || !req.files['video'] || !req.files['thumbnail']) {
-            return res.status(400).json({ success: false, message: "Video or Thumbnail file is missing!" });
+            return res.status(400).json({ success: false, message: "Files missing!" });
         }
 
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 30 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
 
         // 🟢 Upload Function
         const uploadToZetta = async (file, folder) => {
@@ -83,8 +83,7 @@ exports.handleVideoUpload = async (req, res) => {
             
             try {
                 const uploadParams = {
-                    // ✅ FIX: Bucket name ko direct string mein dala hai
-                    Bucket: "saurrockers", 
+                    Bucket: "saurrockers", // ✅ FIXED: Direct Bucket Name
                     Key: fileName,
                     Body: file.buffer, 
                     ContentType: file.mimetype,
@@ -93,22 +92,23 @@ exports.handleVideoUpload = async (req, res) => {
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
                 
-                // Return final URL
+                // ✅ FIXED: Direct URL Format
                 return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
                 console.error(`❌ Zetta Error [${folder}]:`, s3Err.message);
-                throw new Error(`Cloud connection failed: ${s3Err.message}`);
+                throw new Error(s3Err.message);
             }
         };
 
-        // Concurrent Uploads
+        // Parallel Uploads
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving to Database...', percent: 80 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving...', percent: 80 });
 
+        // 🟢 Database Entry
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
@@ -127,11 +127,8 @@ exports.handleVideoUpload = async (req, res) => {
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🚀 BACKEND UPLOAD ERROR:", err);
-        res.status(500).json({ 
-            success: false, 
-            message: "Upload Failed: " + err.message 
-        });
+        console.error("🚀 UPLOAD ERROR:", err);
+        res.status(500).json({ success: false, message: "Upload Error: " + err.message });
     }
 };
 
@@ -171,18 +168,11 @@ exports.getMyVideos = async (req, res) => {
         if (!userId) return res.redirect('/login');
 
         const allContent = await Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean();
-        
         const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
         const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
 
         res.render("User/myVideos", { 
-            videos, 
-            shorts, 
-            title: "My Studio", 
-            user: req.user || req.session.user, 
-            currentPath: "/myVideos" 
+            videos, shorts, title: "My Studio", user: req.user || req.session.user, currentPath: "/myVideos" 
         });
-    } catch (err) { 
-        res.status(500).send("Server Error: " + err.message); 
-    }
+    } catch (err) { res.status(500).send("Server Error: " + err.message); }
 };
