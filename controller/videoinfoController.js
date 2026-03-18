@@ -13,7 +13,7 @@ try {
     console.error("⚠️ FFprobe static not found. Please run: npm install ffprobe-static");
 }
 
-// 🛠️ CONFIG: Zata (S3 Compatible) Client Setup
+// 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
     region: process.env.ZETTA_REGION || "indore",
     endpoint: process.env.ZETTA_ENDPOINT, 
@@ -30,18 +30,6 @@ const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
-};
-
-const getVideoDuration = (filePath) => {
-    return new Promise((resolve) => {
-        ffmpeg.ffprobe(filePath, (err, metadata) => {
-            if (err) {
-                console.error("FFprobe Error:", err.message);
-                return resolve("0:00");
-            }
-            resolve(formatDuration(metadata.format.duration));
-        });
-    });
 };
 
 const getSafeAvatar = (user) => {
@@ -90,38 +78,36 @@ exports.handleVideoUpload = async (req, res) => {
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        // Step 1: Analyze Video Duration
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Analyzing Video...', percent: 15 });
-        const videoDuration = await getVideoDuration(videoFile.path);
+        // 🟢 STEP 1: Status Update
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Preparing Video...', percent: 15 });
+        
+        let videoDuration = "0:00"; 
 
-        // Step 2: Upload Function (Using Buffer for Zetta stability)
+        // 🟢 STEP 2: Upload Function (Using Buffer - MemoryStorage Compatible)
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
-            // Read file as Buffer (Zetta likes Buffers for SHA256 stability)
-            const fileData = fs.readFileSync(file.path);
-
-            await s3Client.send(new PutObjectCommand({
+            const uploadParams = {
                 Bucket: process.env.ZETTA_BUCKET,
                 Key: fileName,
-                Body: file.buffer,
+                Body: file.buffer, // ✅ MemoryStorage uses buffer
                 ContentType: file.mimetype,
-                // ✅ ADDED ONLY THIS: File ko public banane ke liye
                 ACL: 'public-read', 
-            }));
-            
+            };
+
+            await s3Client.send(new PutObjectCommand(uploadParams));
             return `${process.env.ZETTA_ENDPOINT}/${process.env.ZETTA_BUCKET}/${fileName}`;
         };
 
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 45 });
 
-        // Step 3: Concurrent Uploads
+        // 🟢 STEP 3: Concurrent Uploads
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        // Step 4: Database Entry
+        // 🟢 STEP 4: Database Entry
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
@@ -136,19 +122,13 @@ exports.handleVideoUpload = async (req, res) => {
         await newVideo.save();
         await User.findByIdAndUpdate(userId, { $inc: { videosCount: 1 } });
 
-        // 🔥 Step 5: Cleanup Temp Files
-        fs.unlink(videoFile.path, () => {});
-        fs.unlink(thumbnailFile.path, () => {});
+        // ✅ Note: No fs.unlink needed for memoryStorage.
 
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Done!', percent: 100 });
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
         console.error("🚀 Upload Logic Error:", err);
-        // Clean up temp files on error
-        if (req.files?.['video']) fs.unlink(req.files['video'][0].path, () => {});
-        if (req.files?.['thumbnail']) fs.unlink(req.files['thumbnail'][0].path, () => {});
-        
         res.status(500).json({ success: false, message: "Upload Fail: " + err.message });
     }
 };
@@ -194,15 +174,15 @@ exports.toggleLike = async (req, res) => {
 
 exports.getMyVideos = async (req, res) => {
     try {
-        if (!req.user || !req.user._id) {
+        const userId = req.user?._id || req.session.user?._id;
+        if (!userId) {
             return res.redirect('/login');
         }
 
-        const allContent = await Video.find({ uploader: req.user._id })
+        const allContent = await Video.find({ uploader: userId })
             .sort({ createdAt: -1 })
             .lean();
 
-        // ✅ FIXED FILTER: 'videoType' field use karein jo aapke upload logic mein hai
         const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
         const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
 
@@ -210,7 +190,7 @@ exports.getMyVideos = async (req, res) => {
             videos, 
             shorts,
             title: "My Studio | Ghapaghap",
-            user: req.user,
+            user: req.user || req.session.user,
             currentPath: "/myVideos"
         });
     } catch (err) {

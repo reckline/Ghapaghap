@@ -5,6 +5,30 @@ const path = require("path");
 // ==========================================
 // 1. FETCH USER VIDEOS & SHORTS
 // ==========================================
+// exports.getMyVideos = async (req, res) => {
+//     try {
+//         if (!req.user || !req.user._id) return res.redirect('/login');
+
+//         const allContent = await Video.find({ uploader: req.user._id })
+//             .sort({ createdAt: -1 })
+//             .lean();
+
+//         // ✅ FIXED FILTER
+//         const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
+//         const videos = allContent.filter(v => v.videoType !== 'shorts' && v.videoType !== 'short');
+
+//         res.render("User/myVideos", { 
+//             videos, 
+//             shorts,
+//             title: "My Studio | Ghapaghap",
+//             user: req.user,
+//             currentPath: "/myVideos"
+//         });
+//     } catch (err) {
+//         res.status(500).send("Error: " + err.message);
+//     }
+// };
+
 // controller/myVideoController.js (Ya aapki main controller file)
 
 exports.getMyVideos = async (req, res) => {
