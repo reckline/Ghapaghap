@@ -14,15 +14,18 @@ try {
 }
 
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
-// ✅ FIX: Added fallback to prevent "Resolved credential object is not valid"
 const s3Client = new S3Client({
     region: process.env.ZETTA_REGION || "indore",
-    endpoint: process.env.ZETTA_ENDPOINT, 
+    
+    // ✅ FIX: Agar environment variable load nahi ho raha, toh yahan apna URL manually bhi daal sakte hain
+    // Dashboard mein check karein ki ZETTA_ENDPOINT mein "https://" laga hai ya nahi.
+    endpoint: process.env.ZETTA_ENDPOINT || "https://idr01.zata.ai", 
+    
     credentials: {
         accessKeyId: process.env.ZETTA_ACCESS_KEY || "", 
         secretAccessKey: process.env.ZETTA_SECRET_KEY || "",
     },
-    forcePathStyle: true,
+    forcePathStyle: true, // Zetta/DigitalOcean/Minio ke liye true hona zaroori hai
 });
 
 const getSafeAvatar = (user) => {
@@ -69,7 +72,7 @@ exports.handleVideoUpload = async (req, res) => {
         }
 
         if (!req.files || !req.files['video'] || !req.files['thumbnail']) {
-            return res.status(400).json({ success: false, message: "Bhai, files missing hain (Video/Thumbnail)!" });
+            return res.status(400).json({ success: false, message: "Video or Thumbnail file is missing!" });
         }
 
         const videoFile = req.files['video'][0];
@@ -77,11 +80,16 @@ exports.handleVideoUpload = async (req, res) => {
 
         if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 30 });
 
-        // 🟢 Upload Function (Using Memory Buffer)
+        // 🟢 Upload Function
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
             try {
+                // Ensure bucket name exists
+                if (!process.env.ZETTA_BUCKET) {
+                    throw new Error("ZETTA_BUCKET is not defined in environment variables.");
+                }
+
                 const uploadParams = {
                     Bucket: process.env.ZETTA_BUCKET,
                     Key: fileName,
@@ -91,24 +99,24 @@ exports.handleVideoUpload = async (req, res) => {
                 };
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
-                // Ensure endpoint doesn't have double slashes
-                const cleanEndpoint = process.env.ZETTA_ENDPOINT.replace(/\/$/, "");
-                return `${cleanEndpoint}/${process.env.ZETTA_BUCKET}/${fileName}`;
+                
+                // Clean endpoint to avoid double slashes
+                const baseEndpoint = (process.env.ZETTA_ENDPOINT || "").replace(/\/$/, "");
+                return `${baseEndpoint}/${process.env.ZETTA_BUCKET}/${fileName}`;
             } catch (s3Err) {
-                console.error(`❌ Zetta Cloud Error (${folder}):`, s3Err.message);
-                throw new Error(`Cloud Upload Failed: ${s3Err.message}`);
+                console.error(`❌ Zetta Error [${folder}]:`, s3Err.message);
+                throw new Error(`Cloud connection failed: ${s3Err.message}`);
             }
         };
 
-        // Concurrent Uploads (Parallel)
+        // Concurrent Uploads
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving Info...', percent: 80 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving to Database...', percent: 80 });
 
-        // 🟢 Database Entry
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
@@ -127,10 +135,10 @@ exports.handleVideoUpload = async (req, res) => {
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🚀 FINAL BACKEND ERROR:", err);
+        console.error("🚀 BACKEND UPLOAD ERROR:", err);
         res.status(500).json({ 
             success: false, 
-            message: "Upload Error: " + err.message 
+            message: "Upload Failed: " + err.message 
         });
     }
 };
@@ -150,7 +158,7 @@ exports.toggleLike = async (req, res) => {
     try {
         const { videoId } = req.params;
         const userId = req.session.user?._id || req.session.user?.id;
-        if (!userId) return res.status(401).json({ success: false, message: "Login first" });
+        if (!userId) return res.status(401).json({ success: false, message: "Login required" });
 
         const video = await Video.findById(videoId);
         if (!video) return res.status(404).json({ success: false });
@@ -178,11 +186,11 @@ exports.getMyVideos = async (req, res) => {
         res.render("User/myVideos", { 
             videos, 
             shorts, 
-            title: "My Studio | Ghapaghap", 
+            title: "My Studio", 
             user: req.user || req.session.user, 
             currentPath: "/myVideos" 
         });
     } catch (err) { 
-        res.status(500).send("Error: " + err.message); 
+        res.status(500).send("Server Error: " + err.message); 
     }
 };
