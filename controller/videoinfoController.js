@@ -2,7 +2,7 @@ const Video = require("../model/video");
 const User = require("../model/user");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const ffmpeg = require("fluent-ffmpeg");
-const { Readable } = require('stream'); // Stream handling ke liye
+const { Readable } = require('stream');
 const fs = require("fs");
 const path = require("path");
 
@@ -95,13 +95,13 @@ exports.handleVideoUpload = async (req, res) => {
                 });
             });
 
-            const totalSeconds = Math.floor(metadata.format.duration);
+            const totalSeconds = Math.floor(metadata.format.duration || 0);
             const minutes = Math.floor(totalSeconds / 60);
             const seconds = totalSeconds % 60;
             duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
         } catch (ffErr) {
             console.error("⚠️ Duration Error:", ffErr);
-            duration = "0:00"; // Fallback
+            duration = "0:00"; 
         }
 
         // ☁️ Step 2: Upload to Zetta
@@ -138,7 +138,7 @@ exports.handleVideoUpload = async (req, res) => {
             description: description?.trim() || "",
             videoUrl,
             thumbnailUrl,
-            duration, // ✅ Ab sahi duration save hogi
+            duration, 
             uploader: userId,
             category: category || "General",
             videoType: videoType || "video" 
@@ -192,8 +192,8 @@ exports.getMyVideos = async (req, res) => {
         if (!userId) return res.redirect('/login');
 
         const allContent = await Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean();
-        const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
-        const videos = allContent.filter(v => v.videoType === 'video' || !v.videoType);
+        const shorts = allContent.filter(v => (v.videoType === 'shorts' || v.videoType === 'short'));
+        const videos = allContent.filter(v => (v.videoType === 'video' || !v.videoType));
 
         res.render("User/myVideos", { 
             videos, shorts, title: "My Studio", user: req.user || req.session.user, currentPath: "/myVideos" 
