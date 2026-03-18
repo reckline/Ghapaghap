@@ -18,6 +18,11 @@ mongoose.connect(process.env.MONGO_URI)
 
 const app = express();
 const server = http.createServer(app); 
+
+// ⚡ FIX: Server timeout ko badha diya hai (10 Minutes) taaki badi video upload beech mein na ruke
+server.timeout = 600000; 
+server.keepAliveTimeout = 600000;
+
 const io = new Server(server); 
 
 const PORT = process.env.PORT || 3000;
@@ -42,16 +47,20 @@ app.set('views', path.resolve(__dirname, 'views'));
 // 🛠️ GLOBAL MIDDLEWARES
 // =========================================================
 app.use(express.static(path.join(__dirname, 'public'))); 
+
+// ✅ LIMITS ALREADY SET (800MB) - Perfect!
 app.use(express.json({ limit: '800mb' })); 
-app.use(express.urlencoded({ limit: '800mb', extended: true, parameterLimit: 100000 })); 
+app.use(express.urlencoded({ 
+    limit: '800mb', 
+    extended: true, 
+    parameterLimit: 1000000 // Isse bade form data handle ho payenge
+})); 
 
 // Session middleware hamesha routes se pehle
 app.use(sessionConfig); 
 
 // Custom Middleware: req.session.user ko req.user mein map karna
 app.use((req, res, next) => {
-    // 🔥 CRITICAL: Agar aap custom session use kar rahe hain, 
-    // toh req.user ko manually set karna padega controllers ke liye
     if (req.session && req.session.user) {
         req.user = req.session.user; 
     }

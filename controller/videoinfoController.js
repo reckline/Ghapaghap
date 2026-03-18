@@ -16,13 +16,17 @@ try {
 // 🛠️ CONFIG: Zetta (S3 Compatible) Client Setup
 const s3Client = new S3Client({
     region: "indore", 
-    endpoint: "https://idr01.zata.ai", // ✅ FIX: Direct endpoint taaki AWS par connect na kare
+    endpoint: "https://idr01.zata.ai", 
     credentials: {
-        // ⚠️ DHAYAN DEIN: Agar env variables kaam nahi kar rahe, toh yahan direct Keys paste karein
         accessKeyId: process.env.ZETTA_ACCESS_KEY || "3H36HDHCY4EI4ZGJUNSY", 
         secretAccessKey: process.env.ZETTA_SECRET_KEY || "PGJuoGxbn9IZB94D7x8J7-wdXgqVG8eXBAp9D5BDXzWFHkYhdZjvYw",
     },
-    forcePathStyle: true, // Zetta ke liye ye true hona zaroori hai
+    forcePathStyle: true,
+    // ✅ NEW: Badi files ke liye connection timeout badha diya hai (10 Minutes)
+    requestHandler: {
+        connectionTimeout: 600000, 
+        socketTimeout: 600000
+    }
 });
 
 const getSafeAvatar = (user) => {
@@ -75,14 +79,15 @@ exports.handleVideoUpload = async (req, res) => {
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
+        // ✅ Step update for UI
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading Large File...', percent: 20 });
 
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
             
             try {
                 const uploadParams = {
-                    Bucket: "saurrockers", // ✅ FIX: Bucket name direct hardcode kar diya hai
+                    Bucket: "saurrockers", 
                     Key: fileName,
                     Body: file.buffer, 
                     ContentType: file.mimetype,
@@ -90,22 +95,20 @@ exports.handleVideoUpload = async (req, res) => {
                 };
 
                 await s3Client.send(new PutObjectCommand(uploadParams));
-                
-                // Final URL formation
                 return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
                 console.error(`❌ Cloud Error [${folder}]:`, s3Err);
-                // Detail error bhej rahe hain taaki debugging aasaan ho
-                throw new Error(s3Err.name || s3Err.message || "Unknown Cloud Error");
+                throw new Error(s3Err.name || s3Err.message || "Cloud Connection Failed");
             }
         };
 
+        // Parallel Upload
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving...', percent: 80 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving in DB...', percent: 80 });
 
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
