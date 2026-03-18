@@ -2,73 +2,90 @@ const Video = require("../model/video");
 const User = require("../model/user");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const ffmpeg = require("fluent-ffmpeg");
-const { Readable } = require('stream'); 
 const fs = require("fs");
 const path = require("path");
 
-// ==========================================
-// 1. FETCH USER VIDEOS & SHORTS (With Duration Support)
-// ==========================================
-exports.getMyVideos = async (req, res) => {
+// 🟢 FFprobe setup
+// S3 Client Configuration
+// S3 Client Configuration
+const s3Client = new S3Client({
+    region: process.env.ZETTA_REGION || "indore",
+    endpoint: process.env.ZETTA_ENDPOINT || "https://idr01.zata.ai",
+    credentials: {
+        accessKeyId: process.env.ZETTA_ACCESS_KEY,
+        secretAccessKey: process.env.ZETTA_SECRET_KEY,
+    },
+    forcePathStyle: true,
+    requestHandler: {
+        connectionTimeout: 600000, // 10 minutes
+        socketTimeout: 600000
+    }
+});
+
+exports.handleVideoUpload = async (req, res) => {
+    const io = req.app.get('socketio');
+    const socketId = req.headers['x-socket-id'];
+
     try {
-        if (!req.user || !req.user._id) {
-            return res.redirect('/login');
+        const { title, description, category, videoType } = req.body;
+        const userId = req.session.user?._id || req.session.user?.id;
+
+        if (!userId) return res.status(401).json({ success: false, message: "Login required" });
+        if (!req.files?.['video'] || !req.files?.['thumbnail']) {
+            return res.status(400).json({ success: false, message: "Files missing!" });
         }
 
-        // Saara content fetch kar rahe hain duration ke saath
-        const allContent = await Video.find({ uploader: req.user._id })
-            .sort({ createdAt: -1 })
-            .lean();
+        const videoFile = req.files['video'][0];
+        const thumbnailFile = req.files['thumbnail'][0];
 
-        // ✅ Shorts Filter: 'shorts' ya 'short' dono handle honge
-        const shorts = allContent.filter(v => 
-            v.videoType === 'shorts' || 
-            v.videoType === 'short'
-        );
+        // 🕒 Get Duration
+        let duration = "0:00";
+        try {
+            const metadata = await new Promise((resolve, reject) => {
+                const { Readable } = require('stream');
+                const stream = new Readable();
+                stream.push(videoFile.buffer);
+                stream.push(null);
+                ffmpeg(stream).ffprobe((err, data) => {
+                    if (err) reject(err); else resolve(data);
+                });
+            });
+            const seconds = Math.floor(metadata.format.duration);
+            duration = `${Math.floor(seconds / 60)}:${(seconds % 60).toString().padStart(2, '0')}`;
+        } catch (e) { console.log("Duration error, using default"); }
 
-        // ✅ Long Videos Filter: 'video', 'long' ya agar type empty ho
-        const videos = allContent.filter(v => 
-            v.videoType === 'video' || 
-            v.videoType === 'long' || 
-            !v.videoType
-        );
+        // ☁️ Upload Function
+        const uploadToZetta = async (file, folder) => {
+            const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+            const uploadParams = {
+                Bucket: process.env.ZETTA_BUCKET || "saurrockers", // Backup hardcode agar env fail ho
+                Key: fileName,
+                Body: file.buffer,
+                ContentType: file.mimetype,
+                ACL: 'public-read',
+            };
+            await s3Client.send(new PutObjectCommand(uploadParams));
+            return `${process.env.ZETTA_ENDPOINT || 'https://idr01.zata.ai'}/saurrockers/${fileName}`;
+        };
 
-        res.render("User/myVideos", { 
-            videos, 
-            shorts,
-            title: "My Studio | Ghapaghap",
-            user: req.user,
-            currentPath: "/myVideos"
+        const [videoUrl, thumbnailUrl] = await Promise.all([
+            uploadToZetta(videoFile, "videos"),
+            uploadToZetta(thumbnailFile, "thumbnails")
+        ]);
+
+        const newVideo = new Video({
+            title, description, videoUrl, thumbnailUrl, duration,
+            uploader: userId, category, videoType: videoType || "video"
         });
+
+        await newVideo.save();
+        res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🔥 Error in getMyVideos:", err.message);
-        res.status(500).send("Error: " + err.message);
+        console.error("Upload Error:", err);
+        res.status(500).json({ success: false, message: "Cloud connection failed: " + err.message });
     }
 };
-
-// Separate Shorts Page Logic
-exports.getMyShorts = async (req, res) => {
-    try {
-        if (!req.user || !req.user._id) return res.redirect('/login');
-
-        const shorts = await Video.find({ 
-            uploader: req.user._id, 
-            videoType: { $in: ['shorts', 'short'] } 
-        }).sort({ createdAt: -1 }).lean();
-
-        res.render('User/myShorts', { 
-            user: req.user, 
-            shorts: shorts,
-            title: "My Shorts | Ghapaghap",
-            currentPath: '/myShorts'
-        });
-    } catch (error) {
-        console.log("Error fetching shorts:", error);
-        res.status(500).send("Error fetching shorts");
-    }
-};
-
 // ==========================================
 // 1. PAGE: Render Upload Video Page
 // ==========================================
@@ -113,64 +130,44 @@ exports.handleVideoUpload = async (req, res) => {
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        // 🕒 Step 1: Calculate Video Duration (Buffer Stream)
-        let duration = "0:00";
-        try {
-            if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Analyzing Video...', percent: 10 });
-            
-            const metadata = await new Promise((resolve, reject) => {
-                const stream = new Readable();
-                stream.push(videoFile.buffer);
-                stream.push(null);
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading...', percent: 30 });
 
-                ffmpeg(stream).ffprobe((err, data) => {
-                    if (err) reject(err);
-                    else resolve(data);
-                });
-            });
-
-            if (metadata.format && metadata.format.duration) {
-                const totalSeconds = Math.floor(metadata.format.duration);
-                const minutes = Math.floor(totalSeconds / 60);
-                const seconds = totalSeconds % 60;
-                duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-            }
-        } catch (ffErr) {
-            console.error("⚠️ FFprobe Error:", ffErr.message);
-            duration = "0:00"; 
-        }
-
-        // ☁️ Step 2: Upload Function for Zetta
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
-            const uploadParams = {
-                Bucket: "saurrockers", 
-                Key: fileName,
-                Body: file.buffer, 
-                ContentType: file.mimetype,
-                ACL: 'public-read', 
-            };
-            await s3Client.send(new PutObjectCommand(uploadParams));
-            return `https://idr01.zata.ai/saurrockers/${fileName}`;
+            
+            try {
+                const uploadParams = {
+                    Bucket: "saurrockers", // ✅ Fixed: ZETTA_BUCKET error solve karne ke liye direct naam
+                    Key: fileName,
+                    Body: file.buffer, 
+                    ContentType: file.mimetype,
+                    ACL: 'public-read', 
+                };
+
+                await s3Client.send(new PutObjectCommand(uploadParams));
+                
+                // Final URL formation
+                return `https://idr01.zata.ai/saurrockers/${fileName}`;
+            } catch (s3Err) {
+                console.error(`❌ Cloud Connection Error [${folder}]:`, s3Err);
+                throw new Error(s3Err.name || "Connection Failed");
+            }
         };
 
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading to Cloud...', percent: 40 });
-
-        // Sequential or Parallel Upload
+        // Dono files parallel upload hongi
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        // 💾 Step 3: Save in Database
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Finalizing...', percent: 90 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving...', percent: 80 });
 
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
             videoUrl,
             thumbnailUrl,
-            duration, 
+            duration: "0:00",
             uploader: userId,
             category: category || "General",
             videoType: videoType || "video" 
@@ -183,17 +180,16 @@ exports.handleVideoUpload = async (req, res) => {
         res.status(200).json({ success: true, redirect: "/profile?success=uploaded" });
 
     } catch (err) {
-        console.error("🚀 UPLOAD ERROR:", err);
-        // Error message handling for 504 and others
-        let errMsg = err.message;
-        if (errMsg.includes("timeout")) errMsg = "Server took too long (Timeout). Please try a smaller file or check Nginx settings.";
-        
-        res.status(500).json({ success: false, message: errMsg });
+        console.error("🚀 BACKEND ERROR:", err);
+        res.status(500).json({ 
+            success: false, 
+            message: "Upload Failed: " + err.message 
+        });
     }
 };
 
 // ==========================================
-// 3. OTHER LOGICS
+// 3. OTHER LOGICS (Views, Likes, MyVideos)
 // ==========================================
 exports.updateViews = async (req, res) => {
     try {
