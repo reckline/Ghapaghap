@@ -2,7 +2,6 @@ const Video = require("../model/video");
 const User = require("../model/user");
 const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
 const ffmpeg = require("fluent-ffmpeg");
-const { Readable } = require('stream'); // Stream handling ke liye
 const fs = require("fs");
 const path = require("path");
 
@@ -23,6 +22,7 @@ const s3Client = new S3Client({
         secretAccessKey: process.env.ZETTA_SECRET_KEY || "PGJuoGxbn9IZB94D7x8J7-wdXgqVG8eXBAp9D5BDXzWFHkYhdZjvYw",
     },
     forcePathStyle: true,
+    // ✅ NEW: Badi files ke liye connection timeout badha diya hai (10 Minutes)
     requestHandler: {
         connectionTimeout: 600000, 
         socketTimeout: 600000
@@ -79,36 +79,12 @@ exports.handleVideoUpload = async (req, res) => {
         const videoFile = req.files['video'][0];
         const thumbnailFile = req.files['thumbnail'][0];
 
-        // 🕒 Step 1: Calculate Video Duration
-        let duration = "0:00";
-        try {
-            if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Calculating Duration...', percent: 10 });
-            
-            const metadata = await new Promise((resolve, reject) => {
-                const stream = new Readable();
-                stream.push(videoFile.buffer);
-                stream.push(null);
-
-                ffmpeg(stream).ffprobe((err, data) => {
-                    if (err) reject(err);
-                    else resolve(data);
-                });
-            });
-
-            const totalSeconds = Math.floor(metadata.format.duration);
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = totalSeconds % 60;
-            duration = `${minutes}:${seconds.toString().padStart(2, '0')}`;
-        } catch (ffErr) {
-            console.error("⚠️ Duration Error:", ffErr);
-            duration = "0:00"; // Fallback
-        }
-
-        // ☁️ Step 2: Upload to Zetta
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading Files...', percent: 30 });
+        // ✅ Step update for UI
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Uploading Large File...', percent: 20 });
 
         const uploadToZetta = async (file, folder) => {
             const fileName = `${folder}/${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`;
+            
             try {
                 const uploadParams = {
                     Bucket: "saurrockers", 
@@ -117,28 +93,29 @@ exports.handleVideoUpload = async (req, res) => {
                     ContentType: file.mimetype,
                     ACL: 'public-read', 
                 };
+
                 await s3Client.send(new PutObjectCommand(uploadParams));
                 return `https://idr01.zata.ai/saurrockers/${fileName}`;
             } catch (s3Err) {
                 console.error(`❌ Cloud Error [${folder}]:`, s3Err);
-                throw new Error("Cloud Connection Failed");
+                throw new Error(s3Err.name || s3Err.message || "Cloud Connection Failed");
             }
         };
 
+        // Parallel Upload
         const [videoUrl, thumbnailUrl] = await Promise.all([
             uploadToZetta(videoFile, "videos"),
             uploadToZetta(thumbnailFile, "thumbnails")
         ]);
 
-        // 💾 Step 3: Save in Database
-        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving in DB...', percent: 90 });
+        if (io && socketId) io.to(socketId).emit('processing_status', { step: 'Saving in DB...', percent: 80 });
 
         const newVideo = new Video({
             title: title?.trim() || "Untitled",
             description: description?.trim() || "",
             videoUrl,
             thumbnailUrl,
-            duration, // ✅ Ab sahi duration save hogi
+            duration: "0:00",
             uploader: userId,
             category: category || "General",
             videoType: videoType || "video" 
@@ -152,7 +129,10 @@ exports.handleVideoUpload = async (req, res) => {
 
     } catch (err) {
         console.error("🚀 BACKEND ERROR:", err);
-        res.status(500).json({ success: false, message: "Upload Failed: " + err.message });
+        res.status(500).json({ 
+            success: false, 
+            message: "Upload Failed: " + err.message 
+        });
     }
 };
 
