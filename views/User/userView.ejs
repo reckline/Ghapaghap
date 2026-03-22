@@ -61,20 +61,23 @@
                             <% } %>
                         </h1>
                         
-                        <div class="flex gap-2 justify-center">
-                            <% if (user && user._id.toString() === creator._id.toString()) { %>
-                                <a href="/edit-profile" class="px-8 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full text-sm transition-all">
-                                    Edit Profile
-                                </a>
-                            <% } else { %>
-                                <button onclick="subscribeUser('<%= creator._id %>')" id="sub-btn" class="px-8 py-2 <%= creator.isSubbed ? 'bg-gray-700' : 'bg-pink-600 hover:bg-pink-700' %> text-white font-bold rounded-full text-sm transition-all shadow-lg">
-                                    <%= creator.isSubbed ? 'Subscribed' : 'Subscribe' %>
-                                </button>
-                            <% } %>
-                            <button class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-all">
-                                <span class="material-icons-sharp text-sm">share</span>
-                            </button>
-                        </div>
+<div class="flex gap-2 justify-center flex-wrap">
+    <button onclick="subscribeUser('<%= creator._id %>')" id="sub-btn" class="px-8 py-2 <%= creator.isSubbed ? 'bg-gray-700' : 'bg-pink-600 hover:bg-pink-700' %> text-white font-bold rounded-full text-sm transition-all shadow-lg active:scale-95">
+        <%= creator.isSubbed ? 'Subscribed' : 'Subscribe' %>
+    </button>
+
+    <button onclick="switchTab('messages')" class="p-2 bg-pink-600/10 border border-pink-500/50 hover:bg-pink-600 text-white rounded-full transition-all group">
+        <span class="material-icons-sharp text-sm block group-hover:scale-110">message</span>
+    </button>
+
+    <button onclick="startVideoCall('<%= creator._id %>')" class="p-2 bg-blue-600/10 border border-blue-500/50 hover:bg-blue-600 text-white rounded-full transition-all group">
+        <span class="material-icons-sharp text-sm block group-hover:scale-110">videocam</span>
+    </button>
+
+<button id="share-btn" onclick="shareProfile()" class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-all active:scale-90">
+    <span class="material-icons-sharp text-sm">share</span>
+</button>
+</div>
                     </div>
 
                     <div class="flex justify-center md:justify-start gap-8 mb-6">
@@ -90,7 +93,7 @@
 
                     <div class="max-w-md mx-auto md:mx-0">
                         <p class="text-sm text-gray-300 leading-relaxed font-medium">
-                            <%= creator.bio || 'Bhai ne abhi tak koi bio nahi likha hai. 🍿' %>
+                            <%= creator.bio || 'No Bio Available 🍿' %>
                         </p>
                     </div>
                 </div>
@@ -99,20 +102,17 @@
             <div class="flex justify-center border-b border-gray-900 mt-4">
                 <button onclick="switchTab('videos')" id="tab-videos" class="tab-btn px-8 py-4 text-xs font-black uppercase tracking-widest tab-active">Videos</button>
                 <button onclick="switchTab('shorts')" id="tab-shorts" class="tab-btn px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-600 hover:text-gray-400">Shorts</button>
+                <button onclick="switchTab('messages')" id="tab-messages" class="tab-btn px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-600 hover:text-gray-400">Messages</button>
             </div>
 
             <div id="grid-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
                 <% if(videos && videos.length > 0) { %>
                     <% videos.forEach(video => { %>
-                        <div class="video-item <%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'hidden-tab' : '' %>" data-type="<%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'shorts' : 'videos' %>">
+                        <div class="video-item" data-type="<%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'shorts' : 'videos' %>">
                             <a href="/watch/<%= video._id %>" class="group block bg-[#1a1a1a] rounded-2xl overflow-hidden border border-gray-800/50 hover:border-pink-500/30 transition-all shadow-xl">
                                 <div class="relative <%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'aspect-[9/16]' : 'aspect-[16/9]' %> overflow-hidden">
                                     <img src="<%= video.thumbnailUrl %>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="thumb">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
-                                    <div class="absolute bottom-3 left-3 flex items-center gap-2">
-                                        <span class="material-icons-sharp text-[16px] text-white">play_arrow</span>
-                                        <span class="text-[10px] font-bold text-white tracking-tighter">View</span>
-                                    </div>
                                 </div>
                                 <div class="p-3">
                                     <h3 class="text-xs font-bold text-gray-200 truncate group-hover:text-pink-400"><%= video.title %></h3>
@@ -121,63 +121,62 @@
                         </div>
                     <% }) %>
                 <% } else { %>
-                    <div class="col-span-full py-20 text-center">
-                        <span class="material-icons-sharp text-5xl text-gray-800 mb-4">video_library</span>
-                        <p class="text-gray-600 font-bold uppercase text-[10px] tracking-[0.3em]">No Content Yet</p>
+                    <div id="no-content-msg" class="col-span-full py-20 text-center">
+                        <p class="text-gray-600 font-bold uppercase text-[10px] tracking-widest">No Content Found</p>
                     </div>
                 <% } %>
             </div>
+
+            <div id="messages-container" class="hidden mt-8 max-w-2xl mx-auto">
+                <div class="bg-[#1a1a1a] border border-gray-800 rounded-3xl p-10 text-center">
+                    <span class="material-icons-sharp text-5xl text-pink-600 mb-4">chat_bubble</span>
+                    <h2 class="text-xl font-black uppercase italic mb-2">Direct Message</h2>
+                    <p class="text-gray-500 text-sm mb-6">Chat directly with @<%= creator.username %></p>
+<button onclick="openChat('<%= creator._id %>')" class="px-10 py-3 bg-pink-600 hover:bg-pink-700 rounded-full font-bold text-xs uppercase tracking-widest transition-all shadow-lg shadow-pink-600/20 active:scale-95">
+    Open Chat Box
+</button>
+                    
+                </div>
+            </div>
+
         </main>
     </div>
 
     <%- include('../partials/homeFooter') %>
 
     <script>
-        // Tab Switching Logic
         function switchTab(type) {
-            const allItems = document.querySelectorAll('.video-item');
+            const gridContainer = document.getElementById('grid-container');
+            const messagesContainer = document.getElementById('messages-container');
+            const videoItems = document.querySelectorAll('.video-item');
             const btns = document.querySelectorAll('.tab-btn');
             
-            // UI Update
-            btns.forEach(btn => btn.classList.remove('tab-active'));
+            // UI Update (Tabs)
+            btns.forEach(btn => {
+                btn.classList.remove('tab-active', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
             document.getElementById('tab-' + type).classList.add('tab-active');
 
-            // Filtering
-            allItems.forEach(item => {
-                if (item.getAttribute('data-type') === type) {
-                    item.style.display = 'block';
-                } else {
-                    item.style.display = 'none';
-                }
-            });
-        }
-
-        // Initialize: Show only videos first
-        document.addEventListener('DOMContentLoaded', () => {
-            switchTab('videos');
-        });
-
-        // Sidebar logic
-        const sidebar = document.getElementById('mobile-sidebar');
-        const overlay = document.getElementById('sidebar-overlay');
-        const body = document.body;
-
-        function toggleSidebar() {
-            const isOpen = !sidebar.classList.contains('-translate-x-full');
-            if (!isOpen) {
-                sidebar.classList.remove('-translate-x-full');
-                overlay.classList.remove('hidden');
-                setTimeout(() => { overlay.classList.add('opacity-100'); }, 10);
-                body.style.overflow = 'hidden';
+            if (type === 'messages') {
+                // DOM: Hide Grid, Show Messages
+                gridContainer.style.display = 'none';
+                messagesContainer.classList.remove('hidden');
+                messagesContainer.style.display = 'block';
             } else {
-                sidebar.classList.add('-translate-x-full');
-                overlay.classList.remove('opacity-100');
-                setTimeout(() => { overlay.classList.add('hidden'); body.style.overflow = ''; }, 300);
+                // DOM: Show Grid, Hide Messages
+                messagesContainer.style.display = 'none';
+                gridContainer.style.display = 'grid';
+                
+                // Filtering Logic for Videos/Shorts
+                videoItems.forEach(item => {
+                    item.style.display = (item.getAttribute('data-type') === type) ? 'block' : 'none';
+                });
             }
         }
-        overlay.addEventListener('click', toggleSidebar);
 
-        // AJAX Subscribe
+        document.addEventListener('DOMContentLoaded', () => switchTab('videos'));
+
         async function subscribeUser(userId) {
             try {
                 const response = await fetch(`/subscribe/${userId}`, { method: 'POST' });
@@ -192,6 +191,43 @@
                 }
             } catch (err) { console.error(err); }
         }
+
+        function startVideoCall(userId) {
+            alert("Video Call feature coming soon for " + userId);
+        }
+    </script>
+    <script>
+      // Share Profile Function
+async function shareProfile() {
+    const shareData = {
+        title: '<%= creator.username %> | GhapaGhap',
+        text: 'Check out @<%= creator.username %> on GhapaGhap! 🍿',
+        url: window.location.href // Ye automatically current page ka link le lega
+    };
+
+    try {
+        // Check agar browser share support karta hai (Mobile browsers mostly do)
+        if (navigator.share) {
+            await navigator.share(shareData);
+        } else {
+            // Agar desktop browser hai to link copy kar lega fallback ke liye
+            await navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard! 🚀');
+        }
+    } catch (err) {
+        console.error('Error sharing:', err);
+    }
+}
+    </script>
+    <script>
+      // Function to open direct chat page
+function openChat(creatorId) {
+    // Agar user logged in nahi hai, toh login page par bhej sakte ho (Optional)
+    // window.location.href = `/chat/${creatorId}`;
+    
+    // Filhaal direct redirection:
+    window.location.href = `/chat/${creatorId}`;
+}
     </script>
 </body>
 </html>

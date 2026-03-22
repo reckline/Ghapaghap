@@ -11,6 +11,9 @@ dotenv.config();
 // 2. Session config import
 const sessionConfig = require('./config/session'); 
 
+// 🛠️ Controller Import (Socket handling ke liye)
+const { handleSocket } = require('./controller/chatController');
+
 // 3. Database Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB Atlas Connected!"))
@@ -19,7 +22,7 @@ mongoose.connect(process.env.MONGO_URI)
 const app = express();
 const server = http.createServer(app); 
 
-// ⚡ FIX: Server timeout ko badha diya hai (10 Minutes) taaki badi video upload beech mein na ruke
+// ⚡ Server timeout
 server.timeout = 600000; 
 server.keepAliveTimeout = 600000;
 
@@ -29,9 +32,10 @@ const PORT = process.env.PORT || 3000;
 
 app.set('socketio', io);
 
-io.on('connection', (socket) => {
-    socket.on('disconnect', () => {});
-});
+// =========================================================
+// ⚡ SOCKET.IO REAL-TIME LOGIC (Shifted to Controller)
+// =========================================================
+handleSocket(io); 
 
 // =========================================================
 // 🛠️ NOISE REQUESTS HANDLER
@@ -48,18 +52,15 @@ app.set('views', path.resolve(__dirname, 'views'));
 // =========================================================
 app.use(express.static(path.join(__dirname, 'public'))); 
 
-// ✅ LIMITS ALREADY SET (800MB) - Perfect!
 app.use(express.json({ limit: '800mb' })); 
 app.use(express.urlencoded({ 
     limit: '800mb', 
     extended: true, 
-    parameterLimit: 1000000 // Isse bade form data handle ho payenge
+    parameterLimit: 1000000 
 })); 
 
-// Session middleware hamesha routes se pehle
 app.use(sessionConfig); 
 
-// Custom Middleware: req.session.user ko req.user mein map karna
 app.use((req, res, next) => {
     if (req.session && req.session.user) {
         req.user = req.session.user; 
@@ -73,7 +74,7 @@ app.use((req, res, next) => {
 });
 
 // =========================================================
-// 🛣️ ROUTES SETUP (Order Fixed)
+// 🛣️ ROUTES SETUP
 // =========================================================
 const adminRouter = require('./routes/adminRouter'); 
 const userRouter = require('./routes/userRouter');
@@ -81,17 +82,14 @@ const loginAndSignupRouter = require('./routes/loginAndSignupRouter');
 const searchRouter = require('./routes/searchRouter'); 
 const verifyRouter = require('./routes/verifyRouter'); 
 const videoRoutes = require("./routes/videoRoutes");
+const chatRouter = require('./routes/chatRouter'); 
 
-// Routes priority
 app.use('/admin', adminRouter); 
 app.use('/search', searchRouter); 
 app.use('/verify', verifyRouter); 
-
-// Pehle main functional routes
 app.use('/', videoRoutes); 
+app.use('/', chatRouter); 
 app.use('/', userRouter); 
-
-// Sabse aakhir mein login/signup taaki clash na ho
 app.use('/', loginAndSignupRouter); 
 
 // =========================================================
