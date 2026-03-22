@@ -2,6 +2,7 @@ const User = require('../model/user');
 const Deposit = require('../model/deposit');
 const Withdrawal = require('../model/withdrawal');
 const moment = require('moment');
+const Video = require('../model/video'); 
 
 // ==========================================
 // 0. HELPER FUNCTIONS
@@ -267,4 +268,38 @@ exports.getReports = async (req, res) => {
 
         res.render('Admin/reports', { stats, title: "Financial Reports" });
     } catch (err) { res.status(500).send("Internal Server Error"); }
+};
+
+
+// ==========================================
+// 📊 ADMIN ALL VIDEOS EDIT & DELEAT
+// ==========================================
+
+
+// 1. Get All Videos Logic
+exports.getAllVideos = async (req, res) => {
+    try {
+        const videos = await Video.find()
+            .populate('uploader', 'username email') // Uploader ki details nikalne ke liye
+            .sort({ createdAt: -1 });
+
+        res.render('Admin/allVideoInfo', { 
+            videos, 
+            user: req.session.user 
+        });
+    } catch (err) {
+        console.error("Error fetching videos:", err);
+        res.status(500).send("Database error occurred!");
+    }
+};
+
+// 2. Delete Video Logic
+exports.deleteVideo = async (req, res) => {
+    try {
+        const videoId = req.params.id;
+        await Video.findByIdAndDelete(videoId);
+        res.json({ success: true, message: "Video deleted successfully!" });
+    } catch (err) {
+        res.status(500).json({ success: false, message: "Delete action failed!" });
+    }
 };

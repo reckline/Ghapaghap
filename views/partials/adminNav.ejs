@@ -1,63 +1,99 @@
-<aside id="sidebar" class="fixed inset-y-0 left-0 bg-[#111827] w-64 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-50 border-r border-gray-800">
-    <div class="p-6">
-        <h2 class="text-2xl font-black tracking-tighter text-red-500">GHAPAGHP <span class="text-xs text-gray-500 font-normal">ADMIN</span></h2>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+
+<aside id="sidebar" class="fixed inset-y-0 left-0 bg-[#0b0e14] w-64 transform -translate-x-full md:relative md:translate-x-0 transition-transform duration-300 ease-in-out z-50 border-r border-gray-800 flex flex-col">
+    
+    <div class="p-6 border-b border-gray-800/50">
+        <h2 class="text-2xl font-black tracking-tighter text-white italic">
+            GHAPA<span class="text-red-500">GHAP</span>
+            <span class="block text-[10px] text-gray-500 font-bold uppercase tracking-[0.3em] not-italic mt-1">Admin Control</span>
+        </h2>
     </div>
 
-    <nav class="mt-2 space-y-1">
-        <a href="/admin/dashboard" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-pink-500">dashboard</span> 
-            <span class="text-sm font-medium">Dashboard</span>
+    <nav class="flex-1 mt-4 overflow-y-auto custom-scrollbar pb-10">
+        
+        <a href="/admin/dashboard" class="flex items-center px-6 py-3.5 text-gray-400 hover:bg-white/5 hover:text-white transition-all group relative">
+            <div class="w-1 h-6 bg-pink-500 absolute left-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-r-full"></div>
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-pink-500 transition-colors">dashboard</span> 
+            <span class="text-sm font-semibold tracking-wide">Dashboard</span>
         </a>
 
-        <div class="px-6 py-2 mt-4 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">User Management</div>
+        <div class="px-7 py-4 mt-2 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">User Management</div>
 
-        <a href="/admin/verify" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-yellow-500">pending_actions</span> 
+        <a href="/admin/verify" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-yellow-500 transition-colors">pending_actions</span> 
             <span class="text-sm font-medium">Verification Requests</span>
         </a>
 
-        <a href="/admin/allVerifiedUsers" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-blue-500">verified</span> 
+        <a href="/admin/allVerifiedUsers" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-blue-500 transition-colors">verified</span> 
             <span class="text-sm font-medium">Verified Creators</span>
         </a>
 
-        <a href="/admin/notVerifiedUsers" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-red-500">person_off</span> 
+        <a href="/admin/notVerifiedUsers" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-red-500 transition-colors">person_off</span> 
             <span class="text-sm font-medium">Unverified Users</span>
         </a>
 
-        <div class="px-6 py-2 mt-4 mb-1 text-[10px] font-bold text-gray-500 uppercase tracking-widest">Financials</div>
+        <div class="px-7 py-4 mt-2 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Financials</div>
 
-        <a href="/admin/depositRequests" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-green-500">account_balance_wallet</span> 
+        <a href="/admin/depositRequests" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-green-500 transition-colors">account_balance_wallet</span> 
             <span class="text-sm font-medium">Deposit Requests</span>
         </a>
 
-        <a href="/admin/withdrawalRequests" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-orange-500">payments</span> 
+        <a href="/admin/withdrawalRequests" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <span class="material-icons-sharp w-6 text-xl mr-3 group-hover:text-orange-500 transition-colors">payments</span> 
             <span class="text-sm font-medium">Withdrawal Requests</span>
         </a>
 
-        <a href="/admin/depositInfos" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-purple-500">assessment</span> 
-            <span class="text-sm font-medium">Deposit Infos</span>
+        <div class="grid grid-cols-2 gap-1 px-4 mt-2">
+            <a href="/admin/depositInfos" class="flex items-center justify-center p-3 rounded-xl bg-gray-900/50 text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all group border border-gray-800">
+                <span class="material-icons-sharp text-sm mr-2">analytics</span>
+                <span class="text-[10px] font-bold uppercase">Deposits</span>
+            </a>
+            <a href="/admin/withdrawalInfos" class="flex items-center justify-center p-3 rounded-xl bg-gray-900/50 text-gray-400 hover:bg-purple-500/10 hover:text-purple-400 transition-all group border border-gray-800">
+                <span class="material-icons-sharp text-sm mr-2">insights</span>
+                <span class="text-[10px] font-bold uppercase">Payouts</span>
+            </a>
+        </div>
+
+        <div class="px-7 py-4 mt-2 text-[10px] font-black text-gray-600 uppercase tracking-[0.2em]">Content</div>
+
+        <a href="/admin/allVideoInfo" class="flex items-center px-6 py-3 text-gray-400 hover:bg-white/5 hover:text-white transition-all group">
+            <div class="w-6 mr-3 flex justify-center group-hover:text-purple-500 transition-colors">
+                <i class="fa-solid fa-play text-sm"></i>
+            </div>
+            <span class="text-sm font-medium">All Video Edit</span>
         </a>
 
-        <a href="/admin/withdrawalInfos" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-purple-500">assessment</span> 
-            <span class="text-sm font-medium">Withdrawal Infos</span>
-        </a>
+        <div class="mt-8 pt-4 border-t border-gray-800 px-4 space-y-2">
+            <a href="/admin/settings" class="flex items-center px-4 py-3 rounded-xl text-gray-400 hover:bg-gray-800 transition-all">
+                <span class="material-icons-sharp mr-3 opacity-50">settings</span> 
+                <span class="text-sm">Settings</span>
+            </a>
 
-        <div class="px-6 py-2 mt-4 mb-1 border-t border-gray-800 pt-4"></div>
-
-        <a href="/admin/settings" class="flex items-center px-6 py-3 text-gray-300 hover:bg-gray-800 hover:text-white transition-all group">
-            <span class="material-icons-sharp mr-3 text-gray-500 group-hover:text-white">settings</span> 
-            <span class="text-sm font-medium">Settings</span>
-        </a>
-
-        <a href="/logout" class="flex items-center px-6 py-3 text-red-400 hover:bg-red-500/10 transition-all group">
-            <span class="material-icons-sharp mr-3">logout</span> 
-            <span class="text-sm font-medium">Logout</span>
-        </a>
+            <a href="/logout" class="flex items-center px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-all group">
+                <span class="material-icons-sharp mr-3 group-hover:rotate-12 transition-transform">logout</span> 
+                <span class="text-sm font-bold">Sign Out</span>
+            </a>
+        </div>
     </nav>
 </aside>
+
+<style>
+    /* Custom Scrollbar for Sidebar */
+    .custom-scrollbar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+        background: #1f2937;
+        border-radius: 10px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #374151;
+    }
+</style>

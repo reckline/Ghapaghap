@@ -15,14 +15,11 @@
         .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .progress-glow { box-shadow: 0 0 15px rgba(236, 72, 153, 0.5); }
-        
         .input-focus:focus { 
             background: rgba(255, 255, 255, 0.05);
             border-color: #ec4899;
             box-shadow: 0 0 10px rgba(236, 72, 153, 0.2);
         }
-        
-        /* Smooth scale animation for upload icon */
         .upload-icon-anim { animation: bounce 2s infinite; }
         @keyframes bounce {
             0%, 100% { transform: translateY(0); }
@@ -58,6 +55,8 @@
                         </div>
 
                         <form id="uploadForm" class="space-y-8 relative z-10">
+                            <input type="hidden" name="duration" id="durationInput" value="0:00">
+
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 <div class="md:col-span-2">
                                     <label class="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Video Title</label>
@@ -139,18 +138,6 @@
             socketId = socket.id;
         });
 
-        // Listen for Heavy Processing Updates (Duration, Cloud Upload, DB Save)
-        socket.on('processing_status', (data) => {
-            statusLabel.innerText = data.step;
-            progressBar.style.width = data.percent + '%';
-            percentLabel.innerText = data.percent + '%';
-            
-            if (data.percent === 100) {
-                statusLabel.innerText = "SUCCESSFULLY PUBLISHED!";
-                statusLabel.classList.add('text-green-400');
-            }
-        });
-
         const form = document.getElementById('uploadForm');
         const progressContainer = document.getElementById('progressContainer');
         const progressBar = document.getElementById('progressBar');
@@ -158,26 +145,48 @@
         const statusLabel = document.getElementById('statusLabel');
         const submitBtn = document.getElementById('submitBtn');
         const btnText = document.getElementById('btnText');
-        const typeSelector = document.getElementById('typeSelector');
-        const videoUploadBox = document.getElementById('videoUploadBox');
+        const videoInput = document.getElementById('videoInput');
+        const durationInput = document.getElementById('durationInput');
 
-        // Dynamic UI Change based on content type
-        typeSelector.addEventListener('change', (e) => {
-            if(e.target.value === 'short') {
-                videoUploadBox.classList.replace('hover:border-blue-500/40', 'hover:border-pink-500/40');
-                submitBtn.classList.replace('hover:bg-pink-500', 'hover:bg-magenta-600');
-            } else {
-                videoUploadBox.classList.replace('hover:border-pink-500/40', 'hover:border-blue-500/40');
+        // --- 🕒 DURATION EXTRACTION LOGIC ---
+        videoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = function() {
+                window.URL.revokeObjectURL(video.src);
+                const duration = video.duration;
+                const minutes = Math.floor(duration / 60);
+                const seconds = Math.floor(duration % 60);
+                const finalDuration = minutes + ":" + (seconds < 10 ? '0' : '') + seconds;
+                durationInput.value = finalDuration;
+                console.log("Detected Duration:", finalDuration);
+            };
+            video.src = URL.createObjectURL(file);
+        });
+
+        socket.on('processing_status', (data) => {
+            statusLabel.innerText = data.step;
+            // 80% axios se hota hai, baaki 20% socket updates se
+            const socketPercent = 80 + (data.percent * 0.2); 
+            progressBar.style.width = socketPercent + '%';
+            percentLabel.innerText = Math.round(socketPercent) + '%';
+            
+            if (data.percent === 100) {
+                statusLabel.innerText = "SUCCESSFULLY PUBLISHED!";
+                statusLabel.classList.replace('text-white', 'text-green-400');
+                // Auto redirect after socket finish
+                setTimeout(() => { window.location.href = "/myVideos"; }, 2000);
             }
         });
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-
             const formData = new FormData(form);
-            const videoFile = document.getElementById('videoInput').files[0];
+            const videoFile = videoInput.files[0];
             
-            // Show File Size
             if(videoFile) {
                 const sizeMB = (videoFile.size / (1024 * 1024)).toFixed(2);
                 document.getElementById('sizeLabel').innerText = `${sizeMB} MB TOTAL`;
@@ -188,17 +197,13 @@
             progressContainer.classList.remove('hidden');
 
             try {
-                // Axios for Upload Progress (Client to Server)
                 const response = await axios.post('/upload-video', formData, {
                     headers: { 
                         'Content-Type': 'multipart/form-data',
                         'x-socket-id': socketId 
                     },
-                    timeout: 0, // No timeout for large files
                     onUploadProgress: (progressEvent) => {
                         const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
-                        
-                        // We scale Axios progress to 0-80%, remaining 20% is for server-side processing
                         const displayPercent = Math.round(percent * 0.8);
                         
                         if (percent < 100) {
@@ -207,28 +212,22 @@
                             statusLabel.innerText = "Streaming to Secure Server...";
                         } else {
                             statusLabel.innerText = "Server Received File. Processing...";
-                            progressBar.style.width = '85%';
-                            percentLabel.innerText = '85%';
+                            progressBar.style.width = '80%';
+                            percentLabel.innerText = '80%';
                         }
                     }
                 });
 
                 if (response.data.success) {
-                    statusLabel.innerText = "Mubarak Ho! Redirecting...";
-                    setTimeout(() => {
-                        window.location.href = response.data.redirect || "/profile";
-                    }, 1500);
+                    console.log("Initial upload success, waiting for socket...");
                 }
             } catch (error) {
-                console.error("Upload Error:", error);
                 alert("Upload Failed: " + (error.response?.data?.message || "Server Error"));
                 submitBtn.disabled = false;
                 btnText.innerText = "RETRY PUBLISH";
                 progressContainer.classList.add('hidden');
             }
         });
-
-        // Sidebar logic remains same...
     </script>
 </body>
 </html>

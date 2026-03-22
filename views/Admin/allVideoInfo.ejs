@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction History | Ghapaghap</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-[#0b0b0b] text-gray-200 antialiased">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+        
+ <main class="flex-1 overflow-y-auto h-screen">
+  <%- include('../partials/adminHeader') %>
+        <header class="flex justify-between items-center mb-8" style="padding: 1rem;">
+            <div>
+                <h1 class="text-3xl font-black italic uppercase tracking-tighter">
+                    ALL <span class="text-pink-500">VIDEOS</span>
+                </h1>
+                <p class="text-gray-500 text-sm"> Total videos count = <%= videos.length %></p>
+            </div>
+            <a href="/admin/dashboard" class="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-xl text-xs font-bold transition-all">
+                BACK TO DASHBOARD
+            </a>
+        </header>
+
+        <div class="bg-[#1a1a1a] rounded-3xl border border-gray-800 overflow-hidden shadow-2xl" style="padding: 1rem; overflow-x: auto;">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-gray-900/50 text-gray-400 text-[10px] uppercase tracking-[0.2em] border-b border-gray-800">
+                        <th class="px-6 py-4 font-black">Video & Title</th>
+                        <th class="px-6 py-4 font-black">Uploader</th>
+                        <th class="px-6 py-4 font-black">Duration</th>
+                        <th class="px-6 py-4 font-black">Type</th>
+                        <th class="px-6 py-4 font-black text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-800/50">
+                    <% if(videos && videos.length > 0) { %>
+                        <% videos.forEach(video => { %>
+                            <tr class="hover:bg-white/[0.02] transition-colors group">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center gap-4">
+                                        <img src="<%= video.thumbnailUrl %>" class="w-20 h-12 object-cover rounded-lg border border-gray-700" alt="thumb">
+                                        <p class="text-sm font-bold text-white line-clamp-1 max-w-[200px]"><%= video.title %></p>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <p class="text-sm font-medium text-pink-400">@<%= video.uploader ? video.uploader.username : 'Unknown' %></p>
+                                </td>
+                                <td class="px-6 py-4 font-mono text-xs text-gray-400">
+                                    <%= video.duration || '0:00' %>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-2 py-1 rounded text-[9px] font-black uppercase <%= video.videoType === 'short' ? 'bg-pink-500/20 text-pink-500' : 'bg-blue-500/20 text-blue-500' %>">
+                                        <%= video.videoType %>
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    <div class="flex justify-center gap-2">
+                                        <button onclick="deleteVideo('<%= video._id %>')" class="p-2 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-xl transition-all">
+                                            <span class="material-icons-sharp text-sm">delete</span>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="p-20 text-center text-gray-600 italic">Database khali hai bhai!</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script>
+        async function deleteVideo(id) {
+            if(confirm("Bhai, pakka uda dain ye video?")) {
+                try {
+                    const res = await fetch(`/admin/video/delete/${id}`, { method: 'POST' });
+                    const data = await res.json();
+                    if(data.success) {
+                        location.reload();
+                    } else {
+                        alert("Delete nahi ho paya!");
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert("Server Error!");
+                }
+            }
+        }
+    </script>
+
+    <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        menuBtn.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', (e) => {
+            if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        });
+    </script>
+</body>
+</html>

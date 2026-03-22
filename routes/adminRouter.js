@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controller/adminController');
 
+
 // Debugging Middleware: Terminal mein hit hone wale har URL ko track karne ke liye
 router.use((req, res, next) => {
     console.log(`Requested URL: ${req.method} ${req.url}`);
@@ -59,6 +60,12 @@ router.get('/depositInfos', adminController.getDepositInfos);
 router.post('/deposit/approve/:id', adminController.approveDeposit);
 router.post('/deposit/reject/:id', adminController.rejectDeposit);
 router.post('/deposit/update-status', adminController.updateDepositStatus);
+
+// ==========================================================
+// 🎬 CONTENT & VIDEO MANAGEMENT (Naya Add Kiya)
+// ==========================================================
+router.get('/allVideoInfo', adminController.getAllVideos); // Sab videos dekhne ke liye
+router.post('/video/delete/:id', adminController.deleteVideo); // Video delete karne ke liye
 
 // ==========================================================
 // 💸 WITHDRAWAL MANAGEMENT
