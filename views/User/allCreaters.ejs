@@ -5,20 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-    <title>GhapaGhap | Professional Video Sharing</title>
+    <title><%= title %> | GhapaGhap</title>
     <style>
-        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar { width: 5px; }
         ::-webkit-scrollbar-track { background: #0f0f0f; }
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
-        ::-webkit-scrollbar-thumb:hover { background: #444; }
-        .line-clamp-2 { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .creator-card:hover img { transform: scale(1.05); }
     </style>
 </head>
 <body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
 
-    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 z-[70] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
 
     <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
         <% if (user) { %>
@@ -36,76 +34,100 @@
         <% } %>
     </nav>
 
-    <div class="flex">
-        <% if (user) { %>
-            <%- include('../partials/desktopWithLogin') %>
-        <% } else { %>
-            <%- include('../partials/desktopWithoutLogin') %>
-        <% } %>
+    <div class="flex min-h-screen">
+        <aside class="hidden lg:block fixed top-16 left-0 w-64 h-[calc(100vh-64px)] bg-[#0f0f0f] border-r border-gray-800 overflow-y-auto">
+            <% if (user) { %>
+                <%- include('../partials/desktopWithLogin') %>
+            <% } else { %>
+                <%- include('../partials/desktopWithoutLogin') %>
+            <% } %>
+        </aside>
 
-        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-6 lg:p-8 pb-24 lg:pb-8 overflow-x-auto">
-            
-            <%- include('../partials/topNav') %>
+        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-8 pb-32">
+            <div class="flex items-center justify-between mb-8 border-l-4 border-pink-600 pl-4">
+                <h2 class="text-lg md:text-xl font-black uppercase italic tracking-widest text-white">
+                    <%= title %>
+                </h2>
+            </div>
 
-            <%- include('../partials/searchPage') %>
+            <% if (locals.viewType && viewType === 'search') { %>
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    <% if (creators && creators.length > 0) { %>
+                        <% creators.forEach(creator => { %>
+                            <div class="creator-card bg-[#161616] rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-800/50 hover:border-pink-500/30 transition-all text-center">
+                                <img src="<%= creator.avatar %>" class="w-16 h-16 md:w-20 md:h-20 rounded-full mx-auto mb-3 object-cover border-2 border-gray-800 transition-transform duration-300">
+                                <h3 class="text-white font-bold text-xs md:text-sm truncate">@<%= creator.username %></h3>
+                                <p class="text-gray-500 text-[9px] md:text-[10px] mb-4 uppercase tracking-widest"><%= creator.subscribersCount %> Followers</p>
+                                <a href="/user/<%= creator.username %>" class="block w-full py-2 bg-pink-600 hover:bg-pink-700 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-pink-600/10">View Profile</a>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <div class="col-span-full py-20 text-center opacity-50">
+                            <i class="fa-solid fa-magnifying-glass text-4xl mb-4 text-gray-700"></i>
+                            <p class="text-sm font-bold uppercase tracking-[0.2em]">No Creators Found</p>
+                        </div>
+                    <% } %>
+                </div>
+
+            <% } else if (locals.viewType && viewType === 'profile') { %>
+                <%- include('../User/userView') %>
+
+            <% } else { %>
+                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                    <% if (creators && creators.length > 0) { %>
+                        <% creators.forEach(creator => { %>
+                            <div class="creator-card bg-[#161616] rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-800/50 hover:border-pink-500/30 transition-all text-center group">
+                                <div class="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3">
+                                    <div class="absolute -inset-1 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-full blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                                    <img src="<%= creator.avatar %>" class="relative w-full h-full rounded-full object-cover border-2 border-gray-800 transition-all duration-300 group-hover:border-pink-600">
+                                </div>
+                                <h3 class="text-white font-bold text-xs md:text-sm truncate">@<%= creator.username %></h3>
+                                <p class="text-gray-500 text-[9px] md:text-[10px] mb-4 uppercase tracking-widest"><%= creator.subscribersCount %> Followers</p>
+                                <a href="/user/<%= creator.username %>" class="block w-full py-2 bg-gray-800 group-hover:bg-pink-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all">View Profile</a>
+                            </div>
+                        <% }) %>
+                    <% } else { %>
+                        <p class="text-center text-gray-600 col-span-full py-10 italic">Koi creators nahi mile.</p>
+                    <% } %>
+                </div>
+            <% } %>
         </main>
     </div>
 
-    <%- include('../partials/homeFooter') %>
+    <div class="lg:hidden fixed bottom-0 left-0 w-full bg-[#0f0f0f]/95 border-t border-gray-800 px-6 py-3 flex justify-between items-center z-50">
+        <a href="/" class="text-gray-400 hover:text-pink-500"><i class="fa-solid fa-home text-lg"></i></a>
+        <a href="/trending" class="text-gray-400 hover:text-pink-500"><i class="fa-solid fa-fire text-lg"></i></a>
+        <a href="/upload" class="bg-pink-600 p-3 rounded-full -mt-10 border-4 border-[#0f0f0f] shadow-xl"><i class="fa-solid fa-plus text-white"></i></a>
+        <a href="/subscriptions" class="text-gray-400 hover:text-pink-500"><i class="fa-solid fa-users text-lg"></i></a>
+        <a href="/profile" class="text-gray-400 hover:text-pink-500"><i class="fa-solid fa-user text-lg"></i></a>
+    </div>
 
     <script>
-    const sidebar = document.getElementById('mobile-sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    const body = document.body;
+        const sidebar = document.getElementById('mobile-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const body = document.body;
 
-    function toggleSidebar() {
-        const isOpen = !sidebar.classList.contains('-translate-x-full');
-
-        if (!isOpen) {
-            // OPEN SIDEBAR
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-            // Thoda delay taaki transition smooth dikhe
-            setTimeout(() => {
-                overlay.classList.add('opacity-100');
-            }, 10);
-            // Background scroll disable karo
-            body.style.overflow = 'hidden';
-        } else {
-            // CLOSE SIDEBAR
-            sidebar.classList.add('-translate-x-full');
-            overlay.classList.remove('opacity-100');
-            // Transition khatam hone ka wait karo phir hide karo
-            setTimeout(() => {
-                overlay.classList.add('hidden');
-                body.style.overflow = ''; // Scroll wapas on karo
-            }, 300);
+        function toggleSidebar() {
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            if (isHidden) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    body.style.overflow = '';
+                }, 300);
+            }
         }
-    }
 
-    // 1. Overlay click par close
-    overlay.addEventListener('click', toggleSidebar);
-
-    // 2. Escape Key support (Laptop users ke liye)
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) {
-            toggleSidebar();
-        }
-    });
-
-    // 3. Optional: Swipe to close (Mobile users ke liye)
-    let touchStartX = 0;
-    sidebar.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    sidebar.addEventListener('touchend', (e) => {
-        let touchEndX = e.changedTouches[0].screenX;
-        // Agar left swipe kiya (min 50px) toh close kardo
-        if (touchStartX - touchEndX > 50) {
-            toggleSidebar();
-        }
-    }, { passive: true });
-</script>
+        overlay.addEventListener('click', toggleSidebar);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        });
+    </script>
 </body>
 </html>

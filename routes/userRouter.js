@@ -48,6 +48,12 @@ router.get(
 );
 
 // ==========================================
+// 🚀 NEW: CREATOR PROFILE ROUTE (Isi ki wajah se 404 aa raha tha)
+// ==========================================
+// Ye route '/user/kiaracole' jaise URLs ko handle karega
+router.get("/user/:username", userController.getCreatorProfile); 
+
+// ==========================================
 // 2. PROTECTED ROUTES (Logged In Users Only)
 // ==========================================
 router.get("/profile", isLoggedIn, userController.getProfile);

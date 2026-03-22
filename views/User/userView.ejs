@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <title><%= creator.username %> | GhapaGhap</title>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .tab-active { border-bottom: 2px solid #db2777; color: white !important; }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <% if (user) { %>
+            <%- include('../partials/mobWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/mobWithoutLogin') %>
+        <% } %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %>
+            <%- include('../partials/headerWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/headerWithoutLogin') %>
+        <% } %>
+    </nav>
+
+    <div class="flex">
+        <% if (user) { %>
+            <%- include('../partials/desktopWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/desktopWithoutLogin') %>
+        <% } %>
+
+        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-8 pb-24">
+            
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center md:items-start gap-8 border-b border-gray-800/50 pb-12">
+                <div class="relative group">
+                    <div class="absolute -inset-1 bg-gradient-to-tr from-pink-600 to-purple-600 rounded-full blur opacity-40 group-hover:opacity-75 transition duration-500"></div>
+                    <img src="<%= creator.avatar || '/image/default-avatar.png' %>" 
+                         class="relative w-32 h-32 md:w-40 md:h-40 rounded-full object-cover border-4 border-[#0f0f0f]" 
+                         alt="<%= creator.username %>">
+                </div>
+
+                <div class="flex-1 text-center md:text-left">
+                    <div class="flex flex-col md:flex-row md:items-center gap-4 mb-6">
+                        <h1 class="text-2xl font-black tracking-tight text-white italic uppercase">
+                            @<%= creator.username %>
+                            <% if(creator.isVerified) { %>
+                                <span class="material-icons-sharp text-blue-500 text-xl align-middle ml-1">verified</span>
+                            <% } %>
+                        </h1>
+                        
+                        <div class="flex gap-2 justify-center">
+                            <% if (user && user._id.toString() === creator._id.toString()) { %>
+                                <a href="/edit-profile" class="px-8 py-2 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full text-sm transition-all">
+                                    Edit Profile
+                                </a>
+                            <% } else { %>
+                                <button onclick="subscribeUser('<%= creator._id %>')" id="sub-btn" class="px-8 py-2 <%= creator.isSubbed ? 'bg-gray-700' : 'bg-pink-600 hover:bg-pink-700' %> text-white font-bold rounded-full text-sm transition-all shadow-lg">
+                                    <%= creator.isSubbed ? 'Subscribed' : 'Subscribe' %>
+                                </button>
+                            <% } %>
+                            <button class="p-2 bg-gray-800 hover:bg-gray-700 rounded-full transition-all">
+                                <span class="material-icons-sharp text-sm">share</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center md:justify-start gap-8 mb-6">
+                        <div>
+                            <p class="text-lg font-black text-white"><%= videos.length %></p>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Content</p>
+                        </div>
+                        <div>
+                            <p id="sub-count" class="text-lg font-black text-white"><%= creator.subscribersCount || 0 %></p>
+                            <p class="text-[10px] text-gray-500 uppercase font-bold tracking-widest">Followers</p>
+                        </div>
+                    </div>
+
+                    <div class="max-w-md mx-auto md:mx-0">
+                        <p class="text-sm text-gray-300 leading-relaxed font-medium">
+                            <%= creator.bio || 'Bhai ne abhi tak koi bio nahi likha hai. 🍿' %>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-center border-b border-gray-900 mt-4">
+                <button onclick="switchTab('videos')" id="tab-videos" class="tab-btn px-8 py-4 text-xs font-black uppercase tracking-widest tab-active">Videos</button>
+                <button onclick="switchTab('shorts')" id="tab-shorts" class="tab-btn px-8 py-4 text-xs font-black uppercase tracking-widest text-gray-600 hover:text-gray-400">Shorts</button>
+            </div>
+
+            <div id="grid-container" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-8">
+                <% if(videos && videos.length > 0) { %>
+                    <% videos.forEach(video => { %>
+                        <div class="video-item <%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'hidden-tab' : '' %>" data-type="<%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'shorts' : 'videos' %>">
+                            <a href="/watch/<%= video._id %>" class="group block bg-[#1a1a1a] rounded-2xl overflow-hidden border border-gray-800/50 hover:border-pink-500/30 transition-all shadow-xl">
+                                <div class="relative <%= (video.videoType === 'shorts' || video.videoType === 'short') ? 'aspect-[9/16]' : 'aspect-[16/9]' %> overflow-hidden">
+                                    <img src="<%= video.thumbnailUrl %>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt="thumb">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60"></div>
+                                    <div class="absolute bottom-3 left-3 flex items-center gap-2">
+                                        <span class="material-icons-sharp text-[16px] text-white">play_arrow</span>
+                                        <span class="text-[10px] font-bold text-white tracking-tighter">View</span>
+                                    </div>
+                                </div>
+                                <div class="p-3">
+                                    <h3 class="text-xs font-bold text-gray-200 truncate group-hover:text-pink-400"><%= video.title %></h3>
+                                </div>
+                            </a>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-span-full py-20 text-center">
+                        <span class="material-icons-sharp text-5xl text-gray-800 mb-4">video_library</span>
+                        <p class="text-gray-600 font-bold uppercase text-[10px] tracking-[0.3em]">No Content Yet</p>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/homeFooter') %>
+
+    <script>
+        // Tab Switching Logic
+        function switchTab(type) {
+            const allItems = document.querySelectorAll('.video-item');
+            const btns = document.querySelectorAll('.tab-btn');
+            
+            // UI Update
+            btns.forEach(btn => btn.classList.remove('tab-active'));
+            document.getElementById('tab-' + type).classList.add('tab-active');
+
+            // Filtering
+            allItems.forEach(item => {
+                if (item.getAttribute('data-type') === type) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        }
+
+        // Initialize: Show only videos first
+        document.addEventListener('DOMContentLoaded', () => {
+            switchTab('videos');
+        });
+
+        // Sidebar logic
+        const sidebar = document.getElementById('mobile-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const body = document.body;
+
+        function toggleSidebar() {
+            const isOpen = !sidebar.classList.contains('-translate-x-full');
+            if (!isOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => { overlay.classList.add('opacity-100'); }, 10);
+                body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => { overlay.classList.add('hidden'); body.style.overflow = ''; }, 300);
+            }
+        }
+        overlay.addEventListener('click', toggleSidebar);
+
+        // AJAX Subscribe
+        async function subscribeUser(userId) {
+            try {
+                const response = await fetch(`/subscribe/${userId}`, { method: 'POST' });
+                const data = await response.json();
+                if (data.success) {
+                    const btn = document.getElementById('sub-btn');
+                    const count = document.getElementById('sub-count');
+                    btn.innerText = data.status === 'subscribed' ? 'Subscribed' : 'Subscribe';
+                    btn.classList.toggle('bg-pink-600');
+                    btn.classList.toggle('bg-gray-700');
+                    count.innerText = data.newCount;
+                }
+            } catch (err) { console.error(err); }
+        }
+    </script>
+</body>
+</html>

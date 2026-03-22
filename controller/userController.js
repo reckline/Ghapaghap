@@ -65,12 +65,9 @@ exports.getWatchPage = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.session.user?._id || req.session.user?.id;
 
-    // 🔍 Console log check karne ke liye (Sahi ID aa rahi hai ya nahi)
     console.log("Requested Video ID:", videoId);
 
-    // Validate MongoDB ID format to prevent crash
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
-      console.log("Invalid Video ID format");
       return res.redirect("/?error=invalid_id");
     }
 
@@ -80,7 +77,6 @@ exports.getWatchPage = async (req, res) => {
     ]);
 
     if (!video) {
-      console.log("Video not found in Database for ID:", videoId);
       return res.redirect("/?error=video_not_found");
     }
 
@@ -105,6 +101,40 @@ exports.getWatchPage = async (req, res) => {
   }
 };
 
+// 🚀 NEW: Creator Profile (Jo 404 fix karega)
+exports.getCreatorProfile = async (req, res) => {
+  try {
+    const username = req.params.username;
+    const sessionUserId = req.session.user?._id || req.session.user?.id;
+
+    // 1. Fresh login user data for navbar
+    const freshUser = sessionUserId ? await User.findById(sessionUserId).lean() : null;
+    if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
+
+    // 2. Target Creator ka data
+    const creator = await User.findOne({ username: username.toLowerCase() }).lean();
+    if (!creator) return res.status(404).send("Creator nahi mila!");
+
+    creator.avatar = getSafeAvatar(creator);
+
+    // 3. Creator ki videos fetch karo
+    const videos = await Video.find({ uploader: creator._id }).sort({ createdAt: -1 }).lean();
+
+    // 4. Subscription status check karo
+    const isSubbed = freshUser?.subscriptions?.some(id => id.toString() === creator._id.toString()) || false;
+
+    res.render("User/userView", {
+      user: freshUser,
+      creator: { ...creator, isSubbed },
+      videos: videos || [],
+      title: `${creator.username} - Profile`
+    });
+  } catch (err) {
+    console.error("Creator Profile Error:", err);
+    res.status(500).send("Error loading profile");
+  }
+};
+
 exports.getShortsPage = async (req, res) => {
   const userId = req.session.user?._id || req.session.user?.id;
   const freshUser = userId ? await User.findById(userId).lean() : null;
@@ -118,21 +148,22 @@ exports.getTrendingPage = async (req, res) => {
   if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
   res.render("User/trending", { user: freshUser, title: "Trending" });
 };
-
 exports.getTopCreators = async (req, res) => {
     try {
         const sessionUserId = req.session.user?._id || req.session.user?.id;
-        
         let freshUser = null;
         let mySubs = [];
+
         if (sessionUserId) {
             freshUser = await User.findById(sessionUserId).lean();
             mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map(id => id.toString()) : [];
+            if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
         }
 
         const topCreators = await User.find({ role: { $ne: "admin" } })
             .select("username fullname avatar subscribersCount isVerified videosCount bio")
             .sort({ subscribersCount: -1 })
+            .limit(20) // Top creators ke liye limit sahi rehti hai
             .lean();
 
         const creatorsWithStatus = topCreators.map((c) => ({
@@ -147,10 +178,11 @@ exports.getTopCreators = async (req, res) => {
             creators: creatorsWithStatus,
             title: "Top Trending Creators",
             isSubsPage: false,
+            viewType: 'all' // ✅ FIX: Ye variable missing tha isliye error aa raha tha
         });
     } catch (err) {
-        console.error(err);
-        res.status(500).send("Error");
+        console.error("Top Creators Error:", err);
+        res.status(500).send("Error fetching top creators");
     }
 };
 
@@ -182,9 +214,11 @@ exports.getAllCreators = async (req, res) => {
       user: freshUser,
       creators: creatorsWithStatus,
       isSubsPage: false,
-      title: "All Creators"
+      title: "All Creators",
+      viewType: 'all' // ✅ FIX: Missing variable added
     });
   } catch (err) {
+    console.error("All Creators Error:", err);
     res.status(500).send("Error loading creators");
   }
 };
@@ -316,7 +350,6 @@ exports.getProfile = async (req, res) => {
     if (!freshUser) return res.redirect("/login");
     freshUser.avatar = getSafeAvatar(freshUser);
 
-    // 🛠️ FIXED: Filtering based on "short" and "shorts" both
     const shorts = allContent.filter(v => v.videoType === 'shorts' || v.videoType === 'short');
     const videos = allContent.filter(v => v.videoType !== 'shorts' && v.videoType !== 'short');
 
@@ -327,7 +360,6 @@ exports.getProfile = async (req, res) => {
         title: "My Profile" 
     });
   } catch (err) {
-    console.error("Profile Fetch Error:", err);
     res.status(500).send("Error loading profile");
   }
 };
