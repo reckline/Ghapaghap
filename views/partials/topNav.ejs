@@ -1,6 +1,29 @@
-  <div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
-               <a href="/allCreaters"> <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">All Creators</button></a>
-                <!-- <a href="/topCreator"><button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Top Creators</button></a> -->
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Messages</button>
-                <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">Notifications</button>
-            </div>
+<div class="flex gap-3 mb-8 overflow-x-auto no-scrollbar whitespace-nowrap pb-2">
+    <a href="/allCreaters"> 
+        <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium">
+            All Creators
+        </button>
+    </a>
+
+<a href="/inbox" class="relative inline-block">
+    <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium flex items-center gap-2">
+        Messages
+        <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+            <span class="bg-pink-600 text-[10px] text-white font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-pink-500/20 animate-pulse">
+                <%= unreadCount %>
+            </span>
+        <% } %>
+    </button>
+</a>
+
+    <a href="/notifications" class="relative inline-block">
+        <button class="bg-gray-800 hover:bg-gray-700 px-4 py-1.5 rounded-lg text-xs md:text-sm font-medium flex items-center gap-2">
+            Notifications
+            <% if (typeof notifyCount !== 'undefined' && notifyCount > 0) { %>
+                <span class="bg-blue-500 text-[10px] text-white font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center shadow-lg shadow-blue-500/20">
+                    <%= notifyCount %>
+                </span>
+            <% } %>
+        </button>
+    </a>
+</div>

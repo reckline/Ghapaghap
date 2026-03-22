@@ -17,55 +17,59 @@
 <body class="bg-[#0f0f0f] text-white font-sans overflow-hidden">
 
     <nav class="fixed top-0 w-full h-16 border-b border-gray-800 glass z-50 flex items-center justify-between px-4">
-    <div class="flex items-center gap-3">
-        <button onclick="history.back()" class="p-2 hover:bg-gray-800 rounded-full transition-colors">
-            <span class="material-icons-sharp">arrow_back</span>
-        </button>
         <div class="flex items-center gap-3">
-         <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 p-[2px] shadow-lg shadow-pink-500/20">
- <div class="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
-    <% if (receiver && receiver.profileImage) { %>
-        <img src="<%= receiver.profileImage.startsWith('http') ? receiver.profileImage : '/uploads/' + receiver.profileImage %>" 
-             class="w-full h-full object-cover" 
-             onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';" 
-             alt="DP">
-    <% } else { %>
-        <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full object-cover">
-    <% } %>
-</div>
-</div>
-            <div>
-                <h2 class="text-sm font-bold uppercase tracking-tighter">
-                    <%= receiver ? receiver.username : 'User' %>
-                </h2>
-                <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Online
-                </p>
-            </div>
-        </div>
-    </div>
-    
-    <div class="flex gap-2">
-        <button onclick="startVideoCall('<%= receiverId %>')" class="p-2.5  text-blue-500 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
-            <span class="material-icons-sharp">videocam</span>
-        </button>
-    </div>
-</nav>
-
-<main id="chat-box" class="h-screen pt-20 pb-28 overflow-y-auto px-4 flex flex-col gap-3">
-    <% if (typeof messages !== 'undefined' && messages.length > 0) { %>
-        <% messages.forEach(msg => { %>
-            <div class="flex <%= msg.sender.toString() === user._id.toString() ? 'justify-end' : 'justify-start' %>">
-                <div class="max-w-[85%] md:max-w-[70%] <%= msg.sender.toString() === user._id.toString() ? 'bg-pink-600 shadow-lg shadow-pink-600/10' : 'bg-gray-800' %> p-3 rounded-2xl <%= msg.sender.toString() === user._id.toString() ? 'rounded-tr-none' : 'rounded-tl-none' %>">
-                    <p class="text-[13px] leading-relaxed text-white"><%= msg.message %></p>
-                    <p class="text-[9px] <%= msg.sender.toString() === user._id.toString() ? 'text-pink-200' : 'text-gray-400' %> mt-1 text-right">
-                        <%= new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+            <button onclick="history.back()" class="p-2 hover:bg-gray-800 rounded-full transition-colors">
+                <span class="material-icons-sharp">arrow_back</span>
+            </button>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 p-[2px] shadow-lg shadow-pink-500/20">
+                    <div class="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                        <% if (receiver && receiver.profileImage) { %>
+                            <img src="<%= receiver.profileImage.startsWith('http') ? receiver.profileImage : '/uploads/' + receiver.profileImage %>" 
+                                 class="w-full h-full object-cover" 
+                                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';" 
+                                 alt="DP">
+                        <% } else { %>
+                            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full object-cover">
+                        <% } %>
+                    </div>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold uppercase tracking-tighter">
+                        <%= receiver ? receiver.username : 'User' %>
+                    </h2>
+                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Online
                     </p>
                 </div>
             </div>
-        <% }) %>
-    <% } %>
-</main>
+        </div>
+        
+        <div class="flex gap-2">
+            <button onclick="startVideoCall('<%= receiverId %>')" class="p-2.5 text-blue-500 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
+                <span class="material-icons-sharp">videocam</span>
+            </button>
+        </div>
+    </nav>
+
+    <main id="chat-box" class="h-screen pt-20 pb-28 overflow-y-auto px-4 flex flex-col gap-3">
+        <div class="text-center py-10 opacity-20">
+            <p class="text-[10px] uppercase tracking-[0.5em]">End-to-End Encrypted</p>
+        </div>
+
+        <% if (messages && messages.length > 0) { %>
+            <% messages.forEach(msg => { %>
+                <div class="flex <%= msg.sender.toString() === user._id.toString() ? 'justify-end' : 'justify-start' %> animate-in fade-in duration-300">
+                    <div class="max-w-[85%] md:max-w-[70%] <%= msg.sender.toString() === user._id.toString() ? 'bg-pink-600 shadow-lg shadow-pink-600/10' : 'bg-gray-800' %> p-3 rounded-2xl <%= msg.sender.toString() === user._id.toString() ? 'rounded-tr-none' : 'rounded-tl-none' %>">
+                        <p class="text-[13px] leading-relaxed text-white"><%= msg.message %></p>
+                        <p class="text-[9px] <%= msg.sender.toString() === user._id.toString() ? 'text-pink-200' : 'text-gray-400' %> mt-1 text-right font-medium">
+                            <%= new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+                        </p>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </main>
 
     <footer class="fixed bottom-0 w-full p-4 glass border-t border-gray-800 z-50">
         <form id="msg-form" class="max-w-4xl mx-auto flex items-center gap-2">
@@ -91,6 +95,14 @@
         const receiverId = "<%= receiverId %>";
 
         socket.emit('join-chat', currentUserId);
+
+        // Auto scroll on load
+        window.onload = () => {
+            userInput.focus();
+            setTimeout(() => {
+                chatBox.scrollTop = chatBox.scrollHeight;
+            }, 100);
+        };
 
         msgForm.onsubmit = (e) => {
             e.preventDefault();
@@ -133,14 +145,9 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
 
-        // Video Call Function
         function startVideoCall(id) {
-            // Yahan aap apna video call route ya logic dal sakte hain
             alert('Video call starting with ID: ' + id);
-            // window.location.href = `/video-call/${id}`;
         }
-
-        window.onload = () => userInput.focus();
     </script>
 </body>
 </html>

@@ -1,5 +1,6 @@
 const User = require("../model/user");
 const Video = require("../model/video");
+const Message = require("../model/Message"); // ✅ Added for unread counts
 const mongoose = require("mongoose");
 const axios = require("axios");
 const FormData = require("form-data");
@@ -19,6 +20,12 @@ const getSafeAvatar = (user) => {
   return `https://ui-avatars.com/api/?name=${name}&background=f0778b&color=fff&size=128`;
 };
 
+// Helper to get unread messages count
+const getUnreadCount = async (userId) => {
+  if (!userId) return 0;
+  return await Message.countDocuments({ receiver: userId, read: false });
+};
+
 // ==========================================
 // 1. PUBLIC & NAVIGATION PAGES
 // ==========================================
@@ -27,7 +34,11 @@ exports.getHomePage = async (req, res) => {
   try {
     const userId = req.session.user?._id || req.session.user?.id;
     
-    const freshUser = userId ? await User.findById(userId).lean() : null;
+    const [freshUser, unreadCount] = await Promise.all([
+      userId ? User.findById(userId).lean() : null,
+      getUnreadCount(userId)
+    ]);
+
     if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
 
     const videos = await Video.find()
@@ -50,6 +61,7 @@ exports.getHomePage = async (req, res) => {
 
     res.render("User/home", { 
         user: freshUser, 
+        unreadCount, // ✅ Added
         creators: creatorsWithStatus,
         videos: videos || [], 
         title: "GhapaGhap - Home"
@@ -65,15 +77,14 @@ exports.getWatchPage = async (req, res) => {
     const videoId = req.params.id;
     const userId = req.session.user?._id || req.session.user?.id;
 
-    console.log("Requested Video ID:", videoId);
-
     if (!mongoose.Types.ObjectId.isValid(videoId)) {
       return res.redirect("/?error=invalid_id");
     }
 
-    const [freshUser, video] = await Promise.all([
+    const [freshUser, video, unreadCount] = await Promise.all([
       userId ? User.findById(userId).lean() : null,
-      Video.findById(videoId).populate('uploader').lean()
+      Video.findById(videoId).populate('uploader').lean(),
+      getUnreadCount(userId)
     ]);
 
     if (!video) {
@@ -91,6 +102,7 @@ exports.getWatchPage = async (req, res) => {
 
     res.render("User/watch", { 
       user: freshUser, 
+      unreadCount, // ✅ Added
       video: video,
       suggestedVideos: suggestedVideos || [], 
       title: video.title 
@@ -101,30 +113,28 @@ exports.getWatchPage = async (req, res) => {
   }
 };
 
-// 🚀 NEW: Creator Profile (Jo 404 fix karega)
 exports.getCreatorProfile = async (req, res) => {
   try {
     const username = req.params.username;
     const sessionUserId = req.session.user?._id || req.session.user?.id;
 
-    // 1. Fresh login user data for navbar
-    const freshUser = sessionUserId ? await User.findById(sessionUserId).lean() : null;
+    const [freshUser, unreadCount] = await Promise.all([
+      sessionUserId ? User.findById(sessionUserId).lean() : null,
+      getUnreadCount(sessionUserId)
+    ]);
+
     if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
 
-    // 2. Target Creator ka data
     const creator = await User.findOne({ username: username.toLowerCase() }).lean();
     if (!creator) return res.status(404).send("Creator nahi mila!");
 
     creator.avatar = getSafeAvatar(creator);
-
-    // 3. Creator ki videos fetch karo
     const videos = await Video.find({ uploader: creator._id }).sort({ createdAt: -1 }).lean();
-
-    // 4. Subscription status check karo
     const isSubbed = freshUser?.subscriptions?.some(id => id.toString() === creator._id.toString()) || false;
 
     res.render("User/userView", {
       user: freshUser,
+      unreadCount, // ✅ Added
       creator: { ...creator, isSubbed },
       videos: videos || [],
       title: `${creator.username} - Profile`
@@ -137,25 +147,36 @@ exports.getCreatorProfile = async (req, res) => {
 
 exports.getShortsPage = async (req, res) => {
   const userId = req.session.user?._id || req.session.user?.id;
-  const freshUser = userId ? await User.findById(userId).lean() : null;
+  const [freshUser, unreadCount] = await Promise.all([
+    userId ? User.findById(userId).lean() : null,
+    getUnreadCount(userId)
+  ]);
   if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-  res.render("User/shorts", { user: freshUser, title: "Shorts" });
+  res.render("User/shorts", { user: freshUser, unreadCount, title: "Shorts" });
 };
 
 exports.getTrendingPage = async (req, res) => {
   const userId = req.session.user?._id || req.session.user?.id;
-  const freshUser = userId ? await User.findById(userId).lean() : null;
+  const [freshUser, unreadCount] = await Promise.all([
+    userId ? User.findById(userId).lean() : null,
+    getUnreadCount(userId)
+  ]);
   if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
-  res.render("User/trending", { user: freshUser, title: "Trending" });
+  res.render("User/trending", { user: freshUser, unreadCount, title: "Trending" });
 };
+
 exports.getTopCreators = async (req, res) => {
     try {
         const sessionUserId = req.session.user?._id || req.session.user?.id;
         let freshUser = null;
         let mySubs = [];
+        let unreadCount = 0;
 
         if (sessionUserId) {
-            freshUser = await User.findById(sessionUserId).lean();
+            [freshUser, unreadCount] = await Promise.all([
+                User.findById(sessionUserId).lean(),
+                getUnreadCount(sessionUserId)
+            ]);
             mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map(id => id.toString()) : [];
             if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
         }
@@ -163,7 +184,7 @@ exports.getTopCreators = async (req, res) => {
         const topCreators = await User.find({ role: { $ne: "admin" } })
             .select("username fullname avatar subscribersCount isVerified videosCount bio")
             .sort({ subscribersCount: -1 })
-            .limit(20) // Top creators ke liye limit sahi rehti hai
+            .limit(20)
             .lean();
 
         const creatorsWithStatus = topCreators.map((c) => ({
@@ -175,10 +196,11 @@ exports.getTopCreators = async (req, res) => {
 
         res.render("User/allCreaters", { 
             user: freshUser,
+            unreadCount, // ✅ Added
             creators: creatorsWithStatus,
             title: "Top Trending Creators",
             isSubsPage: false,
-            viewType: 'all' // ✅ FIX: Ye variable missing tha isliye error aa raha tha
+            viewType: 'all'
         });
     } catch (err) {
         console.error("Top Creators Error:", err);
@@ -191,9 +213,13 @@ exports.getAllCreators = async (req, res) => {
     const sessionUserId = req.session.user?._id || req.session.user?.id;
     let freshUser = null;
     let mySubs = [];
+    let unreadCount = 0;
 
     if (sessionUserId) {
-      freshUser = await User.findById(sessionUserId).lean();
+        [freshUser, unreadCount] = await Promise.all([
+            User.findById(sessionUserId).lean(),
+            getUnreadCount(sessionUserId)
+        ]);
       mySubs = freshUser?.subscriptions ? freshUser.subscriptions.map((id) => id.toString()) : [];
       if (freshUser) freshUser.avatar = getSafeAvatar(freshUser);
     }
@@ -212,10 +238,11 @@ exports.getAllCreators = async (req, res) => {
 
     res.render("User/allCreaters", {
       user: freshUser,
+      unreadCount, // ✅ Added
       creators: creatorsWithStatus,
       isSubsPage: false,
       title: "All Creators",
-      viewType: 'all' // ✅ FIX: Missing variable added
+      viewType: 'all'
     });
   } catch (err) {
     console.error("All Creators Error:", err);
@@ -228,7 +255,10 @@ exports.getUserSubs = async (req, res) => {
     const sessionUserId = req.session.user?._id || req.session.user?.id;
     if (!sessionUserId) return res.redirect("/login");
 
-    const me = await User.findById(sessionUserId).lean();
+    const [me, unreadCount] = await Promise.all([
+        User.findById(sessionUserId).lean(),
+        getUnreadCount(sessionUserId)
+    ]);
     if (me) me.avatar = getSafeAvatar(me);
 
     const subscribedUsers = await User.find({ _id: { $in: me?.subscriptions || [] } })
@@ -246,6 +276,7 @@ exports.getUserSubs = async (req, res) => {
     res.render("User/userSubs", {
       users: usersWithStatus,
       user: me,
+      unreadCount, // ✅ Added
       isSubsPage: true,
       title: "My Subscriptions"
     });
@@ -342,9 +373,10 @@ exports.getProfile = async (req, res) => {
     const userId = req.session?.user?._id || req.session?.user?.id;
     if (!userId) return res.redirect("/login");
 
-    const [freshUser, allContent] = await Promise.all([
+    const [freshUser, allContent, unreadCount] = await Promise.all([
       User.findById(userId).lean(),
-      Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean()
+      Video.find({ uploader: userId }).sort({ createdAt: -1 }).lean(),
+      getUnreadCount(userId) // ✅ Added
     ]);
 
     if (!freshUser) return res.redirect("/login");
@@ -355,6 +387,7 @@ exports.getProfile = async (req, res) => {
 
     res.render("User/userProfile", { 
         user: freshUser, 
+        unreadCount, // ✅ Passed to view
         shorts: shorts,      
         videos: videos,      
         title: "My Profile" 
@@ -366,9 +399,13 @@ exports.getProfile = async (req, res) => {
 
 exports.getEditProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.session.user._id).lean();
+    const userId = req.session.user._id;
+    const [user, unreadCount] = await Promise.all([
+        User.findById(userId).lean(),
+        getUnreadCount(userId)
+    ]);
     if (user) user.avatar = getSafeAvatar(user);
-    res.render("User/editProfile", { user, title: "Edit Profile" });
+    res.render("User/editProfile", { user, unreadCount, title: "Edit Profile" });
   } catch (err) {
     res.redirect("/profile");
   }
@@ -415,9 +452,13 @@ exports.handleUpdateProfile = async (req, res) => {
 
 exports.getUserDashboard = async (req, res) => {
   try {
-    const user = await User.findById(req.session.user._id).lean();
+    const userId = req.session.user._id;
+    const [user, unreadCount] = await Promise.all([
+        User.findById(userId).lean(),
+        getUnreadCount(userId)
+    ]);
     if (user) user.avatar = getSafeAvatar(user);
-    res.render("User/dashboard", { user, title: "Creator Dashboard" });
+    res.render("User/dashboard", { user, unreadCount, title: "Creator Dashboard" });
   } catch (err) {
     res.status(500).send("Dashboard Error");
   }
@@ -430,8 +471,11 @@ exports.getUserDashboard = async (req, res) => {
 exports.getChangePassword = async (req, res) => {
   const userId = req.session.user?._id || req.session.user?.id;
   if (!userId) return res.redirect("/login");
-  const freshUser = await User.findById(userId).lean();
-  res.render("User/changePassword", { user: freshUser, title: "Change Password" });
+  const [freshUser, unreadCount] = await Promise.all([
+      User.findById(userId).lean(),
+      getUnreadCount(userId)
+  ]);
+  res.render("User/changePassword", { user: freshUser, unreadCount, title: "Change Password" });
 };
 
 exports.handleUpdatePassword = async (req, res) => {
@@ -461,8 +505,11 @@ exports.handleUpdatePassword = async (req, res) => {
 exports.getAddBankPage = async (req, res) => {
   const userId = req.session.user?._id || req.session.user?.id;
   if (!userId) return res.redirect("/login");
-  const freshUser = await User.findById(userId).lean();
-  res.render("User/addBankAccount", { user: freshUser, title: "Add Bank Account" });
+  const [freshUser, unreadCount] = await Promise.all([
+      User.findById(userId).lean(),
+      getUnreadCount(userId)
+  ]);
+  res.render("User/addBankAccount", { user: freshUser, unreadCount, title: "Add Bank Account" });
 };
 
 exports.postAddBank = async (req, res) => {

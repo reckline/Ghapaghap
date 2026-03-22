@@ -15,10 +15,14 @@ const messageSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    timestamp: {
-        type: Date,
-        default: Date.now
+    // ✅ UNREAD COUNT FIX: Ye field batayegi ki message seen hai ya nahi
+    read: {
+        type: Boolean,
+        default: false
     }
-}, { timestamps: true });
+}, { 
+    // Isse automatic 'createdAt' aur 'updatedAt' mil jayenge
+    timestamps: true 
+});
 
 module.exports = mongoose.model('Message', messageSchema);

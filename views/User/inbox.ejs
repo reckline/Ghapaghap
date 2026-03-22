@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <title>Inbox | GhapaGhap</title>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans">
+    
+    <nav class="p-4 border-b border-gray-800 flex items-center justify-between sticky top-0 bg-[#0f0f0f] z-50">
+        <h1 class="text-xl font-bold tracking-tighter text-pink-500 flex items-center gap-2">
+            MESSAGES
+            <% if (typeof unreadCount !== 'undefined' && unreadCount > 0) { %>
+                <span class="bg-pink-600 text-[10px] px-2 py-0.5 rounded-full shadow-lg shadow-pink-500/20" style="color: white;"><%= unreadCount %></span>
+            <% } %>
+        </h1>
+        <button onclick="history.back()" class="p-2 hover:bg-gray-800 rounded-full transition-colors">
+            <span class="material-icons-sharp">close</span>
+        </button>
+    </nav>
+
+    <div class="max-w-2xl mx-auto p-4">
+        <% if (chatList.length > 0) { %>
+            <div class="flex flex-col gap-2">
+                <% chatList.forEach(chat => { %>
+                    <a href="/chat/<%= chat.id %>" class="flex items-center gap-4 p-3 hover:bg-gray-900 rounded-2xl transition-all active:scale-95 border border-transparent hover:border-gray-800 relative group">
+                        
+                        <div class="relative">
+                            <div class="w-14 h-14 rounded-full overflow-hidden border-2 <%= chat.unreadMessagesCount > 0 ? 'border-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.2)]' : 'border-gray-800' %> p-0.5">
+                                <img src="<%= chat.image %>" class="w-full h-full object-cover rounded-full" alt="DP">
+                            </div>
+                            
+                            <% if (chat.unreadMessagesCount > 0) { %>
+                                <div class="absolute -top-1 -right-1 bg-pink-600 text-white text-[10px] font-bold h-5 w-5 flex items-center justify-center rounded-full border-2 border-[#0f0f0f] animate-bounce">
+                                    <%= chat.unreadMessagesCount %>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-center mb-0.5">
+                                <h3 class="font-bold text-sm uppercase <%= chat.unreadMessagesCount > 0 ? 'text-white' : 'text-gray-400' %>">
+                                    <%= chat.username %>
+                                </h3>
+                                <span class="text-[10px] <%= chat.unreadMessagesCount > 0 ? 'text-pink-500 font-bold' : 'text-gray-600' %>">
+                                    <%= new Date(chat.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <p class="text-xs truncate flex-1 <%= chat.unreadMessagesCount > 0 ? 'text-gray-100 font-bold' : 'text-gray-500' %>">
+                                    <%= chat.lastMsg %>
+                                </p>
+
+                                <% if (chat.unreadMessagesCount > 0) { %>
+                                    <div class="flex items-center gap-1.5 shrink-0">
+                                        <span class="bg-pink-600/20 text-pink-500 text-[9px] px-1.5 py-0.5 rounded font-black border border-pink-500/30">
+                                            NEW
+                                        </span>
+                                        <div class="w-2 h-2 bg-pink-500 rounded-full shadow-[0_0_8px_#ec4899] animate-pulse"></div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </a>
+                <% }) %>
+            </div>
+        <% } else { %>
+            <div class="text-center py-20 opacity-30">
+                <span class="material-icons-sharp text-6xl mb-4">chat_bubble_outline</span>
+                <p class="text-sm uppercase tracking-widest">No chats yet</p>
+            </div>
+        <% } %>
+    </div>
+
+</body>
+</html>
