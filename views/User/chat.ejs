@@ -47,6 +47,16 @@
             </div>
         </div>
     </nav>
+    <style>
+        #chat-box {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch; /* iOS smooth scroll */
+    overscroll-behavior-y: contain; /* Browser refresh ko rokta hai */
+    scroll-behavior: smooth;
+}
+    </style>
 
     <main id="chat-box" class="h-screen pt-20 pb-32 overflow-y-auto px-4 flex flex-col gap-4 flex-1 overflow-y-auto">
         <% if (messages && messages.length > 0) { %>
@@ -183,6 +193,19 @@
         </div>
         <canvas id="canvas" class="hidden"></canvas>
     </div>
+    <script>
+        const scrollToBottom = () => {
+    chatBox.scrollTop = chatBox.scrollHeight;
+};
+
+// Jab input pe click ho (Mobile Keyboard Fix)
+userInput.addEventListener('focus', () => {
+    setTimeout(scrollToBottom, 300); // Keyboard khulne ka wait karo
+});
+
+// Initial load par bottom pe le jao
+window.onload = scrollToBottom;
+    </script>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
