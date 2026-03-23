@@ -58,7 +58,7 @@
                             <img src="<%= msg.media %>" class="w-full rounded-lg mb-2 border border-white/10">
                         <% } %>
                         <% if(msg.media && msg.mediaType === 'audio') { %>
-                            <audio controls class="w-full h-10 mb-2 filter brightness-125" style="width: 18rem;">
+                            <audio controls class="w-full h-10 mb-2 filter brightness-125">
                                 <source src="<%= msg.media %>" type="audio/mpeg">
                             </audio>
                         <% } %>
