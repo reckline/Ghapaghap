@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!-- <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -95,6 +95,140 @@
     </div>
 
 <%- include('../partials/homeFooter') %>
+
+    <script>
+        const sidebar = document.getElementById('mobile-sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        const body = document.body;
+
+        function toggleSidebar() {
+            const isHidden = sidebar.classList.contains('-translate-x-full');
+            if (isHidden) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.add('opacity-100'), 10);
+                body.style.overflow = 'hidden';
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.remove('opacity-100');
+                setTimeout(() => {
+                    overlay.classList.add('hidden');
+                    body.style.overflow = '';
+                }, 300);
+            }
+        }
+
+        overlay.addEventListener('click', toggleSidebar);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !sidebar.classList.contains('-translate-x-full')) toggleSidebar();
+        });
+    </script>
+</body>
+</html> -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <title><%= title %> | GhapaGhap</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .creator-card:hover img { transform: scale(1.05); }
+        .verified-badge { background: #1d9bf0; color: white; font-size: 8px; border-radius: 50%; padding: 2px; }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/80 z-[70] hidden opacity-0 transition-opacity duration-300 backdrop-blur-sm"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <% if (user) { %>
+            <%- include('../partials/mobWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/mobWithoutLogin') %>
+        <% } %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <% if (user) { %>
+            <%- include('../partials/headerWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/headerWithoutLogin') %>
+        <% } %>
+    </nav>
+
+    <div class="flex min-h-screen">
+        <aside class="hidden lg:block fixed top-16 left-0 w-64 h-[calc(100vh-64px)] bg-[#0f0f0f] border-r border-gray-800 overflow-y-auto">
+            <% if (user) { %>
+                <%- include('../partials/desktopWithLogin') %>
+            <% } else { %>
+                <%- include('../partials/desktopWithoutLogin') %>
+            <% } %>
+        </aside>
+
+        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-8 pb-32">
+            <div class="flex items-center justify-between mb-8 border-l-4 border-pink-600 pl-4">
+                <h2 class="text-lg md:text-xl font-black uppercase italic tracking-widest text-white">
+                    <%= title %>
+                </h2>
+                <div class="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase">
+                    <i class="fa-solid fa-circle-check text-blue-500"></i> Verified Only
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+                <% 
+                    // Filter creators to show ONLY verified users
+                    const verifiedCreators = (creators && creators.length > 0) ? creators.filter(c => c.isVerified === true) : []; 
+                %>
+
+                <% if (verifiedCreators.length > 0) { %>
+                    <% verifiedCreators.forEach(creator => { %>
+                        <div class="creator-card bg-[#161616] rounded-2xl md:rounded-3xl p-4 md:p-6 border border-gray-800/50 hover:border-pink-500/30 transition-all text-center group">
+                            <div class="relative w-16 h-16 md:w-20 md:h-20 mx-auto mb-3">
+                                <div class="absolute -inset-1 bg-gradient-to-tr from-pink-600 to-blue-500 rounded-full blur opacity-0 group-hover:opacity-40 transition duration-500"></div>
+                                
+                                <img src="<%= creator.avatar %>" class="relative w-full h-full rounded-full object-cover border-2 border-gray-800 transition-all duration-300 group-hover:border-pink-600">
+                                
+                                <div class="absolute bottom-0 right-0 rounded-full p-0.5 shadow-lg">
+                                    <i class="fa-solid fa-circle-check text-[#1d9bf0] text-sm md:text-base"></i>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-center gap-1 mb-1">
+                                <h3 class="text-white font-bold text-xs md:text-sm truncate">@<%= creator.username %></h3>
+                            </div>
+
+                            <p class="text-gray-500 text-[9px] md:text-[10px] mb-4 uppercase tracking-widest font-semibold">
+                                <%= creator.subscribersCount %> Followers
+                            </p>
+
+                            <a href="/user/<%= creator.username %>" class="block w-full py-2 bg-gray-800 group-hover:bg-pink-600 text-white text-[9px] md:text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg hover:shadow-pink-600/20">
+                                View Profile
+                            </a>
+                        </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="col-span-full py-20 text-center opacity-50">
+                        <div class="w-16 h-16 bg-gray-800/50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-user-shield text-2xl text-gray-600"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-[0.2em]">No Verified Creators Found</p>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/homeFooter') %>
 
     <script>
         const sidebar = document.getElementById('mobile-sidebar');
