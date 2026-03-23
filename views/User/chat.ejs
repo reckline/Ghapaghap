@@ -58,7 +58,7 @@
 }
     </style>
 
-    <main id="chat-box" class="h-screen pt-20 pb-32 overflow-y-auto px-4 flex flex-col gap-4 flex-1 overflow-y-auto">
+    <main id="chat-box" class="h-screen pt-40 pb-32 overflow-y-auto px-4 flex flex-col gap-4 flex-1 overflow-y-auto">
         <% if (messages && messages.length > 0) { %>
             <% messages.forEach(msg => { %>
                 <% const isSent = msg.sender.toString() === user._id.toString(); %>
@@ -80,7 +80,7 @@
         <% } %>
     </main>
 
-    <footer class="shrink-0 w-full p-2 md:p-4 glass border-t border-white/5 z-50 safe-area-bottom">
+    <footer class="shrink-0 w-full p-2 md:p-4 glass border-t border-white/5 z-50">
     
     <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-2 md:p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
         <div class="flex items-center gap-2 md:gap-3">
@@ -146,7 +146,7 @@
 }
 </style>
 
-    <footer class="fixed bottom-0 w-full p-4 glass border-t border-white/5 z-50">
+    <!-- <footer class="fixed bottom-0 w-full p-4 glass border-t border-white/5 z-50">
         <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
             <div class="flex items-center gap-3">
                 <span class="relative flex h-3 w-3">
@@ -183,7 +183,7 @@
                 <span class="material-icons-sharp">send</span>
             </button>
         </form>
-    </footer>
+    </footer> -->
 
     <div id="camera-modal" class="fixed inset-0 z-[100] bg-black hidden flex flex-col items-center justify-center">
         <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
