@@ -14,7 +14,8 @@ const sessionConfig = require('./config/session');
 // 🛠️ Controller Import (Socket handling ke liye)
 const { handleSocket } = require('./controller/chatController');
 
-// 🔍 Model Import (Count nikalne ke liye zaroori hai)
+// 🔍 Model Import
+// 🚨 ALERT: Agar error aaye, toh check karein ki model/Message.js mein module.exports hai ya nahi
 const Message = require('./model/Message'); 
 
 // 3. Database Connection
@@ -64,34 +65,36 @@ app.use(express.urlencoded({
 
 app.use(sessionConfig); 
 
-// 🔥 UPDATED GLOBAL MIDDLEWARE (Unread Count Logic Added)
+// 🔥 UPDATED GLOBAL MIDDLEWARE (Unread Count Logic)
 app.use(async (req, res, next) => {
-    if (req.session && req.session.user) {
-        req.user = req.session.user; 
-        
-        try {
-            // 🔍 Database se unread messages ka count nikalo
-            const unreadCount = await Message.countDocuments({
-                receiver: req.session.user._id,
-                read: false
-            });
-            // res.locals har EJS file mein automatic available hota hai
-            res.locals.unreadCount = unreadCount;
-            res.locals.notifyCount = 0; // Future notification system ke liye
-        } catch (err) {
-            console.error("❌ Count Error:", err);
-            res.locals.unreadCount = 0;
-            res.locals.notifyCount = 0;
-        }
-    } else {
-        res.locals.unreadCount = 0;
-        res.locals.notifyCount = 0;
-    }
-    
     res.locals.user = req.session.user || null;
     res.locals.success = req.query.success || null;
     res.locals.error = req.query.error || null;
     res.locals.currentPath = req.path;
+    res.locals.notifyCount = 0; 
+
+    if (req.session && req.session.user) {
+        req.user = req.session.user; 
+        
+        try {
+            // Defensive Check: Agar Message model function nahi hai toh crash na ho
+            if (Message && typeof Message.countDocuments === 'function') {
+                const unreadCount = await Message.countDocuments({
+                    receiver: req.session.user._id,
+                    read: false
+                });
+                res.locals.unreadCount = unreadCount;
+            } else {
+                console.warn("⚠️ Warning: Message model not loaded as Mongoose Model.");
+                res.locals.unreadCount = 0;
+            }
+        } catch (err) {
+            console.error("❌ Count Error in Middleware:", err.message);
+            res.locals.unreadCount = 0;
+        }
+    } else {
+        res.locals.unreadCount = 0;
+    }
     next();
 });
 

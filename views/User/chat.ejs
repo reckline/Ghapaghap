@@ -5,84 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
-    <title>Chat Inbox | GhapaGhap</title>
+    <title>Chat | GhapaGhap</title>
     <style>
-        .glass { background: rgba(26, 26, 26, 0.8); backdrop-filter: blur(10px); }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #080808; color: white; }
+        .glass { background: rgba(15, 15, 15, 0.8); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        ::-webkit-scrollbar { width: 3px; }
         ::-webkit-scrollbar-thumb { background: #db2777; border-radius: 10px; }
-        #chat-box { scroll-behavior: smooth; }
+        .msg-sent { background: linear-gradient(135deg, #db2777 0%, #9d174d 100%); border-radius: 18px 18px 4px 18px; }
+        .msg-received { background: #1f1f1f; border-radius: 18px 18px 18px 4px; border: 1px solid rgba(255,255,255,0.05); }
+        .animate-msg { animation: messageIn 0.3s ease forwards; }
+        @keyframes messageIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .recording-pulse { animation: pulse 1.5s infinite; color: #ef4444 !important; }
+        @keyframes pulse { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.1); } 100% { opacity: 1; transform: scale(1); } }
+        audio::-webkit-media-controls-panel { background-color: #db2777; }
     </style>
 </head>
-<body class="bg-[#0f0f0f] text-white font-sans overflow-hidden">
+<body class="overflow-hidden">
 
-    <nav class="fixed top-0 w-full h-16 border-b border-gray-800 glass z-50 flex items-center justify-between px-4">
+<nav class="fixed top-0 w-full h-16 border-b border-white/5 glass z-50 flex items-center justify-between px-4">
         <div class="flex items-center gap-3">
-            <button onclick="history.back()" class="p-2 hover:bg-gray-800 rounded-full transition-colors">
-                <span class="material-icons-sharp">arrow_back</span>
-            </button>
+            <button onclick="history.back()" class="p-2 hover:bg-white/5 rounded-full"><span class="material-icons-sharp text-gray-400">arrow_back_ios_new</span></button>
             <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 p-[2px] shadow-lg shadow-pink-500/20">
-                    <div class="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
-                        <% if (receiver && receiver.profileImage) { %>
-                            <img src="<%= receiver.profileImage.startsWith('http') ? receiver.profileImage : '/uploads/' + receiver.profileImage %>" 
-                                 class="w-full h-full object-cover" 
-                                 onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png';" 
-                                 alt="DP">
-                        <% } else { %>
-                            <img src="https://cdn-icons-png.flaticon.com/512/149/149071.png" class="w-full h-full object-cover">
-                        <% } %>
+                <div class="w-10 h-10 rounded-full bg-gradient-to-tr from-pink-500 to-purple-600 p-[1.5px]">
+                    <div class="w-full h-full rounded-full bg-black overflow-hidden">
+                        <% 
+                            let dp = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                            if (receiver && receiver.profileImage) {
+                                dp = receiver.profileImage.startsWith('http') ? receiver.profileImage : '/uploads/' + receiver.profileImage;
+                            } else if (receiver && receiver.avatar) {
+                                dp = receiver.avatar;
+                            }
+                        %>
+                        <img src="<%= dp %>" class="w-full h-full object-cover" onerror="this.src='https://cdn-icons-png.flaticon.com/512/149/149071.png'">
                     </div>
                 </div>
                 <div>
-                    <h2 class="text-sm font-bold uppercase tracking-tighter">
-                        <%= receiver ? receiver.username : 'User' %>
-                    </h2>
-                    <p class="text-[10px] text-green-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                        <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span> Online
-                    </p>
+                    <h2 class="text-sm font-bold"><%= receiver ? receiver.username : 'User' %></h2>
+                    <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest">● Online</span>
                 </div>
             </div>
         </div>
-        
-        <div class="flex gap-2">
-            <button onclick="startVideoCall('<%= receiverId %>')" class="p-2.5 text-blue-500 hover:bg-blue-600 hover:text-white transition-all active:scale-90">
-                <span class="material-icons-sharp">videocam</span>
-            </button>
-        </div>
     </nav>
 
-    <main id="chat-box" class="h-screen pt-20 pb-28 overflow-y-auto px-4 flex flex-col gap-3">
-        <div class="text-center py-10 opacity-20">
-            <p class="text-[10px] uppercase tracking-[0.5em]">End-to-End Encrypted</p>
-        </div>
-
+    <main id="chat-box" class="h-screen pt-20 pb-32 overflow-y-auto px-4 flex flex-col gap-4">
         <% if (messages && messages.length > 0) { %>
             <% messages.forEach(msg => { %>
-                <div class="flex <%= msg.sender.toString() === user._id.toString() ? 'justify-end' : 'justify-start' %> animate-in fade-in duration-300">
-                    <div class="max-w-[85%] md:max-w-[70%] <%= msg.sender.toString() === user._id.toString() ? 'bg-pink-600 shadow-lg shadow-pink-600/10' : 'bg-gray-800' %> p-3 rounded-2xl <%= msg.sender.toString() === user._id.toString() ? 'rounded-tr-none' : 'rounded-tl-none' %>">
-                        <p class="text-[13px] leading-relaxed text-white"><%= msg.message %></p>
-                        <p class="text-[9px] <%= msg.sender.toString() === user._id.toString() ? 'text-pink-200' : 'text-gray-400' %> mt-1 text-right font-medium">
-                            <%= new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %>
-                        </p>
+                <% const isSent = msg.sender.toString() === user._id.toString(); %>
+                <div class="flex <%= isSent ? 'justify-end' : 'justify-start' %> animate-msg">
+                    <div class="max-w-[80%] <%= isSent ? 'msg-sent' : 'msg-received' %> p-3 shadow-xl">
+                        <% if(msg.media && msg.mediaType === 'image') { %>
+                            <img src="<%= msg.media %>" class="w-full rounded-lg mb-2 border border-white/10">
+                        <% } %>
+                        <% if(msg.media && msg.mediaType === 'audio') { %>
+                            <audio controls class="w-full h-10 mb-2 filter brightness-125" style="width: 18rem;">
+                                <source src="<%= msg.media %>" type="audio/mpeg">
+                            </audio>
+                        <% } %>
+                        <% if(msg.message) { %><p class="text-sm"><%= msg.message %></p><% } %>
+                        <p class="text-[9px] opacity-60 mt-1 text-right"><%= new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) %></p>
                     </div>
                 </div>
             <% }) %>
         <% } %>
     </main>
 
-    <footer class="fixed bottom-0 w-full p-4 glass border-t border-gray-800 z-50">
+    <footer class="fixed bottom-0 w-full p-4 glass border-t border-white/5 z-50">
+        <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <span class="relative flex h-3 w-3">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
+                </span>
+                <span class="text-xs font-bold text-red-500 uppercase tracking-widest">Recording...</span>
+            </div>
+            <span id="record-timer" class="text-xs font-mono text-red-500">00:00</span>
+        </div>
+
+        <div id="media-preview" class="hidden max-w-2xl mx-auto mb-2 p-2 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-between">
+            <span id="preview-name" class="text-xs text-pink-200 flex items-center gap-2"></span>
+            <button onclick="clearPreview()" class="text-pink-500"><span class="material-icons-sharp text-sm">close</span></button>
+        </div>
+
         <form id="msg-form" class="max-w-4xl mx-auto flex items-center gap-2">
-            <button type="button" class="p-2 text-gray-400 hover:text-white transition-colors">
-                <span class="material-icons-sharp">add_circle</span>
+            <div class="relative group">
+                <button type="button" class="p-2 text-gray-400 hover:text-pink-500 transition-colors"><span class="material-icons-sharp">add_circle</span></button>
+                <div class="absolute bottom-14 left-0 bg-[#1a1a1a] border border-white/10 rounded-2xl p-2 hidden group-hover:flex flex-col gap-2 shadow-2xl z-50">
+                    <button type="button" onclick="document.getElementById('file-input').click()" class="p-3 hover:bg-white/5 rounded-xl text-blue-400"><span class="material-icons-sharp">image</span></button>
+                    <button type="button" onclick="openCamera()" class="p-3 hover:bg-white/5 rounded-xl text-pink-500"><span class="material-icons-sharp">photo_camera</span></button>
+                </div>
+            </div>
+
+            <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFile(this)">
+            <input type="text" id="user-input" autocomplete="off" placeholder="Message..." class="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm focus:outline-none focus:border-pink-500/50">
+            
+            <button type="button" onmousedown="startRecording()" onmouseup="stopRecording()" onmouseleave="stopRecording()" id="mic-btn" class="p-3 text-gray-400 hover:text-red-500 transition-all">
+                <span class="material-icons-sharp">mic</span>
             </button>
-            <input type="text" id="user-input" autocomplete="off" placeholder="Type something sexy..." 
-                   class="flex-1 bg-gray-900 border border-gray-800 rounded-full px-5 py-3 text-sm focus:outline-none focus:border-pink-500 transition-all text-white">
-            <button type="submit" class="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 transition-all shadow-lg shadow-pink-600/20 active:scale-90">
+
+            <button type="submit" id="send-btn" class="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 shadow-lg shadow-pink-600/20 active:scale-95 transition-all">
                 <span class="material-icons-sharp">send</span>
             </button>
         </form>
     </footer>
+
+    <div id="camera-modal" class="fixed inset-0 z-[100] bg-black hidden flex flex-col items-center justify-center">
+        <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>
+        <div class="absolute bottom-10 flex gap-10 items-center">
+            <button onclick="closeCamera()" class="w-14 h-14 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-md"><span class="material-icons-sharp">close</span></button>
+            <button onclick="takeSnap()" class="w-20 h-20 bg-white rounded-full p-1"><div class="w-full h-full rounded-full border-4 border-black/20"></div></button>
+        </div>
+        <canvas id="canvas" class="hidden"></canvas>
+    </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -90,63 +124,177 @@
         const chatBox = document.getElementById('chat-box');
         const msgForm = document.getElementById('msg-form');
         const userInput = document.getElementById('user-input');
-
+        const sendBtn = document.getElementById('send-btn');
+        const micBtn = document.getElementById('mic-btn');
         const currentUserId = "<%= user._id %>"; 
         const receiverId = "<%= receiverId %>";
 
+        let selectedMediaBlob = null;
+        let mediaType = 'text';
+        let mediaRecorder, audioChunks = [];
+        let startTime, timerInterval;
+
         socket.emit('join-chat', currentUserId);
+        window.onload = () => { chatBox.scrollTop = chatBox.scrollHeight; userInput.focus(); };
 
-        // Auto scroll on load
-        window.onload = () => {
-            userInput.focus();
-            setTimeout(() => {
-                chatBox.scrollTop = chatBox.scrollHeight;
-            }, 100);
-        };
+        function showPreview(name, icon = 'attachment') { 
+            document.getElementById('media-preview').classList.remove('hidden'); 
+            document.getElementById('preview-name').innerHTML = `<span class="material-icons-sharp text-sm">${icon}</span> ${name}`; 
+        }
 
-        msgForm.onsubmit = (e) => {
+        function clearPreview() { 
+            selectedMediaBlob = null; 
+            mediaType = 'text'; 
+            document.getElementById('media-preview').classList.add('hidden'); 
+            document.getElementById('file-input').value = ''; 
+        }
+
+        function handleFile(input) { 
+            if(input.files[0]) { 
+                selectedMediaBlob = input.files[0]; 
+                mediaType = 'image'; 
+                showPreview(input.files[0].name, 'image'); 
+            } 
+        }
+
+        async function openCamera() {
+            try {
+                document.getElementById('camera-modal').classList.remove('hidden');
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+                document.getElementById('webcam').srcObject = stream;
+            } catch(e) { alert("Camera Error"); }
+        }
+
+        function closeCamera() {
+            const stream = document.getElementById('webcam').srcObject;
+            if(stream) stream.getTracks().forEach(t => t.stop());
+            document.getElementById('camera-modal').classList.add('hidden');
+        }
+
+        function takeSnap() {
+            const video = document.getElementById('webcam');
+            const canvas = document.getElementById('canvas');
+            canvas.width = video.videoWidth; 
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob(blob => {
+                selectedMediaBlob = new File([blob], `snap_${Date.now()}.jpg`, { type: 'image/jpeg' });
+                mediaType = 'image';
+                showPreview("Snap Captured", 'photo_camera');
+                closeCamera();
+            }, 'image/jpeg');
+        }
+
+        async function startRecording() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+                
+                document.getElementById('recording-overlay').classList.remove('hidden');
+                micBtn.classList.add('recording-pulse');
+                
+                startTime = Date.now();
+                timerInterval = setInterval(() => {
+                    const sec = Math.floor((Date.now() - startTime) / 1000);
+                    document.getElementById('record-timer').innerText = `00:${sec.toString().padStart(2, '0')}`;
+                }, 1000);
+
+                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg' });
+                    selectedMediaBlob = new File([audioBlob], `voice_${Date.now()}.mp3`, { type: 'audio/mpeg' });
+                    mediaType = 'audio';
+                    showPreview("Voice Note Ready", 'mic');
+                    
+                    document.getElementById('recording-overlay').classList.add('hidden');
+                    micBtn.classList.remove('recording-pulse');
+                    clearInterval(timerInterval);
+                };
+                mediaRecorder.start();
+            } catch(e) { console.error("Mic error"); }
+        }
+
+        function stopRecording() { 
+            if(mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            } 
+        }
+
+        msgForm.onsubmit = async (e) => {
             e.preventDefault();
             const message = userInput.value.trim();
-            if(!message) return;
+            if(!message && !selectedMediaBlob) return;
 
-            socket.emit('send-private-message', {
-                senderId: currentUserId,
-                receiverId: receiverId,
-                message: message
-            });
+            sendBtn.disabled = true;
+            let finalMediaUrl = null;
 
-            appendMessage(message, 'sent');
-            userInput.value = '';
-            userInput.focus();
+            try {
+                if(selectedMediaBlob) {
+                    const formData = new FormData();
+                    // Field name 'media' matches chatController requirements
+                    formData.append('media', selectedMediaBlob);
+                    
+                    const res = await fetch('/upload-media', { method: 'POST', body: formData });
+                    const data = await res.json();
+                    
+                    if(data.success) {
+                        finalMediaUrl = data.url;
+                        // Use mediaType from PHP if available for precision
+                        if(data.mediaType) mediaType = data.mediaType;
+                    } else {
+                        throw new Error(data.message || "Upload Failed");
+                    }
+                }
+
+                const msgData = {
+                    senderId: currentUserId, 
+                    receiverId: receiverId,
+                    message, 
+                    media: finalMediaUrl, 
+                    mediaType: mediaType
+                };
+
+                socket.emit('send-private-message', msgData);
+                appendMessage(message, 'sent', '', finalMediaUrl, mediaType);
+                
+                userInput.value = ''; 
+                clearPreview();
+            } catch (err) { 
+                alert("Error: " + err.message);
+            } finally { 
+                sendBtn.disabled = false; 
+            }
         };
 
         socket.on('receive-private-message', (data) => {
             if(data.senderId === receiverId) {
-                appendMessage(data.message, 'received', data.timestamp);
+                appendMessage(data.message, 'received', data.timestamp, data.media, data.mediaType);
             }
         });
 
-        function appendMessage(text, type, time = '') {
+        function appendMessage(text, type, time = '', media = null, mType = 'text') {
             const isSent = type === 'sent';
-            if(!time) {
-                const now = new Date();
-                time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const now = time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            let mediaHtml = '';
+            
+            if(media) {
+                if(mType === 'image') mediaHtml = `<img src="${media}" class="w-full rounded-lg mb-2 border border-white/10">`;
+                else if(mType === 'audio') mediaHtml = `<audio controls class="w-full h-10 mb-2 filter brightness-125"><source src="${media}" type="audio/mpeg"></audio>`;
             }
 
             const msgHtml = `
-                <div class="flex ${isSent ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-300">
-                    <div class="max-w-[85%] md:max-w-[70%] ${isSent ? 'bg-pink-600 shadow-lg shadow-pink-600/10' : 'bg-gray-800'} p-3 rounded-2xl ${isSent ? 'rounded-tr-none' : 'rounded-tl-none'}">
-                        <p class="text-[13px] leading-relaxed text-white">${text}</p>
-                        <p class="text-[9px] ${isSent ? 'text-pink-200' : 'text-gray-400'} mt-1 text-right font-medium">${time}</p>
+                <div class="flex ${isSent ? 'justify-end' : 'justify-start'} animate-msg">
+                    <div class="max-w-[80%] ${isSent ? 'msg-sent' : 'msg-received'} p-3 shadow-xl">
+                        ${mediaHtml}
+                        ${text ? `<p class="text-sm">${text}</p>` : ''}
+                        <p class="text-[9px] opacity-60 mt-1 text-right">${now}</p>
                     </div>
-                </div>
-            `;
+                </div>`;
+            
             chatBox.insertAdjacentHTML('beforeend', msgHtml);
             chatBox.scrollTop = chatBox.scrollHeight;
-        }
-
-        function startVideoCall(id) {
-            alert('Video call starting with ID: ' + id);
         }
     </script>
 </body>
