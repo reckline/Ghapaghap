@@ -46,6 +46,23 @@
                 </div>
             </div>
         </div>
+   <button onclick="handleRefresh(this)" class="p-2.5 bg-white/5 hover:bg-white/10 rounded-full transition-all active:scale-90" title="Refresh Chat">
+        <span id="refresh-icon" class="material-icons-sharp text-pink-500 text-xl">cached</span>
+    </button>
+
+        <script>
+    function handleRefresh(btn) {
+        // Icon ko rotate karne ki animation
+        const icon = btn.querySelector('#refresh-icon');
+        icon.classList.add('animate-spin');
+        
+        // Chhota sa delay taaki animation dikhe, phir reload
+        setTimeout(() => {
+            window.location.reload();
+        }, 500);
+    }
+</script>
+        
     </nav>
     <style>
         #chat-box {
@@ -80,7 +97,7 @@
         <% } %>
     </main>
 
-    <footer class="shrink-0 w-full p-2 md:p-4 glass border-t border-white/5 z-50">
+    <footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
     
     <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-2 md:p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
         <div class="flex items-center gap-2 md:gap-3">
