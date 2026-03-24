@@ -171,7 +171,6 @@ exports.rejectDeposit = async (req, res) => {
     } catch (err) { res.redirect('/admin/depositRequests?error=Failed'); }
 };
 
-// --- Missing Function for AJAX Fix ---
 exports.updateDepositStatus = async (req, res) => {
     try {
         const { id, status } = req.body;
@@ -270,17 +269,14 @@ exports.getReports = async (req, res) => {
     } catch (err) { res.status(500).send("Internal Server Error"); }
 };
 
-
 // ==========================================
-// 📊 ADMIN ALL VIDEOS EDIT & DELEAT
+// 🎬 ADMIN ALL VIDEOS EDIT & DELETE
 // ==========================================
 
-
-// 1. Get All Videos Logic
 exports.getAllVideos = async (req, res) => {
     try {
         const videos = await Video.find()
-            .populate('uploader', 'username email') // Uploader ki details nikalne ke liye
+            .populate('uploader', 'username email') 
             .sort({ createdAt: -1 });
 
         res.render('Admin/allVideoInfo', { 
@@ -293,7 +289,6 @@ exports.getAllVideos = async (req, res) => {
     }
 };
 
-// 2. Delete Video Logic
 exports.deleteVideo = async (req, res) => {
     try {
         const videoId = req.params.id;
@@ -302,4 +297,44 @@ exports.deleteVideo = async (req, res) => {
     } catch (err) {
         res.status(500).json({ success: false, message: "Delete action failed!" });
     }
+};
+
+// ==========================================
+// 💳 PAYMENT SETTINGS LOGIC
+// ==========================================
+
+exports.getPaymentSettings = async (req, res) => {
+    try {
+        const admin = await User.findOne({ role: { $regex: /^admin$/i } }).lean();
+        res.render('Admin/paymentSettings', {
+            title: "Payment Settings | Admin",
+            admin: admin || { upiId: '' }, 
+            user: req.session.user,
+            success: req.query.success || null,
+            error: req.query.error || null
+        });
+    } catch (err) { res.status(500).send("Internal Error"); }
+};
+
+exports.updatePaymentSettings = async (req, res) => {
+    try {
+        const { upiId } = req.body;
+        if (!upiId || upiId.trim() === "") return res.redirect('/admin/paymentSettings?error=Empty UPI');
+
+        let admin = await User.findOne({ role: { $regex: /^admin$/i } });
+        if (admin) {
+            admin.upiId = upiId.trim();
+            await admin.save();
+        } else {
+            admin = new User({
+                username: 'Admin',
+                role: 'admin',
+                upiId: upiId.trim(),
+                email: 'admin@ghapagap.com', 
+                password: 'defaultPassword123' 
+            });
+            await admin.save();
+        }
+        res.redirect('/admin/paymentSettings?success=UPI ID Updated Successfully!');
+    } catch (err) { res.redirect(`/admin/paymentSettings?error=${err.message}`); }
 };

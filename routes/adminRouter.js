@@ -3,6 +3,7 @@ const router = express.Router();
 const adminController = require('../controller/adminController');
 
 
+
 // Debugging Middleware: Terminal mein hit hone wale har URL ko track karne ke liye
 router.use((req, res, next) => {
     console.log(`Requested URL: ${req.method} ${req.url}`);
@@ -37,6 +38,8 @@ router.get('/dashboard', (req, res) => {
 router.get('/allVerifiedUsers', adminController.getAllVerifiedUsers);
 router.get('/notVerifiedUsers', adminController.getNotVerifiedUsers);
 router.get('/user/:id', adminController.getUserDetails);
+router.get('/paymentSettings', adminController.getPaymentSettings);
+router.post('/update-payment', adminController.updatePaymentSettings);
 
 // ==========================================================
 // 🆕 USER VERIFICATION (KYC/APPROVAL) ROUTES

@@ -17,14 +17,29 @@ const getSafeAvatar = (user) => {
 // ==========================================
 
 /**
- * 1. Render Deposit Page
+ * 1. Render Deposit Page (Fixed adminUpi logic)
  */
 exports.getDepositPage = async (req, res) => {
     try {
         if (!req.session.user) return res.redirect('/login');
-        const user = await User.findById(req.session.user._id || req.session.user.id).lean();
+
+        // Fresh User Data & Admin UPI fetch
+        const [user, adminData] = await Promise.all([
+            User.findById(req.session.user._id || req.session.user.id).lean(),
+            User.findOne({ role: 'admin' }).lean()
+        ]);
+
         if (!user) return res.redirect('/login');
-        res.render('User/depositFunds', { user });
+
+        const finalUpi = adminData && adminData.upiId ? adminData.upiId : "biswassaurav@okicici";
+        console.log("✅ Rendering Deposit Page with UPI:", finalUpi);
+
+        res.render('User/depositFunds', { 
+            user,
+            adminUpi: finalUpi,
+            adminName: adminData ? adminData.username : "Ghapagap Creator",
+            title: "Deposit Funds"
+        });
     } catch (err) {
         console.error("Deposit Page Error:", err);
         res.status(500).send("Internal Server Error");
@@ -76,9 +91,7 @@ exports.getWithdrawPage = async (req, res) => {
     try {
         if (!req.session.user) return res.redirect('/login');
         
-        // Fetch fresh user data with bank details
         const user = await User.findById(req.session.user._id || req.session.user.id).lean();
-        
         if (!user) return res.redirect('/login');
 
         res.render('User/withdrawFunds', { 
@@ -106,7 +119,6 @@ exports.postWithdrawRequest = async (req, res) => {
 
         const withdrawAmt = Number(amount);
 
-        // Validations
         if (withdrawAmt < 100) {
             return res.status(400).json({ success: false, message: "Minimum withdrawal ₹100 hai." });
         }
@@ -114,7 +126,6 @@ exports.postWithdrawRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: "Balance kam hai, bhai!" });
         }
 
-        // Creating withdrawal record
         const withdrawal = new Withdrawal({
             user: userId,
             amount: withdrawAmt,
@@ -122,7 +133,6 @@ exports.postWithdrawRequest = async (req, res) => {
             status: 'Pending',
             bankDetails: {
                 upiId: method === 'UPI' ? upiId : "",
-                // Mapping 'accountName' to 'accountHolderName' for model consistency
                 accountHolderName: method === 'Bank' ? accountName : "",
                 accountNumber: method === 'Bank' ? accountNumber : "",
                 ifscCode: method === 'Bank' ? ifscCode : "",
@@ -132,7 +142,6 @@ exports.postWithdrawRequest = async (req, res) => {
 
         await withdrawal.save();
 
-        // User ka balance deduct karein
         user.walletBalance -= withdrawAmt;
         await user.save();
 
@@ -144,7 +153,7 @@ exports.postWithdrawRequest = async (req, res) => {
 };
 
 // ==========================================
-// 📊 FUND HISTORY SYSTEM (NEW)
+// 📊 FUND HISTORY SYSTEM
 // ==========================================
 
 /**
@@ -157,7 +166,6 @@ exports.getFundHistory = async (req, res) => {
 
         const user = await User.findById(userId).lean();
 
-        // Fetching both histories simultaneously
         const [deposits, withdrawals] = await Promise.all([
             Deposit.find({ user: userId }).sort({ createdAt: -1 }).lean(),
             Withdrawal.find({ user: userId }).sort({ createdAt: -1 }).lean()

@@ -17,6 +17,7 @@ const { handleSocket } = require('./controller/chatController');
 // 🔍 Model Import
 // 🚨 ALERT: Agar error aaye, toh check karein ki model/Message.js mein module.exports hai ya nahi
 const Message = require('./model/Message'); 
+const Notification = require('./model/Notification');
 
 // 3. Database Connection
 mongoose.connect(process.env.MONGO_URI)
@@ -98,6 +99,41 @@ app.use(async (req, res, next) => {
     next();
 });
 
+
+// =========================================================
+// NotifyCount
+// =========================================================
+
+// ... (Database connection aur baki setup ke baad)
+
+app.use(sessionConfig); 
+
+// 1. Pehle Session/User globals set karo
+app.use(async (req, res, next) => {
+    res.locals.user = req.session.user || null;
+    res.locals.unreadCount = 0;
+    res.locals.notifyCount = 0; // Default set kar do
+    next();
+});
+
+// 2. 🔥 AB NOTIFICATION COUNT NIKALO (Routes se pehle)
+app.use(async (req, res, next) => {
+    if (req.session && req.session.user) {
+        try {
+            const count = await Notification.countDocuments({ 
+                recipient: req.session.user._id, 
+                isRead: false 
+            });
+            res.locals.notifyCount = count;
+            console.log("✅ Current Notify Count:", count); // Debug ke liye
+        } catch (err) {
+            console.log("❌ Notif Count Error:", err);
+        }
+    }
+    next();
+});
+
+
 // =========================================================
 // 🛣️ ROUTES SETUP
 // =========================================================
@@ -108,14 +144,17 @@ const searchRouter = require('./routes/searchRouter');
 const verifyRouter = require('./routes/verifyRouter'); 
 const videoRoutes = require("./routes/videoRoutes");
 const chatRouter = require('./routes/chatRouter'); 
+const notificationRoutes = require('./routes/notificationRoutes');
 
 app.use('/admin', adminRouter); 
 app.use('/search', searchRouter); 
 app.use('/verify', verifyRouter); 
+app.use('/', notificationRoutes);
 app.use('/', videoRoutes); 
 app.use('/', chatRouter); 
 app.use('/', userRouter); 
 app.use('/', loginAndSignupRouter); 
+
 
 // =========================================================
 // ⚠️ ERROR HANDLING (404 Handler)

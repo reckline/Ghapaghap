@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <title><%= title %> | GhapaGhap</title>
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f0f0f; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+        #mobile-sidebar { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30">
+    <div id="sidebar-overlay" class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"></div>
+
+    <aside id="mobile-sidebar" class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto">
+        <%- user ? include('../partials/mobWithLogin') : include('../partials/mobWithoutLogin') %>
+    </aside>
+
+    <nav class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+        <%- user ? include('../partials/headerWithLogin') : include('../partials/headerWithoutLogin') %>
+    </nav>
+
+    <div class="flex">
+        <%- user ? include('../partials/desktopWithLogin') : include('../partials/desktopWithoutLogin') %>
+
+        <main class="flex-1 lg:ml-64 mt-16 p-4 md:p-8 pb-32">
+            <div class="flex items-center justify-between mb-8 border-l-4 border-pink-600 pl-4">
+                <h2 class="text-lg md:text-xl font-black uppercase italic tracking-widest text-white">Notifications</h2>
+            </div>
+
+            <div class="max-w-3xl mx-auto flex flex-col gap-3">
+                <% if (notifications && notifications.length > 0) { %>
+                    <% notifications.forEach(note => { %>
+                        <a href="<%= note.link || '#' %>" class="flex items-center gap-4 p-4 bg-[#161616] border border-gray-800 rounded-2xl hover:border-pink-500/50 transition-all group <%= !note.isRead ? 'border-l-4 border-l-blue-500' : '' %>">
+                            
+                            <div class="relative">
+                                <img src="<%= (note.sender && note.sender.avatar) ? note.sender.avatar : 'https://ui-avatars.com/api/?name=' + (note.sender ? note.sender.username : 'User') + '&background=f0778b&color=fff' %>" 
+                                     class="w-12 h-12 rounded-full object-cover border border-gray-700 group-hover:scale-105 transition-transform"
+                                     alt="Avatar">
+                                <% if(!note.isRead) { %>
+                                    <span class="absolute top-0 right-0 w-3 h-3 bg-blue-500 border-2 border-[#161616] rounded-full"></span>
+                                <% } %>
+                            </div>
+
+                            <div class="flex-1">
+                                <p class="text-sm text-gray-200">
+                                    <span class="font-bold text-white">@<%= note.sender ? note.sender.username : 'someone' %></span> 
+                                    <%= note.message %>
+                                </p>
+                                <p class="text-[10px] text-gray-500 mt-1 uppercase tracking-tighter">
+                                    <%= new Date(note.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) %>
+                                </p>
+                            </div>
+
+                            <i class="fa-solid fa-chevron-right text-gray-700 group-hover:text-pink-500 transition-colors text-xs"></i>
+                        </a>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center py-20 opacity-30">
+                        <div class="relative inline-block">
+                            <i class="fa-solid fa-bell text-6xl mb-4"></i>
+                            <i class="fa-solid fa-slash absolute inset-0 text-6xl text-pink-600"></i>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-widest mt-4">No notifications yet</p>
+                        <p class="text-[10px] mt-2">Interact with others to see updates here!</p>
+                    </div>
+                <% } %>
+            </div>
+        </main>
+    </div>
+
+    <%- include('../partials/homeFooter') %>
+
+    <script>
+        const sidebar = document.getElementById("mobile-sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+
+        function toggleSidebar() {
+            const isClosed = sidebar.classList.contains("-translate-x-full");
+            if (isClosed) {
+                sidebar.classList.remove("-translate-x-full");
+                overlay.classList.remove("hidden");
+                setTimeout(() => overlay.classList.add("opacity-100"), 10);
+            } else {
+                sidebar.classList.add("-translate-x-full");
+                overlay.classList.remove("opacity-100");
+                setTimeout(() => overlay.classList.add("hidden"), 300);
+            }
+        }
+        overlay.addEventListener("click", toggleSidebar);
+    </script>
+</body>
+</html>

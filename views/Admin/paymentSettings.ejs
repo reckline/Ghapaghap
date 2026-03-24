@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0b0f1a; color: white; }
+        .glass-card {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .neon-input:focus {
+            border-color: #06b6d4;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.3);
+        }
+        .gradient-btn {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            transition: all 0.3s ease;
+        }
+        .gradient-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px -10px #06b6d4;
+        }
+    </style>
+</head>
+<body class="overflow-hidden">
+
+    <div class="flex h-screen">
+        <%- include('../partials/adminNav') %>
+
+        <main class="flex-1 h-full overflow-y-auto">
+            <%- include('../partials/adminHeader') %>
+
+            <div class="container mx-auto px-6 py-12">
+                <div class="max-w-2xl mx-auto">
+                    
+                    <div class="text-center mb-10">
+                        <h1 class="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 to-blue-500">
+                            Payment Gateway
+                        </h1>
+                        <p class="text-gray-400 mt-2">Update your merchant UPI details to receive instant settlements</p>
+                    </div>
+
+                    <div class="glass-card rounded-3xl p-8 relative overflow-hidden">
+                        <div class="absolute -top-24 -right-24 w-48 h-48 bg-cyan-500/10 blur-3xl rounded-full"></div>
+                        
+                        <% if (success) { %>
+                            <div class="mb-6 flex items-center bg-emerald-500/10 border border-emerald-500/50 text-emerald-400 px-4 py-3 rounded-xl">
+                                <i class="material-icons-sharp mr-2 text-sm">check_circle</i>
+                                <span class="text-sm font-medium"><%= success %></span>
+                            </div>
+                        <% } %>
+
+                        <% if (error) { %>
+                            <div class="mb-6 flex items-center bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-xl">
+                                <i class="material-icons-sharp mr-2 text-sm">error</i>
+                                <span class="text-sm font-medium"><%= error %></span>
+                            </div>
+                        <% } %>
+
+                        <form action="/admin/update-payment" method="POST" class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-300 mb-2 ml-1">Merchant UPI ID</label>
+                                <div class="relative group">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i class="bi bi-qr-code-scan text-cyan-500 group-focus-within:text-cyan-400 transition-colors"></i>
+                                    </div>
+                                    <input type="text" 
+                                           name="upiId" 
+                                           class="w-full bg-gray-900/50 border border-gray-700 text-white text-lg rounded-2xl pl-12 pr-4 py-4 neon-input outline-none transition-all placeholder:text-gray-600" 
+                                           placeholder="e.g. saurav@upi" 
+                                           value="<%= admin.upiId || '' %>" 
+                                           required>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-3 flex items-center ml-1">
+                                    <i class="material-icons-sharp text-[14px] mr-1">info</i>
+                                    Payments will be credited directly to the linked bank account.
+                                </p>
+                            </div>
+
+                            <button type="submit" class="w-full gradient-btn py-4 rounded-2xl font-bold text-lg flex items-center justify-center space-x-2 shadow-lg">
+                                <i class="material-icons-sharp">save</i>
+                                <span>Save Gateway Settings</span>
+                            </button>
+                        </form>
+
+                        <div class="mt-10 pt-8 border-t border-gray-800 flex flex-col items-center">
+                            <div class="flex items-center space-x-3">
+                                <div class="relative flex h-3 w-3">
+                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full <%= admin.upiId ? 'bg-emerald-400' : 'bg-red-400' %> opacity-75"></span>
+                                    <span class="relative inline-flex rounded-full h-3 w-3 <%= admin.upiId ? 'bg-emerald-500' : 'bg-red-500' %>"></span>
+                                </div>
+                                <span class="text-sm font-bold tracking-widest uppercase <%= admin.upiId ? 'text-emerald-400' : 'text-red-400' %>">
+                                    <%= admin.upiId ? 'Live Gateway Active' : 'Gateway Offline' %>
+                                </span>
+                            </div>
+                            
+                            <% if (admin.upiId) { %>
+                                <div class="mt-4 bg-gray-900/80 px-6 py-2 rounded-full border border-gray-800">
+                                    <code class="text-cyan-400 font-mono text-sm"><%= admin.upiId %></code>
+                                </div>
+                            <% } %>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <a href="/admin/dashboard" class="group text-gray-500 hover:text-white transition-colors flex items-center justify-center text-sm font-medium">
+                            <i class="material-icons-sharp text-sm mr-1 group-hover:-translate-x-1 transition-transform">arrow_back</i>
+                            Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Sidebar Toggle for Mobile (if needed)
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        if(menuBtn && sidebar) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+        }
+    </script>
+</body>
+</html>

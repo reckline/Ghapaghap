@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const axios = require("axios");
 const FormData = require("form-data");
 const bcrypt = require("bcrypt");
+const Notification = require('../model/Notification');
 
 // ==========================================
 // 0. HELPER FUNCTIONS
@@ -285,8 +286,87 @@ exports.getUserSubs = async (req, res) => {
   }
 };
 
+// // ==========================================
+// // 2. SEARCH & ACTIONS
+// // ==========================================
+
+// exports.searchUsers = async (req, res) => {
+//   try {
+//     const query = (req.query.q || "").trim();
+//     const userId = req.session.user?._id || req.session.user?.id;
+
+//     let mySubs = [];
+//     if (userId) {
+//       const me = await User.findById(userId).select("subscriptions").lean();
+//       mySubs = me?.subscriptions ? me.subscriptions.map((id) => id.toString()) : [];
+//     }
+
+//     let filter = { role: { $ne: "admin" } };
+//     if (query !== "") {
+//       filter.$or = [
+//         { username: { $regex: query, $options: "i" } },
+//         { fullname: { $regex: query, $options: "i" } },
+//       ];
+//     }
+
+//     const users = await User.find(filter)
+//       .select("username fullname avatar isVerified subscribersCount videosCount")
+//       .sort({ subscribersCount: -1 })
+//       .limit(20)
+//       .lean();
+
+//     const usersWithStatus = users.map((u) => ({
+//       ...u,
+//       _id: u._id.toString(),
+//       avatar: getSafeAvatar(u),
+//       isSubbed: mySubs.includes(u._id.toString()),
+//     }));
+
+//     res.json(usersWithStatus);
+//   } catch (err) {
+//     res.status(500).json({ error: "Search Error" });
+//   }
+// };
+
+// exports.subscribeUser = async (req, res) => {
+//   try {
+//     const targetUserId = req.params.userId;
+//     const currentUserId = req.session.user?._id || req.session.user?.id;
+
+//     if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
+//     if (targetUserId === currentUserId.toString()) return res.status(400).json({ success: false, message: "Self-sub blocked" });
+
+//     const me = await User.findById(currentUserId).select("subscriptions");
+//     const isAlreadySubscribed = me.subscriptions.some((id) => id.toString() === targetUserId);
+
+//     const targetUpdate = isAlreadySubscribed
+//       ? { $pull: { subscribers: currentUserId }, $inc: { subscribersCount: -1 } }
+//       : { $push: { subscribers: currentUserId }, $inc: { subscribersCount: 1 } };
+
+//     const myUpdate = isAlreadySubscribed
+//       ? { $pull: { subscriptions: targetUserId } }
+//       : { $push: { subscriptions: targetUserId } };
+
+//     const [updatedTarget, updatedMe] = await Promise.all([
+//       User.findByIdAndUpdate(targetUserId, targetUpdate, { returnDocument: "after" }),
+//       User.findByIdAndUpdate(currentUserId, myUpdate, { returnDocument: "after" }).select("-password").lean(),
+//     ]);
+
+//     req.session.user = { ...updatedMe, avatar: getSafeAvatar(updatedMe) };
+//     req.session.save(() => {
+//       res.json({
+//         success: true,
+//         newCount: updatedTarget.subscribersCount,
+//         status: isAlreadySubscribed ? "unsubscribed" : "subscribed",
+//       });
+//     });
+//   } catch (err) {
+//     res.status(500).json({ success: false });
+//   }
+// };
+
 // ==========================================
-// 2. SEARCH & ACTIONS
+// 2. SEARCH ACTIONS & NOTIFICATION
 // ==========================================
 
 exports.searchUsers = async (req, res) => {
@@ -332,24 +412,38 @@ exports.subscribeUser = async (req, res) => {
     const targetUserId = req.params.userId;
     const currentUserId = req.session.user?._id || req.session.user?.id;
 
-    if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
-    if (targetUserId === currentUserId.toString()) return res.status(400).json({ success: false, message: "Self-sub blocked" });
+    console.log("🔔 Subscribe Attempt:", { from: currentUserId, to: targetUserId });
 
+    if (!currentUserId) return res.status(401).json({ success: false, message: "Login first" });
+    
     const me = await User.findById(currentUserId).select("subscriptions");
     const isAlreadySubscribed = me.subscriptions.some((id) => id.toString() === targetUserId);
 
-    const targetUpdate = isAlreadySubscribed
-      ? { $pull: { subscribers: currentUserId }, $inc: { subscribersCount: -1 } }
-      : { $push: { subscribers: currentUserId }, $inc: { subscribersCount: 1 } };
-
-    const myUpdate = isAlreadySubscribed
-      ? { $pull: { subscriptions: targetUserId } }
-      : { $push: { subscriptions: targetUserId } };
-
     const [updatedTarget, updatedMe] = await Promise.all([
-      User.findByIdAndUpdate(targetUserId, targetUpdate, { returnDocument: "after" }),
-      User.findByIdAndUpdate(currentUserId, myUpdate, { returnDocument: "after" }).select("-password").lean(),
+      User.findByIdAndUpdate(targetUserId, 
+        isAlreadySubscribed 
+          ? { $pull: { subscribers: currentUserId }, $inc: { subscribersCount: -1 } }
+          : { $push: { subscribers: currentUserId }, $inc: { subscribersCount: 1 } }, 
+        { returnDocument: "after" }),
+      User.findByIdAndUpdate(currentUserId, 
+        isAlreadySubscribed 
+          ? { $pull: { subscriptions: targetUserId } }
+          : { $push: { subscriptions: targetUserId } }, 
+        { returnDocument: "after" }).select("-password").lean()
     ]);
+
+    // 🔥 NOTIFICATION CREATE
+    if (!isAlreadySubscribed) {
+        console.log("🚀 Creating Notification in DB...");
+        const newNotif = await Notification.create({
+            recipient: targetUserId,
+            sender: currentUserId,
+            type: 'follow',
+            message: 'started following you',
+            link: `/user/${updatedMe.username}`
+        });
+        console.log("✅ DB Saved Notification:", newNotif._id);
+    }
 
     req.session.user = { ...updatedMe, avatar: getSafeAvatar(updatedMe) };
     req.session.save(() => {
@@ -360,6 +454,7 @@ exports.subscribeUser = async (req, res) => {
       });
     });
   } catch (err) {
+    console.error("❌ CRITICAL ERROR:", err);
     res.status(500).json({ success: false });
   }
 };
@@ -532,4 +627,29 @@ exports.postAddBank = async (req, res) => {
   } catch (err) {
     res.status(500).json({ success: false, message: "Failed to update bank details" });
   }
+};
+
+
+
+// ==========================================
+// 5. Admin UPI & BANK
+// ==========================================
+
+exports.getDepositPage = async (req, res) => {
+    try {
+        // Admin ki UPI ID nikalna
+        const adminData = await User.findOne({ role: 'admin' });
+        const upiID = adminData ? adminData.upiId : "biswassaurav@okicici"; // Fallback ID
+
+        console.log("📢 Current Admin UPI for Deposit:", upiID); // Console Log here
+
+        res.render('User/deposit', {
+            user: req.user, 
+            adminUpi: upiID,
+            adminName: adminData ? adminData.username : "Ghapagap Admin"
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).send("Internal Server Error");
+    }
 };
