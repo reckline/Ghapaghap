@@ -3,6 +3,9 @@ const Deposit = require('../model/deposit');
 const Withdrawal = require('../model/withdrawal');
 const moment = require('moment');
 const Video = require('../model/video'); 
+const Admin = require('../model/admin'); 
+const Settings = require('../model/settings'); 
+const mongoose = require('mongoose'); 
 
 // ==========================================
 // 0. HELPER FUNCTIONS
@@ -150,15 +153,41 @@ exports.getDepositInfos = async (req, res) => {
     } catch (err) { res.status(500).send(err.message); }
 };
 
+// 🔥 FIXED: Isme settings se pack check karne ka logic add kiya hai
 exports.approveDeposit = async (req, res) => {
     try {
-        const d = await Deposit.findById(req.params.id);
-        if (!d || d.status !== 'Pending') return res.redirect('/admin/depositRequests?error=Invalid');
-        await User.findByIdAndUpdate(d.user, { $inc: { walletBalance: d.amount } });
-        d.status = 'Approved'; 
-        await d.save();
-        res.redirect('/admin/depositRequests?success=Deposit Approved! ✅');
-    } catch (err) { res.redirect('/admin/depositRequests?error=Failed'); }
+        const depositId = req.params.id;
+        const deposit = await Deposit.findById(depositId);
+
+        if (deposit && deposit.status === 'Pending') {
+            const user = await User.findById(deposit.user);
+            const settings = await Settings.findOne();
+            
+            // Amount ke basis par correct pack find karo
+            const selectedPack = settings?.subscriptionPacks?.find(p => Number(p.price) === Number(deposit.amount));
+            
+            // Agar pack milta hai toh uski duration use karo, nahi toh fallback minutes (agar future mein schema change ho)
+            const minutesToAdd = selectedPack ? Number(selectedPack.duration) : (Number(deposit.minutes) || 0); 
+
+            if (user && minutesToAdd > 0) {
+                user.totalMinutes = (user.totalMinutes || 0) + minutesToAdd;
+                user.accountStatus = 'paid';
+                await user.save();
+                
+                deposit.status = 'Approved';
+                await deposit.save();
+                
+                res.redirect('/admin/depositRequests?success=Minutes added successfully ✅');
+            } else {
+                res.redirect('/admin/depositRequests?error=User not found or No matching pack duration found');
+            }
+        } else {
+            res.redirect('/admin/depositRequests?error=Already processed or not found');
+        }
+    } catch (err) {
+        console.error("Approve Error:", err);
+        res.status(500).send("Error approving deposit");
+    }
 };
 
 exports.rejectDeposit = async (req, res) => {
@@ -175,10 +204,27 @@ exports.updateDepositStatus = async (req, res) => {
     try {
         const { id, status } = req.body;
         const d = await Deposit.findById(id);
-        if (!d || d.status !== 'Pending') return res.status(404).json({ success: false });
+        if (!d || d.status !== 'Pending') return res.status(404).json({ success: false, message: "Request not found" });
+        
         if (status === 'Approved') {
-            await User.findByIdAndUpdate(d.user, { $inc: { walletBalance: d.amount } });
+            const settings = await Settings.findOne();
+            const selectedPack = settings?.subscriptionPacks?.find(p => Number(p.price) === Number(d.amount));
+            
+            if (selectedPack) {
+                const minutesToAdd = Number(selectedPack.duration);
+                await User.findByIdAndUpdate(d.user, { 
+                    $inc: { totalMinutes: minutesToAdd },
+                    accountStatus: 'paid'
+                });
+            } else {
+                const fallbackMinutes = Number(d.minutes) || 0;
+                await User.findByIdAndUpdate(d.user, { 
+                    $inc: { totalMinutes: fallbackMinutes },
+                    accountStatus: 'paid'
+                });
+            }
         }
+        
         d.status = status;
         await d.save();
         res.json({ success: true });
@@ -235,9 +281,11 @@ exports.updateWithdrawalStatus = async (req, res) => {
         const { requestId, status, remark } = req.body;
         const w = await Withdrawal.findById(requestId);
         if (!w || w.status !== 'Pending') return res.status(404).json({ success: false });
+        
         if (status === 'Rejected') {
             await User.findByIdAndUpdate(w.user, { $inc: { walletBalance: w.amount } });
         }
+        
         w.status = status;
         if (remark) w.remark = remark;
         await w.save();
@@ -339,13 +387,10 @@ exports.updatePaymentSettings = async (req, res) => {
     } catch (err) { res.redirect(`/admin/paymentSettings?error=${err.message}`); }
 };
 
-// Pehle check kar lo ki upar admin model import hai ya nahi
-const Admin = require('../model/admin'); // Chhote 'admin' file name ke saath
 // ==========================================
 // 📢 MULTIPLE POPUP AD LOGIC
 // ==========================================
 
-// 1. Get Popup Settings Page
 exports.getPopupAdSettings = async (req, res) => {
     try {
         let admin = await Admin.findOne().lean();
@@ -363,15 +408,13 @@ exports.getPopupAdSettings = async (req, res) => {
     }
 };
 
-// 2. Add OR Update Popup Ad (Dono handle karega)
 exports.updatePopupAd = async (req, res) => {
     try {
-        const adId = req.params.id; // URL se ID uthayega (Update ke liye)
+        const adId = req.params.id; 
         const { title, message, imageUrl, link, isActive } = req.body;
         const activeStatus = isActive === 'on' || isActive === true;
 
         if (adId) {
-            // Logic: Agar ID hai toh SPECIFIC AD update karo
             await Admin.findOneAndUpdate(
                 { "popupAds._id": adId },
                 { 
@@ -387,7 +430,6 @@ exports.updatePopupAd = async (req, res) => {
             );
             return res.redirect('/admin/popupAdSettings?success=Ad Updated Successfully! ✅');
         } else {
-            // Logic: Agar ID nahi hai toh NAYA AD push karo
             await Admin.findOneAndUpdate(
                 {}, 
                 { 
@@ -412,7 +454,6 @@ exports.updatePopupAd = async (req, res) => {
     }
 };
 
-// 3. Delete Specific Popup Ad
 exports.deletePopupAd = async (req, res) => {
     try {
         const adId = req.params.id;
@@ -424,5 +465,87 @@ exports.deletePopupAd = async (req, res) => {
     } catch (err) { 
         console.error("Delete Error:", err.message);
         res.status(500).send("Delete fail ho gaya: " + err.message); 
+    }
+};
+
+// ==========================================
+// ⚙️ SYSTEM SETTINGS (Trial & Subscription Logic)
+// ==========================================
+
+exports.getSettingsPage = async (req, res) => {
+    try {
+        let settings = await Settings.findOne();
+        if (!settings) {
+            settings = await Settings.create({ trialMinutes: 2, subscriptionPacks: [] });
+        }
+        
+        res.render("Admin/settings", { 
+            user: req.session.user,
+            settings: settings,
+            title: "Admin Settings",
+            success: req.query.success || null,
+            error: req.query.error || null
+        });
+    } catch (err) {
+        console.error("Settings Error:", err);
+        res.status(500).send("Internal Server Error");
+    }
+};
+
+exports.updateTrialSettings = async (req, res) => {
+    try {
+        const { trialMinutes } = req.body;
+        await Settings.findOneAndUpdate({}, { trialMinutes }, { upsert: true, new: true });
+        
+        console.log(`🚀 New Trial Time Set in DB: ${trialMinutes} Minutes`);
+        res.redirect("/admin/settings?success=Trial Updated! ✅");
+    } catch (err) {
+        console.error("Update Trial Error:", err);
+        res.redirect("/admin/settings?error=Update Failed");
+    }
+};
+
+exports.addSubscriptionPack = async (req, res) => {
+    try {
+        const { name, duration, price } = req.body;
+        
+        if (!name || !duration || !price) {
+            return res.redirect("/admin/settings?error=All fields are required");
+        }
+
+        await Settings.findOneAndUpdate(
+            {}, 
+            { 
+                $push: { 
+                    subscriptionPacks: { 
+                        name, 
+                        duration: Number(duration), 
+                        price: Number(price) 
+                    } 
+                } 
+            }, 
+            { upsert: true }
+        );
+
+        res.redirect("/admin/settings?success=New Pack Added! 🚀");
+    } catch (err) {
+        console.error("Add Pack Error:", err);
+        res.redirect("/admin/settings?error=Failed to add pack");
+    }
+};
+
+exports.deleteSubscriptionPack = async (req, res) => {
+    try {
+        const packId = req.params.id;
+        
+        await Settings.findOneAndUpdate(
+            {}, 
+            { $pull: { subscriptionPacks: { _id: packId } } }
+        );
+
+        res.redirect("/admin/settings?success=Pack Deleted! 🗑️");
+    } catch (err) {
+        console.error("Delete Pack Error:", err);
+        res.redirect("/admin/settings?error=Delete action failed");
     }
 };

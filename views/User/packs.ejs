@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <title>GhapaGhap</title>
+    <style>
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f0f0f;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #333;
+        border-radius: 10px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #444;
+      }
+      .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      #mobile-sidebar {
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+    </style>
+    <style>
+    .premium-card {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(10px);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .premium-card:hover {
+        transform: translateY(-10px);
+        background: rgba(255, 255, 255, 0.06);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 20px rgba(236, 72, 153, 0.2);
+    }
+    .neon-text {
+        text-shadow: 0 0 10px rgba(236, 72, 153, 0.5);
+    }
+</style>
+  </head>
+  <body
+    class="bg-[#0f0f0f] text-white font-sans antialiased selection:bg-pink-500/30"
+  >
+    <div
+      id="sidebar-overlay"
+      class="fixed inset-0 bg-black/70 z-[70] hidden opacity-0 transition-opacity duration-300"
+    ></div>
+
+    <!-- ==================================== Mobile Sidebar ==================================== -->
+
+    <aside
+      id="mobile-sidebar"
+      class="fixed top-0 left-0 w-72 h-full bg-[#0f0f0f] z-[80] -translate-x-full border-r border-gray-800 p-5 overflow-y-auto"
+    >
+       <% if (user) { %>
+         <%- include('../partials/mobWithLogin') %>
+       <% } else { %>
+         <%- include('../partials/mobWithoutLogin') %>
+       <% } %>
+    </aside>
+    <!-- ========================================= Header ======================================== -->
+
+    <nav
+      class="fixed top-0 z-50 w-full bg-[#0f0f0f]/90 backdrop-blur-md flex items-center justify-between px-4 h-16 border-b border-gray-800">
+     <% if (user) { %>
+       <%- include('../partials/headerWithLogin') %>
+     <% } else { %>
+       <%- include('../partials/headerWithoutLogin') %>
+     <% } %>
+    </nav>
+    <!-- ========================================= Desktop Sidebar ======================================== -->
+    <div class="flex">
+        <% if (user) { %>
+            <%- include('../partials/desktopWithLogin') %>
+        <% } else { %>
+            <%- include('../partials/desktopWithoutLogin') %>
+        <% } %>
+      <!-- ========================================= Main Body ======================================== -->
+<div class="pt-24 pb-12 px-4 max-w-7xl mx-auto min-h-screen">
+    <div class="text-center mb-16">
+        <span class="bg-pink-500/10 text-pink-500 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest border border-pink-500/20">
+            Premium Access
+        </span>
+        <h1 class="text-4xl md:text-5xl font-black mt-4 mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white via-pink-400 to-purple-500">
+            Elevate Your Experience
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto text-lg">
+            Choose a subscription plan that fits your needs. Unlock exclusive content, faster streaming, and ad-free experience.
+        </p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-2">
+        <% 
+            // 🛠️ Minutes to Days/Hours logic
+            const formatDuration = (totalMinutes) => {
+                const days = Math.floor(totalMinutes / 1440);
+                const hours = Math.floor((totalMinutes % 1440) / 60);
+                const mins = totalMinutes % 60;
+                
+                let parts = [];
+                if (days > 0) parts.push(`${days} Day${days > 1 ? 's' : ''}`);
+                if (hours > 0) parts.push(`${hours} Hr${hours > 1 ? 's' : ''}`);
+                if (mins > 0 && days === 0) parts.push(`${mins} Min`); // Show mins only if no days
+                return parts.length > 0 ? parts.join(' ') : 'Instant';
+            };
+        %>
+
+        <% if(packs && packs.length > 0) { %>
+            <% packs.forEach((pack, index) => { %>
+                <div class="premium-card relative border border-gray-800 rounded-3xl p-8 flex flex-col group">
+                    
+                    <% if(index === 1) { %>
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-600 to-purple-600 text-white text-[10px] font-black px-4 py-1 rounded-full uppercase tracking-tighter shadow-lg">
+                            Most Popular
+                        </div>
+                    <% } %>
+
+                    <div class="mb-8">
+                        <h3 class="text-gray-400 font-bold uppercase tracking-widest text-xs mb-2"><%= pack.name %></h3>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-4xl font-black text-white neon-text">₹<%= pack.price %></span>
+                            <span class="text-gray-500 text-sm">/ Plan</span>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4 mb-10 flex-1">
+                        <div class="flex items-center gap-3 group/item">
+                            <div class="w-8 h-8 rounded-full bg-pink-500/10 flex items-center justify-center group-hover/item:bg-pink-500/20 transition-colors">
+                                <i class="fa-solid fa-calendar-check text-pink-500 text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Valid for <%= formatDuration(pack.duration) %></p>
+                                <p class="text-gray-500 text-[11px]">Uninterrupted service</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 group/item">
+                            <div class="w-8 h-8 rounded-full bg-purple-500/10 flex items-center justify-center">
+                                <i class="fa-solid fa-bolt text-purple-500 text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Ultra HD Streaming</p>
+                                <p class="text-gray-500 text-[11px]">4K Quality supported</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 group/item">
+                            <div class="w-8 h-8 rounded-full bg-blue-500/10 flex items-center justify-center">
+                                <i class="fa-solid fa-shield-halved text-blue-500 text-xs"></i>
+                            </div>
+                            <div>
+                                <p class="text-white font-semibold text-sm">Ad-Free Browsing</p>
+                                <p class="text-gray-500 text-[11px]">No interruptions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form action="/buy-pack/<%= pack._id %>" method="POST">
+                        <!-- <button type="submit" class="w-full relative overflow-hidden group/btn bg-white text-black py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-pink-500 hover:text-white transition-all duration-300 shadow-xl shadow-white/5">
+                            <span class="relative z-10 flex items-center justify-center gap-2">
+                                Get Started <i class="fa-solid fa-arrow-right text-xs"></i>
+                            </span>
+                        </button> -->
+                        <a href="/deposit?amount=<%= pack.price %>&pack=<%= encodeURIComponent(pack.name) %>" 
+   class="w-full relative overflow-hidden group/btn bg-white text-black py-4 rounded-2xl font-black text-sm uppercase tracking-wide hover:bg-pink-500 hover:text-white transition-all duration-300 shadow-xl shadow-white/5 text-center block">
+    <span class="relative z-10 flex items-center justify-center gap-2">
+        Get Started <i class="fa-solid fa-arrow-right text-xs"></i>
+    </span>
+</a>
+                    </form>
+                </div>
+            <% }) %>
+        <% } else { %>
+            <div class="col-span-full bg-gray-900/50 border border-dashed border-gray-800 rounded-3xl p-20 text-center">
+                <i class="fa-solid fa-box-open text-5xl text-gray-700 mb-4"></i>
+                <p class="text-gray-500 font-medium">No plans available at the moment.<br>Please check back later.</p>
+            </div>
+        <% } %>
+    </div>
+</div>
+ 
+
+    </div>
+    <%- include('../partials/homeFooter') %>
+      <%- include('../partials/popupAd') %>
+    <script>
+      const sidebar = document.getElementById("mobile-sidebar");
+      const overlay = document.getElementById("sidebar-overlay");
+
+      function toggleSidebar() {
+        const isClosed = sidebar.classList.contains("-translate-x-full");
+        if (isClosed) {
+          sidebar.classList.remove("-translate-x-full");
+          overlay.classList.remove("hidden");
+          setTimeout(() => overlay.classList.add("opacity-100"), 10);
+        } else {
+          sidebar.classList.add("-translate-x-full");
+          overlay.classList.remove("opacity-100");
+          setTimeout(() => overlay.classList.add("hidden"), 300);
+        }
+      }
+      overlay.addEventListener("click", toggleSidebar);
+    </script>
+  </body>
+</html>

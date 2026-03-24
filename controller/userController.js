@@ -653,3 +653,29 @@ exports.getDepositPage = async (req, res) => {
         res.status(500).send("Internal Server Error");
     }
 };
+
+
+
+
+// ==========================================
+// 6. SUBSCRIPTIOB PACKS
+// ==========================================
+
+
+const Settings = require('../model/settings'); // Model import zaroor karein
+
+exports.getSubscriptionPacks = async (req, res) => {
+    try {
+        // Database se settings uthao jisme packs hain
+        const settings = await Settings.findOne().lean();
+        
+        res.render('User/packs', { 
+            title: "Subscription Plans",
+            user: req.session.user,
+            packs: settings ? settings.subscriptionPacks : [] 
+        });
+    } catch (err) {
+        console.error("Error fetching packs:", err);
+        res.status(500).send("Server Error");
+    }
+};

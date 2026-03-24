@@ -4,7 +4,6 @@ const userController = require("../controller/userController");
 const videoController = require("../controller/videoController");
 const searchController = require("../controller/searchController");
 const walletController = require("../controller/walletController");
-// ✅ NEW: Shorts Controller Import kiya
 const shortsController = require("../controller/shortsController"); 
 
 const { isLoggedIn } = require("../middleware/auth");
@@ -48,15 +47,16 @@ router.get(
 );
 
 // ==========================================
-// 🚀 NEW: CREATOR PROFILE ROUTE (Isi ki wajah se 404 aa raha tha)
+// 🚀 NEW: CREATOR PROFILE ROUTE
 // ==========================================
-// Ye route '/user/kiaracole' jaise URLs ko handle karega
 router.get("/user/:username", userController.getCreatorProfile); 
 
 // ==========================================
 // 2. PROTECTED ROUTES (Logged In Users Only)
 // ==========================================
+// NOTE: isLoggedIn handles the 2-minute 'paid' to 'updated' status check auto.
 router.get("/profile", isLoggedIn, userController.getProfile);
+router.get("/home", isLoggedIn, userController.renderHome || userController.getHomePage);
 
 // --- Video Upload System ---
 router.get("/upload-video", isLoggedIn, videoController.getUploadPage);
@@ -115,7 +115,9 @@ router.post("/add-bank", isLoggedIn, userController.postAddBank);
 // 💰 WALLET, DEPOSIT & WITHDRAW SYSTEM
 // ==========================================
 router.get("/fundHistory", isLoggedIn, walletController.getFundHistory);
-router.get("/deposit-funds", isLoggedIn, walletController.getDepositPage);
+// router.get("/deposit-funds", isLoggedIn, walletController.getDepositPage);
+// Isko /deposit kar diya taaki packs page wala link match ho jaye
+router.get("/deposit", isLoggedIn, walletController.getDepositPage);
 router.post(
   "/deposit-finalize",
   isLoggedIn,
@@ -133,7 +135,7 @@ router.post(
 // ==========================================
 router.post("/subscribe/:userId", isLoggedIn, userController.subscribeUser);
 
-// ✅ NEW ACTION: Shorts Like (AJAX ke liye ready)
+// ✅ NEW ACTION: Shorts Like
 router.post("/shorts/like/:id", isLoggedIn, shortsController.likeShort);
 
 // ==========================================
@@ -151,5 +153,7 @@ router.get("/depositFunds", (req, res) => res.redirect("/deposit-funds"));
 router.get("/withdrawFunds", (req, res) => res.redirect("/withdraw-funds"));
 router.get("/changePassword", (req, res) => res.redirect("/change-password"));
 router.get("/addBankAccount", (req, res) => res.redirect("/add-bank"));
+// 🆕 Subscription Packs dekhne ke liye route
+router.get('/packs', isLoggedIn, userController.getSubscriptionPacks);
 
 module.exports = router;

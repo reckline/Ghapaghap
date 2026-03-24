@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Settings | Ghapaghp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Sharp" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-white font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        <%- include('../partials/adminNav') %>
+
+        <main class="flex-1 h-full overflow-y-auto">
+            <%- include('../partials/adminHeader') %>
+
+            <div class="p-6 lg:p-10">
+                <div class="max-w-4xl mx-auto">
+                    <div class="mb-8">
+                        <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-500 to-purple-500">
+                            System Settings
+                        </h1>
+                        <p class="text-gray-400 mt-2">Manage global configurations for the platform.</p>
+                    </div>
+
+                    <div class="bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-2xl">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="p-3 bg-pink-500/10 rounded-lg">
+                                <i class="ri-time-line text-2xl text-pink-500"></i>
+                            </div>
+                            <h2 class="text-xl font-semibold">User Trial Configuration</h2>
+                        </div>
+
+                        <form action="/admin/settings/update-trial" method="POST" class="space-y-6">
+                            <div>
+                                <label class="block text-gray-400 mb-2 font-medium text-sm uppercase tracking-wider">
+                                    New User Trial Time (Minutes)
+                                </label>
+                                <div class="relative">
+                                    <input type="number" 
+                                           name="trialMinutes" 
+                                           value="<%= settings.trialMinutes %>" 
+                                           class="w-full bg-[#2a2a2a] border border-gray-700 rounded-xl px-4 py-4 focus:outline-none focus:ring-2 focus:ring-pink-500 transition-all text-white text-lg font-mono"
+                                           placeholder="Enter minutes..."
+                                           required>
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">Mins</span>
+                                </div>
+                                <div class="flex items-start gap-2 mt-4 p-3 bg-blue-500/5 rounded-lg border border-blue-500/10">
+                                    <span class="material-icons-sharp text-blue-400 text-sm">info</span>
+                                    <p class="text-gray-400 text-xs leading-relaxed">
+                                        <b>Logic:</b> User create hone ke baad itne minute tak uska account status <b>'Paid'</b> rahega. Time khatam hote hi middleware use auto <b>'Updated'</b> kar dega.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <button type="submit" class="w-full md:w-auto bg-gradient-to-r from-pink-600 to-purple-600 px-10 py-4 rounded-xl font-bold hover:scale-105 active:scale-95 transition-all shadow-lg shadow-pink-500/20 flex items-center justify-center gap-2">
+                                    <span class="material-icons-sharp">save</span>
+                                    Update Configuration
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+
+
+
+
+                <div class="mt-10 bg-[#1a1a1a] border border-gray-800 rounded-2xl p-6 shadow-2xl">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="p-3 bg-purple-500/10 rounded-lg">
+            <i class="ri-money-dollar-circle-line text-2xl text-green-500"></i>
+        </div>
+        <h2 class="text-xl font-semibold">Subscription & Pricing Packs</h2>
+    </div>
+
+    <form action="/admin/settings/add-pack" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8 p-5 bg-[#252525] rounded-xl border border-gray-700">
+        <div class="space-y-2">
+            <label class="text-xs text-gray-400 uppercase tracking-widest">Pack Name</label>
+            <input type="text" name="name" placeholder="VIP Gold" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-pink-500 outline-none" required>
+        </div>
+        <div class="space-y-2">
+            <label class="text-xs text-gray-400 uppercase tracking-widest">Duration (Mins)</label>
+            <input type="number" name="duration" placeholder="1440" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-pink-500 outline-none" required>
+        </div>
+        <div class="space-y-2">
+            <label class="text-xs text-gray-400 uppercase tracking-widest">Price (INR)</label>
+            <input type="number" name="price" placeholder="₹ 499" class="w-full bg-[#1a1a1a] border border-gray-700 rounded-lg px-3 py-2.5 focus:ring-2 focus:ring-pink-500 outline-none" required>
+        </div>
+        <div class="flex items-end">
+            <button type="submit" class="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 py-2.5 rounded-lg font-bold transition-all shadow-lg shadow-green-900/20">
+                <i class="ri-add-line"></i> Create Pack
+            </button>
+        </div>
+    </form>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead>
+                <tr class="text-gray-500 border-b border-gray-800 text-sm">
+                    <th class="pb-3 px-2">Pack Name</th>
+                    <th class="pb-3 px-2">Duration</th>
+                    <th class="pb-3 px-2">Price</th>
+                    <th class="pb-3 px-2 text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-800">
+                <% if(settings.subscriptionPacks && settings.subscriptionPacks.length > 0) { %>
+                    <% settings.subscriptionPacks.forEach(pack => { %>
+                        <tr class="hover:bg-white/5 transition-colors">
+                            <td class="py-4 px-2 font-semibold text-pink-500"><%= pack.name %></td>
+                            <td class="py-4 px-2 text-gray-300"><%= pack.duration %> Mins</td>
+                            <td class="py-4 px-2 text-green-400 font-mono">₹<%= pack.price %></td>
+                            <td class="py-4 px-2 text-right">
+                                <a href="/admin/settings/delete-pack/<%= pack._id %>" class="p-2 hover:bg-red-500/10 rounded-lg text-red-500 transition-all">
+                                    <i class="ri-delete-bin-6-line text-lg"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="4" class="py-12 text-center text-gray-600 italic">No packs available. Add one above!</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+            </div>
+
+            <!-- =========================================================== -->
+        </main>
+    </div>
+
+    <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const sidebar = document.getElementById('sidebar');
+
+        if(menuBtn && sidebar) {
+            menuBtn.addEventListener('click', () => {
+                sidebar.classList.toggle('-translate-x-full');
+            });
+
+            // Close sidebar when clicking outside on mobile
+            document.addEventListener('click', (e) => {
+                if (!sidebar.contains(e.target) && !menuBtn.contains(e.target) && window.innerWidth < 768) {
+                    sidebar.classList.add('-translate-x-full');
+                }
+            });
+        }
+    </script>
+</body>
+</html>
