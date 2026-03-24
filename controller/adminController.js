@@ -338,3 +338,91 @@ exports.updatePaymentSettings = async (req, res) => {
         res.redirect('/admin/paymentSettings?success=UPI ID Updated Successfully!');
     } catch (err) { res.redirect(`/admin/paymentSettings?error=${err.message}`); }
 };
+
+// Pehle check kar lo ki upar admin model import hai ya nahi
+const Admin = require('../model/admin'); // Chhote 'admin' file name ke saath
+// ==========================================
+// 📢 MULTIPLE POPUP AD LOGIC
+// ==========================================
+
+// 1. Get Popup Settings Page
+exports.getPopupAdSettings = async (req, res) => {
+    try {
+        let admin = await Admin.findOne().lean();
+        if (!admin) {
+            admin = { popupAds: [] };
+        }
+        res.render('Admin/popupAdSettings', { 
+            title: "Manage Popup Ads", 
+            admin, 
+            success: req.query.success || null 
+        });
+    } catch (err) { 
+        console.error("Fetch Error:", err.message);
+        res.status(500).send("Settings load karne mein error: " + err.message); 
+    }
+};
+
+// 2. Add OR Update Popup Ad (Dono handle karega)
+exports.updatePopupAd = async (req, res) => {
+    try {
+        const adId = req.params.id; // URL se ID uthayega (Update ke liye)
+        const { title, message, imageUrl, link, isActive } = req.body;
+        const activeStatus = isActive === 'on' || isActive === true;
+
+        if (adId) {
+            // Logic: Agar ID hai toh SPECIFIC AD update karo
+            await Admin.findOneAndUpdate(
+                { "popupAds._id": adId },
+                { 
+                    $set: { 
+                        "popupAds.$.title": title,
+                        "popupAds.$.message": message,
+                        "popupAds.$.imageUrl": imageUrl,
+                        "popupAds.$.link": link,
+                        "popupAds.$.isActive": activeStatus,
+                        updatedAt: Date.now()
+                    } 
+                }
+            );
+            return res.redirect('/admin/popupAdSettings?success=Ad Updated Successfully! ✅');
+        } else {
+            // Logic: Agar ID nahi hai toh NAYA AD push karo
+            await Admin.findOneAndUpdate(
+                {}, 
+                { 
+                    $push: { 
+                        popupAds: { 
+                            title,
+                            message,
+                            imageUrl,
+                            link,
+                            isActive: activeStatus 
+                        } 
+                    },
+                    $set: { updatedAt: Date.now() }
+                },
+                { upsert: true, new: true }
+            );
+            return res.redirect('/admin/popupAdSettings?success=New Ad Added Successfully! 🚀');
+        }
+    } catch (err) { 
+        console.error("Save/Update Error:", err.message);
+        res.status(500).send("Action fail ho gaya: " + err.message); 
+    }
+};
+
+// 3. Delete Specific Popup Ad
+exports.deletePopupAd = async (req, res) => {
+    try {
+        const adId = req.params.id;
+        await Admin.findOneAndUpdate(
+            {}, 
+            { $pull: { popupAds: { _id: adId } } }
+        );
+        res.redirect('/admin/popupAdSettings?success=Ad Deleted Successfully! ✅');
+    } catch (err) { 
+        console.error("Delete Error:", err.message);
+        res.status(500).send("Delete fail ho gaya: " + err.message); 
+    }
+};

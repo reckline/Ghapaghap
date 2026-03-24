@@ -2,8 +2,6 @@ const express = require('express');
 const router = express.Router();
 const adminController = require('../controller/adminController');
 
-
-
 // Debugging Middleware: Terminal mein hit hone wale har URL ko track karne ke liye
 router.use((req, res, next) => {
     console.log(`Requested URL: ${req.method} ${req.url}`);
@@ -53,34 +51,25 @@ router.post('/verify/reject/:id', adminController.rejectUser);
 // 💰 DEPOSIT MANAGEMENT
 // ==========================================================
 
-// 1. Pending Requests (Action lene ke liye)
 router.get('/depositRequests', adminController.getDepositReports);
-
-// 2. Settled Logs (History & Calendar Filter)
 router.get('/depositInfos', adminController.getDepositInfos);
-
-// 3. Actions
 router.post('/deposit/approve/:id', adminController.approveDeposit);
 router.post('/deposit/reject/:id', adminController.rejectDeposit);
 router.post('/deposit/update-status', adminController.updateDepositStatus);
 
 // ==========================================================
-// 🎬 CONTENT & VIDEO MANAGEMENT (Naya Add Kiya)
+// 🎬 CONTENT & VIDEO MANAGEMENT
 // ==========================================================
-router.get('/allVideoInfo', adminController.getAllVideos); // Sab videos dekhne ke liye
-router.post('/video/delete/:id', adminController.deleteVideo); // Video delete karne ke liye
+
+router.get('/allVideoInfo', adminController.getAllVideos);
+router.post('/video/delete/:id', adminController.deleteVideo);
 
 // ==========================================================
 // 💸 WITHDRAWAL MANAGEMENT
 // ==========================================================
 
-// 1. Pending Requests (Approval ke liye)
 router.get('/withdrawalRequests', adminController.getWithdrawalRequests);
-
-// 2. Settled Logs (Naya route jo humne abhi banaya)
 router.get('/withdrawalInfos', adminController.getWithdrawalInfos);
-
-// 3. Update Status (Ajax/Form)
 router.post('/withdrawal/update-status', adminController.updateWithdrawalStatus);
 
 // ==========================================================
@@ -88,5 +77,21 @@ router.post('/withdrawal/update-status', adminController.updateWithdrawalStatus)
 // ==========================================================
 
 router.get('/reports', adminController.getReports);
+
+// ==========================================================
+// 📢 POPUP AD SETTINGS (FIXED & TESTED)
+// ==========================================================
+
+// 1. Settings Page Load
+router.get('/popupAdSettings', adminController.getPopupAdSettings);
+
+// 2. Naya Ad Add karne ke liye
+router.post('/add-popup-ad', adminController.updatePopupAd);
+
+// 3. Purana Ad Update karne ke liye (Fix: Added :id parameter to handle dynamic IDs)
+router.post('/update-popup-ad/:id', adminController.updatePopupAd);
+
+// 4. Ad Delete karne ke liye
+router.post('/delete-popup-ad/:id', adminController.deletePopupAd);
 
 module.exports = router;
