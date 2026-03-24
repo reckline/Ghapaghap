@@ -97,7 +97,7 @@
         <% } %>
     </main>
 
-    <footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
+    <!-- <footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
     
     <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-2 md:p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
         <div class="flex items-center gap-2 md:gap-3">
@@ -148,7 +148,69 @@
             <span class="material-icons-sharp text-white text-xl md:text-2xl">send</span>
         </button>
     </form>
+</footer> -->
+
+<footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
+    
+    <% if (user && user.totalMinutes <= 0) { %>
+        <div class="max-w-4xl mx-auto mb-3 p-3 bg-red-500/20 border border-red-500/40 rounded-xl text-center">
+            <p class="text-red-400 text-xs md:text-sm font-bold flex items-center justify-center gap-2">
+                <span class="material-icons-sharp text-sm">error</span>
+                Bhai, aapka balance khatam ho gaya hai! Recharge karein.
+            </p>
+        </div>
+    <% } %>
+
+    <div id="recording-overlay" class="hidden ..."> ... </div>
+    <div id="media-preview" class="hidden ..."> ... </div>
+
+    <form id="msg-form" class="max-w-4xl mx-auto flex items-center gap-1 md:gap-2">
+        
+        <div class="relative group">
+            <button type="button" 
+                <%= (user && user.totalMinutes <= 0) ? 'disabled' : '' %>
+                class="<%= (user && user.totalMinutes <= 0) ? 'opacity-20 cursor-not-allowed' : '' %> p-2 text-gray-400 hover:text-pink-500 transition-colors">
+                <span class="material-icons-sharp text-2xl md:text-3xl">add_circle</span>
+            </button>
+            <% if (user && user.totalMinutes > 0) { %>
+                <div class="absolute bottom-14 left-0 bg-[#1a1a1a] border border-white/10 rounded-2xl p-1.5 hidden group-hover:flex flex-col gap-1 shadow-2xl z-50">
+                    <button type="button" onclick="document.getElementById('file-input').click()" class="p-3 hover:bg-white/5 rounded-xl text-blue-400 flex items-center justify-center">
+                        <span class="material-icons-sharp">image</span>
+                    </button>
+                    <button type="button" onclick="openCamera()" class="p-3 hover:bg-white/5 rounded-xl text-pink-500 flex items-center justify-center">
+                        <span class="material-icons-sharp">photo_camera</span>
+                    </button>
+                </div>
+            <% } %>
+        </div>
+
+        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFile(this)">
+        
+        <input type="text" id="user-input" autocomplete="off" 
+               placeholder="<%= (user && user.totalMinutes <= 0) ? 'Balance Expired...' : 'Message...' %>" 
+               <%= (user && user.totalMinutes <= 0) ? 'disabled' : '' %>
+               class="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 md:px-5 py-2.5 md:py-3 text-[14px] md:text-base focus:outline-none focus:border-pink-500/50 transition-all <%= (user && user.totalMinutes <= 0) ? 'opacity-50 cursor-not-allowed' : '' %>">
+        
+        <button type="button" 
+                <% if (user && user.totalMinutes > 0) { %>
+                    onmousedown="startRecording()" onmouseup="stopRecording()" 
+                    onmouseleave="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()"
+                <% } else { %>
+                    disabled
+                <% } %>
+                id="mic-btn" class="p-2 text-gray-400 <%= (user && user.totalMinutes <= 0) ? 'opacity-20 cursor-not-allowed' : 'hover:text-red-500 active:scale-125' %> transition-all shrink-0">
+            <span class="material-icons-sharp text-2xl md:text-3xl">mic</span>
+        </button>
+
+        <button type="submit" id="send-btn" 
+                <%= (user && user.totalMinutes <= 0) ? 'disabled' : '' %>
+                class="w-10 h-10 md:w-12 md:h-12 <%= (user && user.totalMinutes <= 0) ? 'bg-gray-700 cursor-not-allowed' : 'bg-pink-600 hover:bg-pink-700 shadow-pink-600/20 active:scale-90' %> rounded-full flex items-center justify-center shadow-lg transition-all shrink-0">
+            <span class="material-icons-sharp text-white text-xl md:text-2xl">send</span>
+        </button>
+    </form>
 </footer>
+
+
   <%- include('../partials/popupAd') %>
 <style>
     .safe-area-bottom {
