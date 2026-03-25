@@ -16,9 +16,9 @@
                 <span class="text-sm">Shorts</span>
             </a>
 
-            <a href="/live" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 <%= currentPath === '/live' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
+            <a href="/packs" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 <%= currentPath === '/live' ? 'bg-pink-600/10 text-pink-500 font-bold' : 'text-gray-400 hover:bg-white/5 hover:text-white' %>">
                 <i class="fas fa-broadcast-tower w-5 text-center"></i>
-                <span class="text-sm">Live Room</span>
+                <span class="text-sm">Subscription Packs</span>
             </a>
         </div>
 
@@ -47,6 +47,26 @@
         </div>
 
         <hr class="border-gray-800/50 my-4 mx-2" />
+<div class="mt-auto pb-4">
+    <% 
+       // Dono variables check kar lete hain, jo bhi mil jaye
+       let activeAdmin = (typeof adminData !== 'undefined' && adminData) ? adminData : (typeof admin !== 'undefined' ? admin : null);
+    %>
+
+    <% if (activeAdmin && activeAdmin.isWhatsappActive && activeAdmin.contactNumber) { %>
+        <a href="https://wa.me/<%= activeAdmin.contactNumber.replace(/\D/g,'') %>?text=Hello%20Admin" 
+           target="_blank"
+           class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 hover:bg-green-500/10 hover:text-green-500 group text-gray-400">
+            <i class="fab fa-whatsapp w-5 text-center text-lg transition-transform group-hover:translate-x-1"></i>
+            <span class="text-sm font-bold uppercase tracking-wider">Contact Us</span>
+        </a>
+    <% } else { %>
+        <div class="flex items-center gap-4 p-3 rounded-xl opacity-50 cursor-not-allowed text-gray-500">
+            <i class="fas fa-headset w-5 text-center"></i>
+            <span class="text-sm font-bold uppercase tracking-wider">Support Offline</span>
+        </div>
+    <% } %>
+</div>
 
         <div class="mt-auto pb-4">
             <a href="/logout" class="flex items-center gap-4 p-3 rounded-xl transition-all duration-300 text-red-500/70 hover:bg-red-500/10 hover:text-red-500 group">

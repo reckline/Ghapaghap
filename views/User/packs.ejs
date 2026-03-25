@@ -167,11 +167,7 @@
                     </div>
 
                     <form action="/buy-pack/<%= pack._id %>" method="POST">
-                        <!-- <button type="submit" class="w-full relative overflow-hidden group/btn bg-white text-black py-4 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-pink-500 hover:text-white transition-all duration-300 shadow-xl shadow-white/5">
-                            <span class="relative z-10 flex items-center justify-center gap-2">
-                                Get Started <i class="fa-solid fa-arrow-right text-xs"></i>
-                            </span>
-                        </button> -->
+                   
                         <a href="/deposit?amount=<%= pack.price %>&pack=<%= encodeURIComponent(pack.name) %>" 
    class="w-full relative overflow-hidden group/btn bg-white text-black py-4 rounded-2xl font-black text-sm uppercase tracking-wide hover:bg-pink-500 hover:text-white transition-all duration-300 shadow-xl shadow-white/5 text-center block">
     <span class="relative z-10 flex items-center justify-center gap-2">

@@ -97,59 +97,6 @@
         <% } %>
     </main>
 
-    <!-- <footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
-    
-    <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-2 md:p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
-        <div class="flex items-center gap-2 md:gap-3">
-            <span class="relative flex h-2 w-2 md:h-3 md:w-3">
-                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-red-500"></span>
-            </span>
-            <span class="text-[10px] md:text-xs font-bold text-red-500 uppercase tracking-widest">Recording...</span>
-        </div>
-        <span id="record-timer" class="text-xs font-mono text-red-500">00:00</span>
-    </div>
-
-    <div id="media-preview" class="hidden max-w-2xl mx-auto mb-2 p-2 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-between">
-        <span id="preview-name" class="text-[10px] md:text-xs text-pink-200 truncate pr-4 flex items-center gap-2"></span>
-        <button onclick="clearPreview()" class="text-pink-500 shrink-0"><span class="material-icons-sharp text-sm">close</span></button>
-    </div>
-
-    <form id="msg-form" class="max-w-4xl mx-auto flex items-center gap-1 md:gap-2">
-        
-        <div class="relative group">
-            <button type="button" class="p-2 text-gray-400 hover:text-pink-500 transition-colors">
-                <span class="material-icons-sharp text-2xl md:text-3xl">add_circle</span>
-            </button>
-            <div class="absolute bottom-14 left-0 bg-[#1a1a1a] border border-white/10 rounded-2xl p-1.5 hidden group-hover:flex flex-col gap-1 shadow-2xl z-50">
-                <button type="button" onclick="document.getElementById('file-input').click()" class="p-3 hover:bg-white/5 rounded-xl text-blue-400 flex items-center justify-center">
-                    <span class="material-icons-sharp">image</span>
-                </button>
-                <button type="button" onclick="openCamera()" class="p-3 hover:bg-white/5 rounded-xl text-pink-500 flex items-center justify-center">
-                    <span class="material-icons-sharp">photo_camera</span>
-                </button>
-            </div>
-        </div>
-
-        <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFile(this)">
-        
-        <input type="text" id="user-input" autocomplete="off" placeholder="Message..." 
-               class="flex-1 min-w-0 bg-white/5 border border-white/10 rounded-full px-4 md:px-5 py-2.5 md:py-3 text-[14px] md:text-base focus:outline-none focus:border-pink-500/50 transition-all">
-        
-        <button type="button" 
-                onmousedown="startRecording()" onmouseup="stopRecording()" 
-                onmouseleave="stopRecording()" ontouchstart="startRecording()" ontouchend="stopRecording()"
-                id="mic-btn" class="p-2 text-gray-400 hover:text-red-500 active:scale-125 transition-all shrink-0">
-            <span class="material-icons-sharp text-2xl md:text-3xl">mic</span>
-        </button>
-
-        <button type="submit" id="send-btn" 
-                class="w-10 h-10 md:w-12 md:h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 shadow-lg shadow-pink-600/20 active:scale-90 transition-all shrink-0">
-            <span class="material-icons-sharp text-white text-xl md:text-2xl">send</span>
-        </button>
-    </form>
-</footer> -->
-
 <footer class="shrink-0 w-full p-2 md:p-6 glass border-t border-white/5 z-50">
     
     <% if (user && user.totalMinutes <= 0) { %>
@@ -225,45 +172,6 @@
     }
 }
 </style>
-
-    <!-- <footer class="fixed bottom-0 w-full p-4 glass border-t border-white/5 z-50">
-        <div id="recording-overlay" class="hidden max-w-4xl mx-auto mb-2 p-3 bg-red-500/10 border border-red-500/20 rounded-2xl flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <span class="relative flex h-3 w-3">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
-                </span>
-                <span class="text-xs font-bold text-red-500 uppercase tracking-widest">Recording...</span>
-            </div>
-            <span id="record-timer" class="text-xs font-mono text-red-500">00:00</span>
-        </div>
-
-        <div id="media-preview" class="hidden max-w-2xl mx-auto mb-2 p-2 bg-pink-500/10 border border-pink-500/20 rounded-xl flex items-center justify-between">
-            <span id="preview-name" class="text-xs text-pink-200 flex items-center gap-2"></span>
-            <button onclick="clearPreview()" class="text-pink-500"><span class="material-icons-sharp text-sm">close</span></button>
-        </div>
-
-        <form id="msg-form" class="max-w-4xl mx-auto flex items-center gap-2">
-            <div class="relative group">
-                <button type="button" class="p-2 text-gray-400 hover:text-pink-500 transition-colors"><span class="material-icons-sharp">add_circle</span></button>
-                <div class="absolute bottom-14 left-0 bg-[#1a1a1a] border border-white/10 rounded-2xl p-2 hidden group-hover:flex flex-col gap-2 shadow-2xl z-50">
-                    <button type="button" onclick="document.getElementById('file-input').click()" class="p-3 hover:bg-white/5 rounded-xl text-blue-400"><span class="material-icons-sharp">image</span></button>
-                    <button type="button" onclick="openCamera()" class="p-3 hover:bg-white/5 rounded-xl text-pink-500"><span class="material-icons-sharp">photo_camera</span></button>
-                </div>
-            </div>
-
-            <input type="file" id="file-input" class="hidden" accept="image/*" onchange="handleFile(this)">
-            <input type="text" id="user-input" autocomplete="off" placeholder="Message..." class="flex-1 bg-white/5 border border-white/10 rounded-full px-5 py-3 text-sm focus:outline-none focus:border-pink-500/50">
-            
-            <button type="button" onmousedown="startRecording()" onmouseup="stopRecording()" onmouseleave="stopRecording()" id="mic-btn" class="p-3 text-gray-400 hover:text-red-500 transition-all">
-                <span class="material-icons-sharp">mic</span>
-            </button>
-
-            <button type="submit" id="send-btn" class="w-12 h-12 bg-pink-600 rounded-full flex items-center justify-center hover:bg-pink-700 shadow-lg shadow-pink-600/20 active:scale-95 transition-all">
-                <span class="material-icons-sharp">send</span>
-            </button>
-        </form>
-    </footer> -->
 
     <div id="camera-modal" class="fixed inset-0 z-[100] bg-black hidden flex flex-col items-center justify-center">
         <video id="webcam" autoplay playsinline class="w-full h-full object-cover"></video>

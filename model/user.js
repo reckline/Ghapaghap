@@ -399,6 +399,21 @@ const userSchema = new mongoose.Schema({
         default: "" 
     },
 
+    // 📞 NEW: Admin Contact Settings (WhatsApp Number)
+    contactNumber: { 
+        type: String, 
+        default: "" 
+    },
+    isWhatsappActive: { 
+        type: Boolean, 
+        default: false 
+    },
+
+    avatar: { 
+        type: String, 
+        default: 'https://ui-avatars.com/api/?name=User&background=f0778b&color=fff' 
+    },
+
     // 🔥 NEW: Minutes Balance
     totalMinutes: { 
         type: Number, 
